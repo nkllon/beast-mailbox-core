@@ -116,9 +116,13 @@ class RedisMailboxService:
             self._processing_task.cancel()
             try:
                 await self._processing_task
-            except Exception:
-                # Suppress all exceptions during shutdown (including CancelledError subclass)
+            except asyncio.CancelledError:
+                # NOTE: SonarCloud flags this as python:S7497 (should re-raise)
+                # However, stop() IS the cleanup handler - re-raising would propagate
+                # to callers expecting graceful shutdown. This is intentional suppression.
                 pass
+            except Exception:
+                pass  # Ignore other errors during shutdown
             finally:
                 self._processing_task = None
         if self._client:
