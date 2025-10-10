@@ -6,7 +6,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=coverage)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
-[![Tests](https://img.shields.io/badge/tests-44%20passed-brightgreen)](https://github.com/nkllon/beast-mailbox-core/actions)
+[![Tests](https://img.shields.io/badge/tests-47%20passed-brightgreen)](https://github.com/nkllon/beast-mailbox-core/actions)
 
 Redis-backed mailbox utilities extracted from Beast Mode. **Production-ready with 85% test coverage and passing Quality Gate!**
 
