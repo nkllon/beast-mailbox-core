@@ -131,7 +131,6 @@ async def run_service_async(args: argparse.Namespace) -> None:
     # Streaming mode - echo handler
     async def echo_handler(message: MailboxMessage) -> None:
         """Echo received messages to console."""
-        # No await needed - just logging, but async for handler interface compatibility
         logging.info(
             "📬 %s <- %s (%s): %s",
             message.recipient,
@@ -139,6 +138,8 @@ async def run_service_async(args: argparse.Namespace) -> None:
             message.message_type,
             message.payload,
         )
+        # Yield to event loop (proper async pattern for I/O-less async functions)
+        await asyncio.sleep(0)
 
     if args.echo:
         service.register_handler(echo_handler)
