@@ -1,6 +1,6 @@
 # Beast Mailbox Core
 
-[![PyPI version](https://img.shields.io/pypi/v/beast-mailbox-core.svg)](https://pypi.org/project/beast-mailbox-core/)
+[![PyPI version](https://img.shields.io/pypi/v/beast-mailbox-core?label=PyPI&color=blue)](https://pypi.org/project/beast-mailbox-core/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/beast-mailbox-core.svg)](https://pypi.org/project/beast-mailbox-core/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
