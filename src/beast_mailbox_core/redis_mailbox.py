@@ -117,6 +117,8 @@ class RedisMailboxService:
             try:
                 await self._processing_task
             except asyncio.CancelledError:
+                # Expected - we just cancelled this task ourselves for cleanup
+                # No need to re-raise since we're the cancellation initiator
                 pass
             self._processing_task = None
         if self._client:
@@ -176,7 +178,8 @@ class RedisMailboxService:
                         await self._dispatch(mailbox_message)
                         await self._client.xack(stream_name, self._consumer_group, message_id)
             except asyncio.CancelledError:
-                break
+                # Task cancelled - re-raise to propagate cancellation properly
+                raise
             except Exception as exc:
                 self.logger.exception("Error in mailbox consume loop: %s", exc)
                 await asyncio.sleep(self.config.poll_interval)
@@ -185,7 +188,8 @@ class RedisMailboxService:
         if not self._handlers:
             self.logger.info("Mailbox message received with no handlers registered: %s", message)
             return
-        for handler in list(self._handlers):
+        # Iterate directly - handlers must not modify the list during iteration
+        for handler in self._handlers:
             try:
                 await handler(message)
             except Exception as exc:
