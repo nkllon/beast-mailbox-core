@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2025-10-10
+
+### Fixed
+- **CRITICAL:** Reduced cognitive complexity in `_fetch_latest_messages()` from 16 to ~8 (python:S3776)
+- CLI test coverage improved from 0% to 84%
+
+### Changed
+- Extracted `_acknowledge_messages()` helper function from `_fetch_latest_messages()`
+- Extracted `_trim_messages()` helper function from `_fetch_latest_messages()`
+- Improved separation of concerns in CLI module
+
+### Technical Notes
+- Tests: 44/44 passing
+- Coverage: 85% overall (cli.py: 84%, redis_mailbox.py: 85%)
+- SonarCloud cognitive complexity issue resolved
+
 ## [0.2.4] - 2025-10-10
 
 ### Added

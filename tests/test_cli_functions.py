@@ -10,7 +10,7 @@ from beast_mailbox_core.cli import _fetch_latest_messages
 
 
 @pytest.fixture
-def mock_service():
+async def mock_service():
     """Create a service with fully mocked client that won't reset."""
     config = MailboxConfig(host="localhost", db=15)
     service = RedisMailboxService("test-agent", config)
@@ -23,20 +23,21 @@ def mock_service():
     mock_client.xdel = AsyncMock(return_value=0)
     mock_client.close = AsyncMock()
     
-    # Override connect and stop to prevent client reset
-    async def mock_connect():
-        if service._client is None:
-            service._client = mock_client
+    # Actually call connect to set client
+    with patch('beast_mailbox_core.redis_mailbox.redis.Redis', return_value=mock_client):
+        await service.connect()
     
+    # Override stop to not clear client
+    original_stop = service.stop
     async def mock_stop():
-        # Don't set _client to None
-        pass
-    
-    service.connect = mock_connect
+        service._running = False
+        # Don't clear _client
     service.stop = mock_stop
-    service._client = mock_client
     
-    return service, mock_client
+    yield service, mock_client
+    
+    # Cleanup
+    await original_stop()
 
 
 @pytest.fixture
