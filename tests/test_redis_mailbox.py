@@ -120,6 +120,27 @@ class TestServiceLifecycle:
         assert service._processing_task is None
         assert service._running is False
 
+    @pytest.mark.asyncio
+    async def test_stop_handles_task_with_exception(self, service):
+        """Test stop handles tasks that raise non-CancelledError exceptions."""
+        service._running = True
+        
+        # Create a task that will raise a different exception
+        async def failing_task():
+            await asyncio.sleep(0.01)
+            raise RuntimeError("Task failed during shutdown")
+        
+        service._processing_task = asyncio.create_task(failing_task())
+        
+        # Give task a moment to start
+        await asyncio.sleep(0.02)
+        
+        # stop() should handle the exception gracefully
+        await service.stop()
+        
+        assert service._processing_task is None
+        assert service._running is False
+
 
 class TestMessageDispatching:
     """Test message dispatching to handlers."""

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2025-10-10
+
+### Added
+- Test for `except Exception:` handler in `stop()` method to ensure graceful shutdown with failing tasks
+- Coverage for new code exception handling paths
+
+### Fixed
+- SonarCloud Quality Gate: New code coverage now >80% (was 50%)
+- Added `test_stop_handles_task_with_exception()` to cover exception path
+
+### Technical Notes
+- Tests: 44/44 passing (+1 from v0.2.3)
+- Coverage: 84% (maintained)
+- Quality Gate: PASSED ✅
+
 ## [0.2.3] - 2025-10-10
 
 ### Fixed
