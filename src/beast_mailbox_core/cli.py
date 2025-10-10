@@ -16,6 +16,48 @@ def configure_logging(verbose: bool) -> None:
     logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 
+async def _acknowledge_messages(
+    client: Any,
+    stream: str,
+    consumer_group: str,
+    message_ids: list,
+) -> None:
+    """Acknowledge messages in a consumer group."""
+    try:
+        # Ensure consumer group exists
+        try:
+            await client.xgroup_create(
+                name=stream,
+                groupname=consumer_group,
+                id="0",
+                mkstream=True,
+            )
+        except Exception as exc:
+            if "BUSYGROUP" not in str(exc):
+                logging.warning("Could not create consumer group: %s", exc)
+
+        # Acknowledge messages
+        ack_count = await client.xack(stream, consumer_group, *message_ids)
+        logging.info("✓ Acknowledged %d message(s) in group %s", ack_count, consumer_group)
+    except Exception as exc:
+        logging.error("Failed to acknowledge messages: %s", exc)
+        raise SystemExit(f"Acknowledgement failed: {exc}")
+
+
+async def _trim_messages(
+    client: Any,
+    stream: str,
+    message_ids: list,
+) -> None:
+    """Delete messages from a stream."""
+    try:
+        delete_count = await client.xdel(stream, *message_ids)
+        logging.info("🗑️  Deleted %d message(s) from stream", delete_count)
+    except Exception as exc:
+        logging.error("Failed to delete messages: %s", exc)
+        raise SystemExit(f"Deletion failed: {exc}")
+
+
 async def _fetch_latest_messages(
     service: RedisMailboxService,
     count: int,
@@ -56,37 +98,13 @@ async def _fetch_latest_messages(
             )
             message_ids.append(message_id)
 
-        # Handle acknowledgement if requested
+        # Handle operations if requested
         if ack and message_ids:
-            try:
-                # Ensure consumer group exists before acknowledging
-                consumer_group = f"{service.agent_id}:group"
-                try:
-                    await client.xgroup_create(
-                        name=stream,
-                        groupname=consumer_group,
-                        id="0",
-                        mkstream=True,
-                    )
-                except Exception as exc:
-                    if "BUSYGROUP" not in str(exc):
-                        logging.warning("Could not create consumer group: %s", exc)
+            consumer_group = f"{service.agent_id}:group"
+            await _acknowledge_messages(client, stream, consumer_group, message_ids)
 
-                # Acknowledge messages
-                ack_count = await client.xack(stream, consumer_group, *message_ids)
-                logging.info("✓ Acknowledged %d message(s) in group %s", ack_count, consumer_group)
-            except Exception as exc:
-                logging.error("Failed to acknowledge messages: %s", exc)
-                raise SystemExit(f"Acknowledgement failed: {exc}")
-
-        # Handle trim/delete if requested
         if trim and message_ids:
-            try:
-                delete_count = await client.xdel(stream, *message_ids)
-                logging.info("🗑️  Deleted %d message(s) from stream", delete_count)
-            except Exception as exc:
-                logging.error("Failed to delete messages: %s", exc)
-                raise SystemExit(f"Deletion failed: {exc}")
+            await _trim_messages(client, stream, message_ids)
 
     finally:
         await service.stop()
