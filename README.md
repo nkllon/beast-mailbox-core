@@ -1,5 +1,12 @@
 # Beast Mailbox Core
 
+[![PyPI version](https://badge.fury.io/py/beast-mailbox-core.svg)](https://badge.fury.io/py/beast-mailbox-core)
+[![Python Versions](https://img.shields.io/pypi/pyversions/beast-mailbox-core.svg)](https://pypi.org/project/beast-mailbox-core/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=coverage)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=bugs)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
+
 Redis-backed mailbox utilities extracted from Beast Mode.
 
 ## Features
