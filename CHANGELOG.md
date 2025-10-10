@@ -8,12 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.2] - 2025-10-10
 
 ### Added
-- Test suite with 14 tests covering core functionality (29% coverage)
+- Comprehensive test suite with 29 tests covering core functionality (43% coverage)
 - pytest, pytest-asyncio, pytest-cov dev dependencies
 - Automated coverage reporting (coverage.xml for SonarCloud)
+- Tests for MailboxMessage, MailboxConfig, and RedisMailboxService
+- AsyncIO lifecycle testing (start, stop, connect, message dispatching)
+- SonarCloud integration with automated coverage upload
 
 ### Fixed
 - Removed false claim of "21 tests" from v0.2.0 (tests didn't exist)
+- Proper async mocking for non-blocking tests
 
 ## [0.2.1] - 2025-10-10
 
