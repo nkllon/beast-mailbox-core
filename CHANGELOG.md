@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2025-10-10
+
+### Fixed
+- **Bug #2 (MAJOR):** Re-raise `asyncio.CancelledError` in `_consume_loop()` for proper cancellation propagation
+- **Code Smell #4:** Removed unnecessary `list()` wrapper in `_dispatch()` method for performance
+
+### Changed
+- Updated async exception handling patterns following Python best practices
+- Improved inline documentation for `CancelledError` handling in cleanup methods
+
+### Documented
+- Added comprehensive SonarCloud quality fixes documentation (`docs/SONARCLOUD_QUALITY_FIXES.md`)
+- Documented intentional `CancelledError` suppression in `stop()` method (line 119)
+  - This is a design decision for graceful shutdown, not a bug
+  - SonarCloud Bug #1 is a false positive for this use case
+
+### Technical Notes
+- Tests: 43/43 passing
+- Coverage: 83.4% (slight decrease due to additional exception handlers)
+- Fixed 1 bug, 1 code smell
+- Remaining SonarCloud issues are false positives or acceptable (documented)
+
 ## [0.2.2] - 2025-10-10
 
 ### Added
