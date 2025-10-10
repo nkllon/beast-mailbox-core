@@ -1,10 +1,23 @@
 [project]
 name = "beast-mailbox-core"
-version = "0.2.0"
+version = "0.2.1"
 description = "Redis-backed mailbox utilities from Beast Mode"
 readme = "README.md"
 requires-python = ">=3.9"
-license = "MIT"
+license = {text = "MIT"}
+keywords = ["redis", "messaging", "mailbox", "async", "streams"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Distributed Computing",
+]
 dependencies = [
   "redis>=5.0.0",
 ]
