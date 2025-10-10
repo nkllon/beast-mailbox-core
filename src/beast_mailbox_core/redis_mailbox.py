@@ -116,10 +116,9 @@ class RedisMailboxService:
             self._processing_task.cancel()
             try:
                 await self._processing_task
-            except asyncio.CancelledError:
-                pass  # Expected during shutdown
             except Exception:
-                pass  # Ignore other errors during shutdown
+                # Suppress all exceptions during shutdown (including CancelledError subclass)
+                pass
             finally:
                 self._processing_task = None
         if self._client:
