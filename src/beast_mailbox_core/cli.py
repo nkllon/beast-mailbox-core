@@ -128,8 +128,10 @@ async def run_service_async(args: argparse.Namespace) -> None:
         await _fetch_latest_messages(service, args.count, args.ack, args.trim)
         return
 
-    # Streaming mode
-    async def printer(message: MailboxMessage) -> None:
+    # Streaming mode - echo handler
+    async def echo_handler(message: MailboxMessage) -> None:
+        """Echo received messages to console."""
+        # No await needed - just logging, but async for handler interface compatibility
         logging.info(
             "📬 %s <- %s (%s): %s",
             message.recipient,
@@ -139,7 +141,7 @@ async def run_service_async(args: argparse.Namespace) -> None:
         )
 
     if args.echo:
-        service.register_handler(printer)
+        service.register_handler(echo_handler)
 
     if not await service.start():
         raise SystemExit("Failed to start mailbox service")

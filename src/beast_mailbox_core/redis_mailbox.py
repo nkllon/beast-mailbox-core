@@ -79,6 +79,7 @@ class RedisMailboxService:
         return f"{self.config.stream_prefix}:{self.agent_id}:in"
 
     async def connect(self) -> None:
+        """Connect to Redis. Async for interface consistency."""
         if self._client is None:
             self._client = redis.Redis(
                 host=self.config.host,
@@ -87,6 +88,8 @@ class RedisMailboxService:
                 db=self.config.db,
                 decode_responses=False,
             )
+            # Ping to verify connection works
+            await self._client.ping()
 
     async def start(self) -> bool:
         await self.connect()
@@ -116,7 +119,7 @@ class RedisMailboxService:
             self._processing_task.cancel()
             try:
                 await self._processing_task
-            except asyncio.CancelledError:
+            except asyncio.CancelledError:  # noqa: S7497
                 # NOTE: SonarCloud flags this as python:S7497 (should re-raise)
                 # However, stop() IS the cleanup handler - re-raising would propagate
                 # to callers expecting graceful shutdown. This is intentional suppression.

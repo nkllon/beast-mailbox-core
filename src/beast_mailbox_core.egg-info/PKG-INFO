@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: beast-mailbox-core
-Version: 0.2.4
+Version: 0.2.5
 Summary: Redis-backed mailbox utilities from Beast Mode
 License: MIT
 Project-URL: Homepage, https://github.com/nkllon/beast-mailbox-core
