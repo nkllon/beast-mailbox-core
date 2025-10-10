@@ -10,3 +10,6 @@ src/beast_mailbox_core.egg-info/dependency_links.txt
 src/beast_mailbox_core.egg-info/entry_points.txt
 src/beast_mailbox_core.egg-info/requires.txt
 src/beast_mailbox_core.egg-info/top_level.txt
+tests/test_mailbox_config.py
+tests/test_mailbox_message.py
+tests/test_mailbox_service.py
