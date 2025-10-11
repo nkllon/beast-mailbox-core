@@ -6,11 +6,11 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=coverage)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
-[![Tests](https://img.shields.io/badge/tests-52%20passed-brightgreen)](https://github.com/nkllon/beast-mailbox-core/actions)
+[![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen)](https://github.com/nkllon/beast-mailbox-core/actions)
 [![Documentation](https://img.shields.io/badge/docs-52%25-brightgreen)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 [![Maintainability Rating](https://img.shields.io/badge/maintainability-A-brightgreen)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 
-Redis-backed mailbox utilities extracted from Beast Mode. **Enterprise-grade with 85% coverage, 52% documentation density, and ZERO defects!**
+Redis-backed mailbox utilities extracted from Beast Mode. **Enterprise-grade with 90% coverage, 52% documentation density, and ZERO defects!**
 
 ## Features
 - Durable messaging via Redis streams (`XADD`/`XREADGROUP`)
