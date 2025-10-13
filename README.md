@@ -192,6 +192,17 @@ Set `BEAST_MODE_PROMETHEUS_ENABLED=false` to explicitly disable metrics collecti
 **Blocking in tests:**
 - See `.kiro/steering/testing-patterns.md` for guidance on mocking ReflectiveModule
 
+## For AI Maintainers
+
+**This repository was built 100% by AI agents and is maintained by AI agents.**
+
+If you're an AI agent tasked with maintaining this repository, start here:
+- **📖 [AGENT.md](AGENT.md)** - Comprehensive maintainer guide for AI agents
+- **📚 [docs/LESSONS_LEARNED_v0.3.0.md](docs/LESSONS_LEARNED_v0.3.0.md)** - 80+ lessons from v0.1.0 → v0.3.0
+- **🔧 [steering/release-procedure-CORRECTED.md](steering/release-procedure-CORRECTED.md)** - Mandatory release procedure
+
+These documents contain critical context, quality standards, testing requirements, release procedures, and lessons learned from building this project from crisis to excellence.
+
 ## Version History
 
 ### 0.2.0 (2025-10-10)
