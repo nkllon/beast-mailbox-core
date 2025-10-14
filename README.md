@@ -2,10 +2,14 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/beast-mailbox-core?label=PyPI&color=blue)](https://pypi.org/project/beast-mailbox-core/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/beast-mailbox-core.svg)](https://pypi.org/project/beast-mailbox-core/)
+[![Downloads](https://static.pepy.tech/badge/beast-mailbox-core)](https://pepy.tech/project/beast-mailbox-core)
+[![PyPI status](https://img.shields.io/pypi/status/beast-mailbox-core.svg)](https://pypi.org/project/beast-mailbox-core/)
+[![Wheel](https://img.shields.io/pypi/wheel/beast-mailbox-core.svg)](https://pypi.org/project/beast-mailbox-core/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=coverage)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
+[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-dark.svg)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 [![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen)](https://github.com/nkllon/beast-mailbox-core/actions)
 [![Documentation](https://img.shields.io/badge/docs-52%25-brightgreen)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 [![Maintainability Rating](https://img.shields.io/badge/maintainability-A-brightgreen)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
@@ -191,6 +195,17 @@ Set `BEAST_MODE_PROMETHEUS_ENABLED=false` to explicitly disable metrics collecti
 
 **Blocking in tests:**
 - See `.kiro/steering/testing-patterns.md` for guidance on mocking ReflectiveModule
+
+## For AI Maintainers
+
+**This repository was built 100% by AI agents and is maintained by AI agents.**
+
+If you're an AI agent tasked with maintaining this repository, start here:
+- **📖 [AGENT.md](AGENT.md)** - Comprehensive maintainer guide for AI agents
+- **📚 [docs/LESSONS_LEARNED_v0.3.0.md](docs/LESSONS_LEARNED_v0.3.0.md)** - 80+ lessons from v0.1.0 → v0.3.0
+- **🔧 [steering/release-procedure-CORRECTED.md](steering/release-procedure-CORRECTED.md)** - Mandatory release procedure
+
+These documents contain critical context, quality standards, testing requirements, release procedures, and lessons learned from building this project from crisis to excellence.
 
 ## Version History
 
