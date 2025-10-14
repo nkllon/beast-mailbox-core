@@ -593,6 +593,118 @@ sonar.exclusions=**/docs/**,**/prompts/**,**/__pycache__/**
 
 **Important:** New code period is 30 days. Focus on keeping new code high quality.
 
+**Critical:** Use the correct GitHub Action for SonarCloud:
+```yaml
+- name: SonarCloud Scan
+  uses: SonarSource/sonarcloud-github-action@master  # ✅ Correct for SonarCloud
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+```
+
+❌ **WRONG:** `SonarSource/sonarqube-scan-action` - This is for self-hosted SonarQube Server, NOT SonarCloud. Using the wrong action will cause authentication failures.
+
+**Setting up SONAR_TOKEN:**
+```bash
+# Generate token at https://sonarcloud.io/account/security
+# Set it as GitHub secret:
+gh secret set SONAR_TOKEN --body "your-token-here" --repo nkllon/beast-mailbox-core
+
+# Verify it's set:
+gh secret list --repo nkllon/beast-mailbox-core
+```
+
+### GitHub Tokens & gh CLI
+
+**Token Types:**
+
+GitHub offers two types of Personal Access Tokens:
+
+1. **Classic Tokens** (`ghp_...`) - **Recommended for CLI automation**
+   - Work immediately on all repos you have access to
+   - Simple scope-based permissions (check "repo" for full access)
+   - No per-repository or organization approval needed
+   - Generate at: https://github.com/settings/tokens/new
+
+2. **Fine-Grained Tokens** (`github_pat_...`) - More secure but complex
+   - Require explicit per-repository access configuration
+   - For organization repos: May require organization admin approval
+   - Better security isolation but more setup required
+   - Generate at: https://github.com/settings/personal-access-tokens/new
+
+**For Organization Repos (like nkllon/beast-mailbox-core):**
+
+Classic tokens "just work". Fine-grained tokens require:
+- Explicit repository access grants
+- Repository-level permissions (Issues: Read & Write, Contents: Read & Write, etc.)
+- Possible org admin approval
+
+**Setting Up gh CLI:**
+
+```bash
+# Install gh CLI
+brew install gh  # macOS
+# or download from https://cli.github.com/
+
+# Authenticate with token
+echo "your-token-here" | gh auth login --with-token
+
+# Verify authentication
+gh auth status
+
+# Store token in ~/.env for safekeeping
+echo "GITHUB_TOKEN=your-token-here" >> ~/.env
+```
+
+**Common gh CLI Commands for Maintenance:**
+
+```bash
+# PR Management
+gh pr list                                    # List open PRs
+gh pr view 4                                  # View PR #4
+gh pr comment 4 --body "@dependabot rebase"  # Comment on PR
+gh pr merge 4 --squash                        # Merge PR
+
+# Workflow Management  
+gh run list --limit 5                         # Recent workflow runs
+gh run view <run-id>                          # View run details
+gh run rerun <run-id>                         # Rerun failed workflow
+gh run view <run-id> --log-failed             # View failure logs
+
+# Secrets Management
+gh secret list                                # List repo secrets
+gh secret set SECRET_NAME --body "value"      # Set secret
+gh secret delete SECRET_NAME                  # Delete secret
+
+# Release Management
+gh release create v0.X.Y --title "Release v0.X.Y" --notes "Release notes"
+gh release list
+```
+
+**Token Permissions Required:**
+
+For full maintenance access, ensure token has:
+- ✅ `repo` (Full control of private repositories)
+- ✅ `workflow` (Update GitHub Action workflows) 
+- ✅ `write:packages` (if publishing packages)
+
+**Security Best Practices:**
+
+1. **Store tokens securely:**
+   ```bash
+   # Add to ~/.env (in .gitignore)
+   echo "GITHUB_TOKEN=ghp_..." >> ~/.env
+   echo "SONAR_TOKEN=..." >> ~/.env
+   
+   # Never commit tokens to repository
+   ```
+
+2. **Use minimal permissions:** Only grant what's needed
+
+3. **Rotate tokens regularly:** Generate new tokens every 90 days
+
+4. **Use GitHub Secrets for CI/CD:** Never hardcode tokens in workflows
+
 ### PyPI
 
 **Package:** https://pypi.org/project/beast-mailbox-core/
@@ -708,6 +820,48 @@ pip install -e .
 
 **Rule:** Choose excellence. Use tools to enforce standards. Iterate rapidly.
 
+### Lesson 11: Use the Correct GitHub Actions for Third-Party Services
+
+**Context:** SonarCloud workflow was failing with `SONAR_TOKEN` errors despite token being set.
+
+**Root Cause:** Using `SonarSource/sonarqube-scan-action@v6` (for self-hosted SonarQube) instead of `SonarSource/sonarcloud-github-action@master` (for SonarCloud).
+
+**Impact:** Authentication mechanisms differ between the two actions. Wrong action = guaranteed failure.
+
+**Rule:** Always use service-specific GitHub Actions. Read the official docs for the correct action name.
+
+### Lesson 12: Classic GitHub Tokens > Fine-Grained for Organization Repos
+
+**Context:** Spent significant time debugging fine-grained token permissions for organization repo.
+
+**Issue:** Fine-grained tokens require:
+- Explicit per-repository access configuration
+- Organization admin approval (even if you're the admin)
+- Repository-specific permissions (Issues, Contents, etc.)
+
+**Solution:** Classic tokens with `repo` scope work immediately for org repos.
+
+**Rule:** For AI agents maintaining organization repos, use classic tokens (`ghp_...`). Fine-grained tokens add unnecessary complexity.
+
+**Note:** This isn't a security issue - classic tokens are still fully supported and appropriate for automation.
+
+### Lesson 13: GitHub Secrets Must Be Actually Set
+
+**Context:** Workflow was reading `SONAR_TOKEN` as empty despite thinking it was configured.
+
+**Debugging:** Used `gh secret list` to verify existence, then `gh secret set` to update value.
+
+**Common Causes:**
+- Secret set with empty value
+- Secret not saved after editing
+- Token permissions insufficient (secret exists but value is invalid)
+
+**Rule:** Always verify secrets after setting:
+```bash
+gh secret set SECRET_NAME --body "value"
+gh secret list  # Verify it appears with recent timestamp
+```
+
 ---
 
 ## Troubleshooting Guide
@@ -807,6 +961,99 @@ ls -la src/beast_mailbox_core/
 rm -rf dist/ build/ *.egg-info
 python -m build
 ```
+
+### SonarCloud Workflow Failing
+
+**Problem:** GitHub Actions workflow fails on SonarCloud step
+
+**Error 1: "Running this GitHub Action without SONAR_TOKEN is not recommended" + HTTP 401**
+
+**Debug Steps:**
+```bash
+# 1. Verify secret exists
+gh secret list --repo nkllon/beast-mailbox-core | grep SONAR
+
+# 2. Check secret timestamp (should be recent)
+# If old or missing, regenerate and set:
+
+# 3. Generate new token at https://sonarcloud.io/account/security
+
+# 4. Set secret
+gh secret set SONAR_TOKEN --body "your-sonar-token" --repo nkllon/beast-mailbox-core
+
+# 5. Re-run workflow
+gh run rerun <run-id>
+```
+
+**Error 2: "Resource not accessible by personal access token"**
+
+**Cause:** Using wrong GitHub Action for SonarCloud
+
+**Fix:** Update `.github/workflows/sonarcloud.yml`:
+```yaml
+# ❌ WRONG - This is for self-hosted SonarQube
+uses: SonarSource/sonarqube-scan-action@v6
+
+# ✅ CORRECT - This is for SonarCloud
+uses: SonarSource/sonarcloud-github-action@master
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+```
+
+**Error 3: Quality Gate failing**
+
+**Debug:**
+1. Visit https://sonarcloud.io/project/overview?id=nkllon_beast-mailbox-core
+2. Check "New Code" tab (not "Overall Code")
+3. Review:
+   - Coverage of new code (must be ≥ 80%)
+   - New bugs (must be 0)
+   - New code smells (should be 0)
+4. Fix issues in new code and push again
+
+### GitHub CLI Authentication Issues
+
+**Problem:** `gh` commands fail with authentication errors
+
+**Error: "To get started with GitHub CLI, please run: gh auth login"**
+
+**Solution:**
+```bash
+# 1. Get/create classic token at https://github.com/settings/tokens/new
+# Check "repo" scope
+
+# 2. Authenticate
+echo "ghp_your_token_here" | gh auth login --with-token
+
+# 3. Verify
+gh auth status
+```
+
+**Error: "GraphQL: Resource not accessible by personal access token"**
+
+**For Organization Repos:**
+
+This usually means using a fine-grained token without proper permissions.
+
+**Fix:**
+```bash
+# Use a classic token instead
+# 1. Go to https://github.com/settings/tokens/new
+# 2. Check "repo" scope
+# 3. Generate token
+# 4. Authenticate:
+echo "ghp_new_token" | gh auth login --with-token
+```
+
+**Or configure fine-grained token properly:**
+1. Go to https://github.com/settings/personal-access-tokens/active
+2. Click your token
+3. Repository access: Add `nkllon/beast-mailbox-core`
+4. Permissions → Issues: Read and write
+5. Permissions → Contents: Read and write
+6. Save changes
+7. **Important:** Regenerate token (permission changes require regeneration)
 
 ---
 
@@ -974,10 +1221,17 @@ Good luck, and may your coverage always be ≥ 85%! 📊✨
 
 ---
 
-**Last Updated:** 2025-10-13  
+**Last Updated:** 2025-10-14  
 **Maintained By:** AI Agent (You)  
 **Previous Maintainer:** Herbert (AI Agent)  
-**Document Version:** 1.0.0
+**Document Version:** 1.1.0
+
+**Changes in v1.1.0:**
+- Added comprehensive GitHub Tokens & gh CLI section
+- Added SonarCloud workflow troubleshooting
+- Added lessons about correct GitHub Actions usage
+- Added lessons about Classic vs Fine-Grained tokens for org repos
+- Added debugging steps for authentication issues
 
 **Questions?** Check `docs/LESSONS_LEARNED_v0.3.0.md` for 80+ specific lessons learned.
 
