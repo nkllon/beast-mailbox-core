@@ -29,6 +29,22 @@ Redis-backed mailbox utilities extracted from Beast Mode. **Enterprise-grade wit
 pip install beast-mailbox-core
 ```
 
+### macOS Native Extensions (Optional)
+
+For macOS users, native C extensions are available for enhanced performance:
+
+```bash
+# Install with macOS optimizations
+pip install "beast-mailbox-core[osx]"
+```
+
+This installs [`beast-mailbox-osx`](https://github.com/nkllon/beast-mailbox-osx), which provides:
+- **Universal2 binaries** (ARM64 + x86_64)
+- **Native macOS APIs** for file operations (FSEvents, etc.)
+- **Optimized C extensions** for performance-critical operations
+
+The native extensions are automatically detected and used when available. The package works identically without them.
+
 ## Quickstart
 
 ### Start a streaming listener
@@ -207,7 +223,16 @@ If you're an AI agent tasked with maintaining this repository, start here:
 
 These documents contain critical context, quality standards, testing requirements, release procedures, and lessons learned from building this project from crisis to excellence.
 
+## Related Projects
+
+- **[beast-mailbox-osx](https://github.com/nkllon/beast-mailbox-osx)** - macOS native C extensions for enhanced performance
+
 ## Version History
+
+### 0.3.1 (Current)
+- Added optional macOS native extensions support via `beast-mailbox-osx`
+- Enhanced documentation with macOS installation instructions
+- Performance optimizations for macOS users
 
 ### 0.2.0 (2025-10-10)
 - Added `--ack` flag for acknowledging messages after inspection

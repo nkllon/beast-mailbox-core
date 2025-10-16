@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Optional macOS native extensions via `beast-mailbox-osx` package
+- New `[osx]` extra for installing with macOS optimizations: `pip install "beast-mailbox-core[osx]"`
+- Integration with `beast-mailbox-osx` for native C extensions on macOS
+- Documentation for macOS native extensions in README
+
+### Changed
+- Enhanced README with macOS installation instructions
+- Added Related Projects section linking to `beast-mailbox-osx`
+
+### Technical Notes
+- Native extensions provide universal2 binaries (ARM64 + x86_64)
+- Automatic detection and use of native extensions when available
+- Zero breaking changes - works identically with or without native extensions
+
 ## [0.3.1] - 2025-10-10 - 90% COVERAGE MILESTONE 🎯
 
 ### Achieved
