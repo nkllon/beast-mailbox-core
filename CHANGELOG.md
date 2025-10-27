@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.4.0] - 2025-10-14 - RECOVERY EDITION 🔄
+
+### Added
+- **Automatic pending message recovery on startup** using Redis `XAUTOCLAIM`
+- Configurable recovery behavior via `MailboxConfig`:
+  - `enable_recovery: bool = True` - Enable/disable recovery
+  - `recovery_min_idle_time: int = 0` - Minimum idle time in seconds before claiming
+  - `recovery_batch_size: int = 50` - Number of messages to process per batch
+- `RecoveryMetrics` dataclass for tracking recovery statistics
+- Optional `recovery_callback` parameter to `RedisMailboxService` for instrumentation
+- Comprehensive recovery test suite (`test_recovery.py`) with 18 tests
+- Integration tests for recovery end-to-end (`test_recovery_integration.py`)
+
+### Changed
+- Recovery now runs synchronously during `start()` before the consume loop begins
+- Graceful shutdown now uses `aclose()` instead of deprecated `close()` method
+- Enhanced docstrings with recovery behavior documentation
+- Updated README with recovery configuration examples and migration notes
+
+### Fixed
+- Simplified recovery task management (removed redundant task wrapper)
+- Improved graceful shutdown handling
+
+### Technical Notes
+- Recovery ensures at-least-once delivery semantics
+- Messages in-flight during shutdown are automatically recovered on next startup
+- Supports configurable idle time to skip very recent pending messages
+- Batch processing prevents memory issues with large pending lists
+- Idempotent: skips gracefully if no handlers registered or consumer group doesn't exist
+
+### Migration Notes
+- Recovery is **enabled by default** for existing consumers
+- No code changes required - existing handlers process recovered messages
+- Use `MailboxConfig(enable_recovery=False)` to disable if implementing custom recovery
+- Use `recovery_callback` to integrate with Prometheus/StatsD metrics
+
 ## [0.3.1] - 2025-10-10 - 90% COVERAGE MILESTONE 🎯
 
 ### Achieved
@@ -13,16 +51,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ✅ **93% CLI coverage** (was 83%)
 
 ### Added
+- Optional macOS native extensions via `beast-mailbox-osx` package
+- New `[osx]` extra for installing with macOS optimizations: `pip install "beast-mailbox-core[osx]"`
+- Integration with `beast-mailbox-osx` for native C extensions on macOS
+- Documentation for macOS native extensions in README
 - Coverage boost test suite (test_coverage_boost.py) with 7 tests
 - Tests for `run_service_async()` config creation and routing
 - Tests for echo handler registration and failure paths
 - Tests for exception handling in CLI helpers
 - Test for `_consume_loop()` entry assertion
 
+### Changed
+- Enhanced README with macOS installation instructions
+- Added Related Projects section linking to `beast-mailbox-osx`
+
 ### Technical Notes
 - Tests: 59/59 passing (+7 from v0.3.0)
 - Coverage: 90% overall (cli: 93%, redis_mailbox: 86%)
 - Only 24 uncovered lines (all infinite event loops)
+- Native extensions provide universal2 binaries (ARM64 + x86_64)
+- Automatic detection and use of native extensions when available
+- Zero breaking changes - works identically with or without native extensions
 - Exceeded excellence target!
 
 ## [0.3.0] - 2025-10-10 - EXCELLENCE EDITION 🏆

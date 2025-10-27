@@ -13,6 +13,16 @@ import redis.asyncio as redis
 
 
 @dataclass
+class RecoveryMetrics:
+    """Metrics collected during pending message recovery."""
+
+    total_recovered: int = 0
+    batches_processed: int = 0
+    start_time: Optional[float] = None
+    end_time: Optional[float] = None
+
+
+@dataclass
 class MailboxConfig:
     """Configuration for connecting to Redis streams."""
 
@@ -23,6 +33,9 @@ class MailboxConfig:
     stream_prefix: str = "beast:mailbox"
     max_stream_length: int = 1000
     poll_interval: float = 2.0
+    enable_recovery: bool = True
+    recovery_min_idle_time: int = 0
+    recovery_batch_size: int = 50
 
 
 @dataclass
@@ -73,6 +86,9 @@ class RedisMailboxService:
         - Durable message queue with configurable retention
         - Async/await based for efficient concurrent operations
         - Automatic reconnection and error recovery
+        - Pending message recovery on startup (XAUTOCLAIM-based)
+        - Configurable recovery behavior (idle time, batch size)
+        - Recovery metrics and instrumentation callbacks
         
     Example:
         >>> config = MailboxConfig(host="localhost", db=0)
@@ -83,7 +99,12 @@ class RedisMailboxService:
         ...     print(f"Received: {msg.payload}")
         >>> service.register_handler(handle_message)
         >>> 
-        >>> # Start consuming messages
+        >>> # Optional: Add recovery callback for metrics
+        >>> async def on_recovery_complete(metrics: RecoveryMetrics):
+        ...     print(f"Recovered {metrics.total_recovered} messages")
+        >>> service = RedisMailboxService("my-agent", config, recovery_callback=on_recovery_complete)
+        >>> 
+        >>> # Start consuming messages (recovery runs automatically)
         >>> await service.start()
         >>> 
         >>> # Send a message to another agent
@@ -91,14 +112,32 @@ class RedisMailboxService:
         >>> 
         >>> # Graceful shutdown
         >>> await service.stop()
+        
+    Pending Message Recovery:
+        On startup, the service automatically reclaims and processes any pending messages
+        from the consumer group. This ensures messages that were in-flight during a previous
+        shutdown are not lost. Recovery behavior can be configured via MailboxConfig:
+        
+        - enable_recovery: Enable/disable pending message recovery (default: True)
+        - recovery_min_idle_time: Minimum time (seconds) before claiming pending messages (default: 0)
+        - recovery_batch_size: Number of messages to process per batch (default: 50)
+        
+        Recovery runs before the consume loop starts, ensuring at-least-once delivery semantics.
     """
 
-    def __init__(self, agent_id: str, config: Optional[MailboxConfig] = None):
+    def __init__(
+        self,
+        agent_id: str,
+        config: Optional[MailboxConfig] = None,
+        recovery_callback: Optional[Callable[[RecoveryMetrics], Awaitable[None]]] = None,
+    ):
         """Initialize the mailbox service for a specific agent.
         
         Args:
             agent_id: Unique identifier for this agent instance
             config: Optional configuration (defaults to MailboxConfig())
+            recovery_callback: Optional async callback invoked after recovery completes
+                              Receives RecoveryMetrics object with recovery stats
             
         Note:
             The agent_id is used to generate unique inbox streams and consumer groups.
@@ -106,6 +145,7 @@ class RedisMailboxService:
         """
         self.agent_id = agent_id
         self.config = config or MailboxConfig()
+        self.recovery_callback = recovery_callback
         self.logger = logging.getLogger(f"beast_mailbox.{agent_id}")
         self._client: Optional[redis.Redis] = None
         self._processing_task: Optional[asyncio.Task] = None
@@ -151,13 +191,152 @@ class RedisMailboxService:
             # Ping to verify connection works
             await self._client.ping()
 
+    async def _recover_pending_messages(self) -> RecoveryMetrics:
+        """Recover pending messages from the consumer group.
+        
+        Claims pending entries using XAUTOCLAIM and dispatches them to registered handlers.
+        Processes messages in batches until no more are available.
+        
+        Returns:
+            RecoveryMetrics object containing recovery statistics
+            
+        Note:
+            If no handlers are registered, logs a warning and skips recovery.
+            If consumer group doesn't exist, exits gracefully without error.
+        """
+        metrics = RecoveryMetrics()
+        metrics.start_time = asyncio.get_event_loop().time()
+        
+        if not self.config.enable_recovery:
+            self.logger.info("Pending message recovery is disabled")
+            return metrics
+        
+        if not self._handlers:
+            self.logger.warning(
+                "No handlers registered for recovery - pending messages will not be processed"
+            )
+            return metrics
+        
+        assert self._client is not None
+        
+        try:
+            # Check if consumer group exists by querying pending info
+            pending_info = await self._client.xpending_range(
+                name=self.inbox_stream,
+                groupname=self._consumer_group,
+                min="-",
+                max="+",
+                count=1,
+            )
+            
+            if not pending_info:
+                self.logger.info("No pending messages to recover")
+                metrics.end_time = asyncio.get_event_loop().time()
+                return metrics
+                
+        except Exception as exc:
+            if "NOGROUP" in str(exc):
+                self.logger.debug("Consumer group does not exist yet - skipping recovery")
+                return metrics
+            else:
+                self.logger.warning("Failed to check pending messages: %s", exc)
+                return metrics
+        
+        self.logger.info("Starting pending message recovery...")
+        start_id = "0-0"
+        
+        while True:
+            try:
+                # Claim pending messages
+                claimed_data = await self._client.xautoclaim(
+                    name=self.inbox_stream,
+                    groupname=self._consumer_group,
+                    consumername=self._consumer_name,
+                    min_idle_time=self.config.recovery_min_idle_time * 1000,  # Convert to ms
+                    start=start_id,
+                    count=self.config.recovery_batch_size,
+                )
+                
+                if not claimed_data or len(claimed_data) < 3:
+                    break
+                    
+                next_start_id = claimed_data[0]
+                # claimed_data[1] is a list of messages
+                messages = claimed_data[1]
+                
+                if not messages:
+                    # If no messages were claimed, move to next ID to prevent infinite loop
+                    if next_start_id == "0-0":
+                        break
+                    start_id = next_start_id
+                    continue
+                
+                self.logger.debug(
+                    "Recovered batch of %d pending messages (next: %s)",
+                    len(messages),
+                    next_start_id,
+                )
+                
+                # Process and acknowledge each message
+                for entry in messages:
+                    message_id, fields = entry[:2]
+                    mailbox_message = MailboxMessage.from_redis_fields(fields)
+                    
+                    self.logger.debug(
+                        "Recovering message %s from %s",
+                        message_id,
+                        mailbox_message.sender,
+                    )
+                    
+                    await self._dispatch(mailbox_message)
+                    
+                    # Acknowledge the recovered message
+                    await self._client.xack(
+                        self.inbox_stream,
+                        self._consumer_group,
+                        message_id,
+                    )
+                    
+                    metrics.total_recovered += 1
+                
+                metrics.batches_processed += 1
+                
+                # Continue with next batch
+                start_id = next_start_id
+                
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                self.logger.exception("Error during recovery: %s", exc)
+                break
+        
+        metrics.end_time = asyncio.get_event_loop().time()
+        elapsed = metrics.end_time - metrics.start_time
+        
+        self.logger.info(
+            "Recovery complete: %d messages recovered in %d batches (%.2fs)",
+            metrics.total_recovered,
+            metrics.batches_processed,
+            elapsed,
+        )
+        
+        # Invoke callback if provided
+        if self.recovery_callback:
+            try:
+                await self.recovery_callback(metrics)
+            except Exception as exc:
+                self.logger.exception("Recovery callback failed: %s", exc)
+        
+        return metrics
+    
     async def start(self) -> bool:
         """Start the mailbox service and begin consuming messages.
         
         This method:
         1. Connects to Redis
         2. Creates the consumer group (if it doesn't exist)
-        3. Launches the background message consumption loop
+        3. Recovers pending messages (if enabled and handlers are registered)
+        4. Launches the background message consumption loop
         
         Returns:
             True if service started successfully
@@ -186,6 +365,11 @@ class RedisMailboxService:
         except Exception as exc:
             if "BUSYGROUP" not in str(exc):
                 raise
+        
+        # Run pending message recovery before starting the consume loop
+        if self.config.enable_recovery:
+            await self._recover_pending_messages()
+        
         self._running = True
         self._processing_task = asyncio.create_task(self._consume_loop())
         return True
@@ -207,6 +391,7 @@ class RedisMailboxService:
             expecting graceful shutdown.
         """
         self._running = False
+        
         if self._processing_task:
             self._processing_task.cancel()
             try:
@@ -221,7 +406,7 @@ class RedisMailboxService:
             finally:
                 self._processing_task = None
         if self._client:
-            await self._client.close()
+            await self._client.aclose()  # Replaced deprecated close() with aclose()
             self._client = None
 
     def register_handler(self, handler: Callable[[MailboxMessage], Awaitable[None]]) -> None:
