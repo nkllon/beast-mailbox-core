@@ -37,11 +37,6 @@ struct DashboardView: View {
             .navigationTitle("Beast Observatory")
             .toolbar {
                 ToolbarItem(placement: .automatic) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .automatic) {
                     Button(action: {
                         monitor.triggerSync()
                     }) {

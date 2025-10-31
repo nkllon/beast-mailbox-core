@@ -56,14 +56,14 @@ struct MenuBarView: View {
             .disabled(monitor.isSyncing)
             
             Button(action: {
-                showingDashboard = true
+                openDashboardWindow()
             }) {
                 Label("Open Dashboard", systemImage: "chart.bar")
             }
             .keyboardShortcut("d", modifiers: .command)
             
             Button(action: {
-                showingChat = true
+                openChatWindow()
             }) {
                 Label("Chat with Apple Intelligence", systemImage: "message.fill")
             }
