@@ -1,0 +1,336 @@
+{
+  "dashboard": {
+    "title": "Beast Mailbox Core - Quality Metrics",
+    "description": "Code quality metrics from SonarCloud and test execution",
+    "tags": ["quality", "sonarcloud", "coverage", "tests"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Code Coverage Trend",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "sonarcloud_coverage_percent{branch=\"main\"}",
+            "legendFormat": "Coverage %",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 80, "color": "yellow"},
+                {"value": 90, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Quality Gate Status",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "sonarcloud_quality_gate_status{branch=\"main\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "1", "text": "✅ PASS", "color": "green"},
+              {"type": "value", "value": "0", "text": "❌ FAIL", "color": "red"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "graphMode": "none",
+          "colorMode": "value",
+          "justifyMode": "auto"
+        }
+      },
+      {
+        "id": 3,
+        "title": "Bugs",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+        "targets": [
+          {
+            "expr": "sonarcloud_bugs_total{branch=\"main\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Vulnerabilities",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 4},
+        "targets": [
+          {
+            "expr": "sonarcloud_vulnerabilities_total{branch=\"main\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Code Smells",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "sonarcloud_code_smells_total{branch=\"main\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 10, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Reliability Rating",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 8},
+        "targets": [
+          {
+            "expr": "sonarcloud_reliability_rating{branch=\"main\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "1.0", "text": "A", "color": "green"},
+              {"type": "value", "value": "2.0", "text": "B", "color": "yellow"},
+              {"type": "value", "value": "3.0", "text": "C", "color": "orange"},
+              {"type": "value", "value": "4.0", "text": "D", "color": "red"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 2, "color": "yellow"},
+                {"value": 3, "color": "orange"},
+                {"value": 4, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Security Rating",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "sonarcloud_security_rating{branch=\"main\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "1.0", "text": "A", "color": "green"},
+              {"type": "value", "value": "2.0", "text": "B", "color": "yellow"},
+              {"type": "value", "value": "3.0", "text": "C", "color": "orange"},
+              {"type": "value", "value": "4.0", "text": "D", "color": "red"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Maintainability Rating",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 8},
+        "targets": [
+          {
+            "expr": "sonarcloud_maintainability_rating{branch=\"main\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "1.0", "text": "A", "color": "green"},
+              {"type": "value", "value": "2.0", "text": "B", "color": "yellow"},
+              {"type": "value", "value": "3.0", "text": "C", "color": "orange"},
+              {"type": "value", "value": "4.0", "text": "D", "color": "red"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Test Pass Rate",
+        "type": "gauge",
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "sum(pytest_tests_total{branch=\"main\",status=\"passed\"}) / sum(pytest_tests_total{branch=\"main\"}) * 100",
+            "legendFormat": "Pass Rate",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 95, "color": "yellow"},
+                {"value": 99, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Test Count",
+        "type": "timeseries",
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 12},
+        "targets": [
+          {
+            "expr": "pytest_tests_total{branch=\"main\",status=\"passed\"}",
+            "legendFormat": "Passed",
+            "refId": "A"
+          },
+          {
+            "expr": "pytest_tests_total{branch=\"main\",status=\"failed\"}",
+            "legendFormat": "Failed",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Test Duration",
+        "type": "timeseries",
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 12},
+        "targets": [
+          {
+            "expr": "pytest_duration_seconds{branch=\"main\"}",
+            "legendFormat": "Duration (s)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 12,
+        "title": "Workflow Success Rate (7d)",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 12},
+        "targets": [
+          {
+            "expr": "rate(github_workflow_runs_total{status=\"success\",branch=\"main\"}[7d]) / rate(github_workflow_runs_total{branch=\"main\"}[7d]) * 100",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-7d",
+      "to": "now"
+    },
+    "timepicker": {},
+    "templating": {
+      "list": [
+        {
+          "name": "branch",
+          "type": "query",
+          "query": "label_values(sonarcloud_coverage_percent, branch)",
+          "current": {"value": "main", "text": "main"},
+          "options": [],
+          "datasource": "Prometheus",
+          "refresh": 1
+        }
+      ]
+    }
+  }
+}
+
