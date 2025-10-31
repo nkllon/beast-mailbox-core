@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct MenuBarView: View {
     @EnvironmentObject var monitor: StatusMonitor

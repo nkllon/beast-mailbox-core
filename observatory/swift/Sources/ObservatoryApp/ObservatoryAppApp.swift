@@ -8,18 +8,11 @@
 import SwiftUI
 import AppKit
 import UserNotifications
-import AppKit
-import UserNotifications
 
 @main
 struct ObservatoryAppApp: App {
     @StateObject private var statusMonitor = StatusMonitor()
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
-    init() {
-        // Hide dock icon (menu bar only app)
-        NSApp.setActivationPolicy(.accessory)
-    }
     
     var body: some Scene {
         MenuBarExtra {
@@ -37,6 +30,9 @@ struct ObservatoryAppApp: App {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Hide dock icon (menu bar only app)
+        NSApp.setActivationPolicy(.accessory)
+        
         // Request notification permissions
         Task {
             do {
