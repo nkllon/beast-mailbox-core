@@ -77,6 +77,7 @@ def fault_injection_config():
         poll_interval=0.1,
         enable_recovery=True,
         recovery_batch_size=50,
+        recovery_min_idle_time=0.001,  # Very short idle time for tests
     )
 
 
