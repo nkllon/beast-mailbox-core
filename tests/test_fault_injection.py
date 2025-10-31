@@ -255,6 +255,9 @@ async def test_recovery_callback_handles_exception(fault_injection_config, fault
             count=1,
         )
         
+        # Wait a bit to ensure message is idle (recovery_min_idle_time might be > 0)
+        await asyncio.sleep(0.01)
+        
         # Now try recovery - callback should raise but recovery should continue
         metrics = await service._recover_pending_messages()
         
@@ -318,6 +321,9 @@ async def test_handler_exception_during_recovery(fault_injection_config, fault_a
             streams={service.inbox_stream: ">"},
             count=1,
         )
+        
+        # Wait a bit to ensure message is idle
+        await asyncio.sleep(0.01)
         
         # Recovery should continue despite bad handler
         metrics = await service._recover_pending_messages()
