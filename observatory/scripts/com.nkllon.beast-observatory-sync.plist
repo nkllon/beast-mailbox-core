@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.nkllon.beast-observatory-sync</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/beast-observatory-sync</string>
+    </array>
+    
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>SONARCLOUD_PROJECT_KEY</key>
+        <string>nkllon_beast-mailbox-core</string>
+        <key>PROMETHEUS_PUSHGATEWAY_URL</key>
+        <string>http://localhost:9091</string>
+        <key>SYNC_INTERVAL_HOURS</key>
+        <string>1</string>
+        <key>GIT_BRANCH</key>
+        <string>main</string>
+        <key>PYTHONPATH</key>
+        <string>/Volumes/lemon/cursor/beast-mailbox-core/observatory/src:/Volumes/lemon/cursor/beast-mailbox-core/src</string>
+    </dict>
+    
+    <key>WorkingDirectory</key>
+    <string>/Volumes/lemon/cursor/beast-mailbox-core/observatory</string>
+    
+    <key>StandardOutPath</key>
+    <string>/Users/lou/Library/Logs/beast-observatory/sync.log</string>
+    
+    <key>StandardErrorPath</key>
+    <string>/Users/lou/Library/Logs/beast-observatory/sync.error.log</string>
+    
+    <key>RunAtLoad</key>
+    <false/>
+    
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    
+    <key>StartInterval</key>
+    <integer>3600</integer>
+    
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+</dict>
+</plist>
+

@@ -1,0 +1,18 @@
+// !!! IMPORTANT !!!
+// This file was generated automatically. In a real project, create via Xcode:
+// File > New > Project > macOS > App
+// Then configure settings below.
+
+// !!! TO CREATE REAL PROJECT:
+// 1. Open Xcode
+// 2. File > New > Project
+// 3. Choose: macOS > App
+// 4. Product Name: ObservatoryApp
+// 5. Interface: SwiftUI
+// 6. Language: Swift
+// 7. Uncheck: "Use Core Data", "Include Tests"
+// 8. Save to: observatory/swift/
+// 9. Then add the .swift files from this directory
+
+// Minimal project file structure - USE XCODE TO CREATE REAL PROJECT
+

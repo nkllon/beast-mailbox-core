@@ -74,6 +74,8 @@ observatory/
 - [x] Fix metrics format (non-numeric values, label escaping)
 - [x] Verify full integration
 - [x] Document architecture
+- [x] Create macOS native service management (launchd plist)
+- [x] Analyze Apple Intelligence integration opportunities (macOS 26.0.1+)
 
 ---
 
