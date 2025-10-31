@@ -10,6 +10,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update SonarCloud GitHub Action from deprecated `SonarSource/sonarcloud-github-action@master` to `sonarqube-scan-action` (backlog item for next release)
 
+## [0.4.3] - 2025-10-30 - ENVIRONMENT VARIABLE SUPPORT 🔧
+
+### Added
+- **Environment variable support for RedisMailboxService** - Automatically reads Redis configuration from environment variables when `config=None`
+  - Priority 1: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB` (individual env vars)
+  - Priority 2: `REDIS_URL` (if `REDIS_HOST` not set, parses URL format: `redis://:password@host:port/db`)
+  - Priority 3: Defaults to `localhost:6379` if no environment variables are set
+- **Comprehensive test suite** for environment variable support (`test_env_var_support.py`) with 11 tests covering all scenarios
+- Updated documentation (README.md, API.md) with environment variable usage examples
+
+### Benefits
+- Simplifies usage - just set environment variables, no need to create `MailboxConfig` explicitly
+- Maintains contract - `beast-mailbox-core` owns all Redis configuration logic
+- Enables production cluster connections out of the box via environment variables
+- Backward compatible - explicit `MailboxConfig` still works
+
+### Migration Notes
+- **No breaking changes** - fully backward compatible
+- Explicit `MailboxConfig` objects continue to work as before
+- New behavior only applies when `config=None` (default)
+
+### Technical Notes
+- Implements requirement from `beast-agent` maintainers (see `prompts/inbound/20251030_env_var_support.md`)
+- Enables `beast-agent` to connect to production clusters with just environment variables
+- Fulfills contract: `beast-mailbox-core` handles all Redis-specific configuration
+
+### Example Usage
+```python
+import os
+from beast_mailbox_core import RedisMailboxService
+
+# Set environment variables
+os.environ["REDIS_HOST"] = "prod-redis.example.com"
+os.environ["REDIS_PASSWORD"] = "secret"
+
+# Automatically reads from env - no MailboxConfig needed!
+service = RedisMailboxService("my-agent", config=None)
+```
+
 ## [0.4.2] - 2025-01-31 - TEST QUALITY IMPROVEMENTS 🧪
 
 ### Changed
