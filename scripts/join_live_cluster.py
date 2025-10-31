@@ -10,14 +10,16 @@ import sys
 from beast_agent import BaseAgent
 from beast_mailbox_core.redis_mailbox import MailboxConfig
 
-# Update these for your cluster
-REDIS_HOST = "192.168.1.119"  # Update with actual cluster host
-REDIS_PORT = 6379
-REDIS_PASSWORD = "beastmode2025"  # Update with actual password
-REDIS_DB = 0
+# Configuration - can be set via environment variables
+import os
+
+REDIS_HOST = os.getenv("REDIS_HOST", "192.168.1.119")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "beastmode2025")
+REDIS_DB = int(os.getenv("REDIS_DB", "0"))
 
 # Your agent ID (make it unique and descriptive)
-AGENT_ID = "beast-mailbox-core-test-agent"
+AGENT_ID = os.getenv("AGENT_ID", "beast-mailbox-core-test-agent")
 
 
 class ClusterTester(BaseAgent):
@@ -131,29 +133,40 @@ async def main():
         await agent.startup()
         
         # Keep running
-        self._logger.info("✅ Agent is live! Press Ctrl+C to exit...")
+        agent._logger.info("✅ Agent is live! Press Ctrl+C to exit...")
         await asyncio.sleep(3600)  # Run for 1 hour, or until interrupted
         
     except KeyboardInterrupt:
-        self._logger.info("\n🛑 Shutting down...")
+        print("\n🛑 Shutting down...")
     finally:
         await agent.shutdown()
 
 
 if __name__ == "__main__":
-    # Check version
+    # Check if beast-agent is installed
     try:
         import beast_agent
-        version = getattr(beast_agent, '__version__', 'unknown')
-        if version < "0.1.3":
-            print("⚠️  WARNING: beast-agent v0.1.3+ required for discovery methods")
-            print(f"   Current version: {version}")
-            print("   Upgrade: pip install beast-agent==0.1.3")
-            sys.exit(1)
+        # Try to import discovery methods to verify v0.1.3+
+        try:
+            from beast_agent import BaseAgent
+            # Check if discover_agents method exists (v0.1.3+)
+            if not hasattr(BaseAgent, 'discover_agents'):
+                print("⚠️  WARNING: beast-agent v0.1.3+ required for discovery methods")
+                print("   Upgrade: pip install beast-agent==0.1.3")
+                sys.exit(1)
+        except Exception:
+            print("⚠️  WARNING: Could not verify beast-agent version")
+            print("   Ensure v0.1.3+ is installed: pip install beast-agent==0.1.3")
     except ImportError:
         print("❌ ERROR: beast-agent not installed")
         print("   Install: pip install beast-agent==0.1.3")
         sys.exit(1)
+    
+    # Print connection info (but not password)
+    print(f"🔗 Connecting to Redis at {REDIS_HOST}:{REDIS_PORT} (db={REDIS_DB})")
+    print(f"🤖 Agent ID: {AGENT_ID}")
+    print(f"📋 Using credentials from: {'Environment variables' if os.getenv('REDIS_PASSWORD') else 'Script defaults'}")
+    print()
     
     asyncio.run(main())
 
