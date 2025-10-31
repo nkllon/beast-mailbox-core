@@ -1,10 +1,17 @@
 # Discovering and Interacting with Agents on the Cluster
 
-**⚠️ TEMPORARY INTEGRATION EXAMPLES**
+**✅ DEPRECATED - USE AUTHORITATIVE DOCS**
 
 **Status:** Live-fire testing active 🚀
 
-**Requirement Expressed:** See `prompts/inbound/20250131_BEAST_AGENT_INTEGRATION_DOCS.md` for the requirement sent to beast-agent maintainers to document cluster discovery.
+**👉 Use This Instead:** See [beast-agent Integration Documentation](https://github.com/nkllon/beast-agent/blob/main/docs/INTEGRATION_WITH_MAILBOX_CORE.md) for complete, authoritative cluster discovery guide.
+
+**What Changed:**
+- beast-agent v0.1.3 now includes complete cluster discovery documentation
+- Discovery methods (`discover_agents()`, `get_agent_info()`, etc.) are documented
+- All examples are tested and maintained
+
+**This file is kept for reference only and will be removed in a future release.**
 
 **What This Shows:**
 - Redis patterns used by the cluster (`beast:agents:*`)
