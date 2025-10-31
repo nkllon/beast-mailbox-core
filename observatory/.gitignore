@@ -1,0 +1,15 @@
+# Discovery outputs (may contain sensitive info)
+docs/discovery/*.json
+docs/discovery/*.txt
+docs/discovery/*.yml
+docs/discovery/*.ini
+docs/discovery/SUMMARY.md
+!docs/discovery/.gitkeep
+
+# Docker volumes and data
+docker/volumes/
+docker/data/
+
+# Local test artifacts
+*.log
+*.tmp
