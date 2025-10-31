@@ -35,7 +35,7 @@ class SimpleHTTPServer {
         }
         
         listener?.start(queue: queue)
-        logger.info("✅ Apple Intelligence HTTP server started on port \(port)")
+        logger.info("✅ Apple Intelligence HTTP server started on port \(self.port)")
     }
     
     func stop() {
