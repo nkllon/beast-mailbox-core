@@ -565,6 +565,116 @@ pytest tests/
 **Secrets Required:**
 - `SONAR_TOKEN` - SonarCloud authentication
 
+### Requirement Gathering for CI/CD & Deployment
+
+⚠️ **CRITICAL:** Before creating ANY solution related to CI/CD, deployment, or workflows, you MUST gather requirements first.
+
+#### Mandatory Pre-Solution Checklist
+
+**Before proposing or creating ANY CI/CD solution, verify:**
+
+1. ✅ **List all existing workflows:**
+   ```bash
+   find .github/workflows -name "*.yml" -o -name "*.yaml" | sort
+   ```
+
+2. ✅ **Read each workflow file completely:**
+   ```bash
+   for workflow in .github/workflows/*.yml; do
+     echo "=== $workflow ==="
+     cat "$workflow"
+     echo ""
+   done
+   ```
+
+3. ✅ **Understand all triggers:**
+   - What events trigger each workflow?
+   - Are there release/publish workflows already?
+   - What secrets/environments are configured?
+
+4. ✅ **Check documentation:**
+   - Does AGENT.md describe the workflow?
+   - Does steering/release-procedure-CORRECTED.md mention automation?
+   - Are there any release/docs that describe deployment?
+
+5. ✅ **Verify actual system state:**
+   - Run: `gh workflow list` (if gh CLI available)
+   - Check: GitHub Actions tab in repository
+   - Verify: What workflows actually exist vs. what's documented
+
+6. ✅ **Check for Docker/Container setup:**
+   ```bash
+   find . -name "Dockerfile*" -o -name "docker-compose*" | head -10
+   ```
+
+7. ✅ **Understand deployment requirements:**
+   - Is publishing manual or automated?
+   - What credentials/secrets are needed?
+   - What's the actual deployment process?
+
+#### DO NOT Create Solutions Without:
+
+❌ **NEVER:**
+- Create a workflow without checking if one already exists
+- Assume manual deployment without checking for automation
+- Create Docker setup without checking if it exists
+- Propose CI/CD changes without understanding current setup
+
+✅ **ALWAYS:**
+- List and read all existing workflows FIRST
+- Understand what triggers exist
+- Verify what's documented vs. what's implemented
+- Check actual system state before proposing changes
+- Document gaps between docs and reality
+
+#### Example: Correct Requirement Gathering Process
+
+```bash
+# 1. List all workflows
+ls -la .github/workflows/
+
+# 2. Read each workflow
+cat .github/workflows/sonarcloud.yml
+cat .github/workflows/publish.yml  # If exists
+
+# 3. Check triggers
+grep -r "on:" .github/workflows/
+
+# 4. Verify in GitHub
+gh workflow list  # If available
+
+# 5. Check documentation
+grep -i "workflow\|CI\|CD\|publish\|deploy" AGENT.md
+grep -i "workflow\|CI\|CD\|publish\|deploy" steering/release-procedure-CORRECTED.md
+
+# 6. THEN propose solution if gap exists
+```
+
+#### Requirement Documentation Template
+
+When creating a solution, document:
+
+1. **What was checked:**
+   - Existing workflows: [list]
+   - Documentation reviewed: [files]
+   - System state verified: [how]
+
+2. **What gaps were found:**
+   - Missing automation: [what]
+   - Documentation gaps: [what]
+   - Configuration needed: [what]
+
+3. **Solution proposed:**
+   - New workflow: [what it does]
+   - Triggers: [what events]
+   - Dependencies: [secrets, configs needed]
+
+4. **Verification plan:**
+   - How to test: [steps]
+   - How to verify: [checks]
+
+This ensures solutions are based on actual requirements, not assumptions.
+
 ### SonarCloud
 
 **Project:** `nkllon_beast-mailbox-core`  
