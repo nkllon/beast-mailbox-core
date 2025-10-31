@@ -204,13 +204,18 @@ struct QueryUnderstanding {
 
 // MARK: - Beast Cohort Integration
 
+// Note: This is a placeholder for future mailbox integration
+// The Python agent handles mailbox integration (see observatory/python/apple_intelligence_agent.py)
+// This Swift class is kept for reference but not currently used
+
 class AppleIntelligenceMailboxAgent {
-    private let mailboxService: Any // RedisMailboxService from Python
     private let processor = AppleIntelligenceProcessor.shared
     private let logger = Logger(subsystem: "com.nkllon.ObservatoryApp", category: "MailboxAgent")
     
-    // This would integrate with beast-mailbox-core via HTTP or direct Swift binding
-    // For now, this is the interface design
+    init() {
+        // Initializer for mailbox agent
+        // Currently not used - Python agent handles mailbox
+    }
     
     func handleMailboxMessage(message: MailboxMessage) async {
         guard message.message_type == "QUERY_APPLE_INTELLIGENCE" else {
@@ -247,10 +252,20 @@ class AppleIntelligenceMailboxAgent {
     }
 }
 
+// Note: This is a placeholder for future mailbox integration
+// The Python agent uses beast-mailbox-core for actual mailbox integration
 struct MailboxMessage {
     let sender: String
     let recipient: String
     let message_type: String
     let payload: [String: Any]
+    
+    // Placeholder initializer for now
+    init(sender: String, recipient: String, message_type: String, payload: [String: Any]) {
+        self.sender = sender
+        self.recipient = recipient
+        self.message_type = message_type
+        self.payload = payload
+    }
 }
 
