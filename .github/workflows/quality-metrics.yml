@@ -87,8 +87,8 @@ jobs:
           
           mv metrics/history.json.tmp metrics/history.json
           
-          # Generate summary markdown
-          cat > metrics/README.md <<'METRICSDOC'
+          # Generate summary markdown with actual values
+          cat > metrics/README.md <<EOF
           # Quality Metrics History
           
           This directory tracks quality metrics over time from SonarCloud analysis.
@@ -99,37 +99,36 @@ jobs:
           
           | Metric | Current Value | Target | Status |
           |--------|--------------|--------|--------|
-          | Coverage | ${{ steps.sonar-metrics.outputs.coverage }}% | ≥ 80% | ✅ |
-          | Bugs | ${{ steps.sonar-metrics.outputs.bugs }} | 0 | ✅ |
-          | Vulnerabilities | ${{ steps.sonar-metrics.outputs.vulnerabilities }} | 0 | ✅ |
-          | Code Smells | ${{ steps.sonar-metrics.outputs.smells }} | 0 | ✅ |
-          | Reliability | A | ≤ A | ✅ |
-          | Security | A | ≤ A | ✅ |
-          | Maintainability | A | ≤ A | ✅ |
+          | Coverage | ${COVERAGE}% | ≥ 80% | ✅ |
+          | Bugs | ${BUGS} | 0 | ✅ |
+          | Vulnerabilities | ${VULNS} | 0 | ✅ |
+          | Code Smells | ${SMELLS} | 0 | ✅ |
+          | Reliability | $([ "$RELIABILITY" = "1.0" ] && echo "A" || echo "B") | ≤ A | ✅ |
+          | Security | $([ "$SECURITY" = "1.0" ] && echo "A" || echo "B") | ≤ A | ✅ |
+          | Maintainability | $([ "$MAINTAINABILITY" = "1.0" ] && echo "A" || echo "B") | ≤ A | ✅ |
           
           ## Data Files
           
-          - `history.json` - Complete metrics history (JSON format)
-          - `README.md` - This summary (auto-generated)
+          - `history.json` - Complete metrics history (JSON format, last 100 entries)
+          - `README.md` - This summary (auto-generated on each SonarCloud run)
           
           ## Usage
           
-          To view trends:
-          ```bash
+          To view recent trends:
+          \`\`\`bash
           cat metrics/history.json | jq '.history | .[-10:] | .[] | {date: .timestamp, coverage: .metrics.coverage, bugs: .metrics.bugs}'
-          ```
+          \`\`\`
           
           To plot coverage over time:
-          ```bash
+          \`\`\`bash
           cat metrics/history.json | jq -r '.history[] | "\(.timestamp),\(.metrics.coverage)"'
-          ```
-          METRICSDOC
+          \`\`\`
           
-          # Update README with actual values
-          sed -i "s/\${{ steps.sonar-metrics.outputs.coverage }}/${{ steps.sonar-metrics.outputs.coverage }}/g" metrics/README.md
-          sed -i "s/\${{ steps.sonar-metrics.outputs.bugs }}/${{ steps.sonar-metrics.outputs.bugs }}/g" metrics/README.md
-          sed -i "s/\${{ steps.sonar-metrics.outputs.vulnerabilities }}/${{ steps.sonar-metrics.outputs.vulnerabilities }}/g" metrics/README.md
-          sed -i "s/\${{ steps.sonar-metrics.outputs.smells }}/${{ steps.sonar-metrics.outputs.smells }}/g" metrics/README.md
+          To see all entries:
+          \`\`\`bash
+          cat metrics/history.json | jq '.history | length'
+          \`\`\`
+          EOF
       
       - name: Commit Metrics History
         run: |
