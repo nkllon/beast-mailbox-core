@@ -14,7 +14,9 @@ import argparse
 import asyncio
 import json
 import logging
-from typing import Any, Dict
+import os
+from typing import Any, Dict, Optional
+from urllib.parse import urlparse
 
 from .redis_mailbox import MailboxConfig, MailboxMessage, RedisMailboxService
 
@@ -30,6 +32,140 @@ def configure_logging(verbose: bool) -> None:
     """
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+
+
+def parse_redis_url(redis_url: Optional[str] = None) -> Dict[str, Any]:
+    """Parse REDIS_URL environment variable into connection parameters.
+    
+    Supports Redis URL format: `redis://:password@host:port/db` or
+    `redis://user:password@host:port/db`.
+    
+    Args:
+        redis_url: Optional URL string. If None, reads from REDIS_URL environment variable.
+        
+    Returns:
+        Dictionary with keys: host, port, password, db
+        
+    Raises:
+        SystemExit: If REDIS_URL is malformed or uses unsupported scheme.
+        
+    Example:
+        >>> config = parse_redis_url("redis://:pass@localhost:6379/0")
+        >>> assert config["host"] == "localhost"
+        >>> assert config["port"] == 6379
+        >>> assert config["password"] == "pass"
+        >>> assert config["db"] == 0
+        
+    Note:
+        Returns None values for missing components (password, db).
+        Port defaults to 6379 if not specified in URL.
+    """
+    if redis_url is None:
+        redis_url = os.environ.get("REDIS_URL")
+    
+    if not redis_url:
+        return {}
+    
+    try:
+        parsed = urlparse(redis_url)
+        
+        # Validate scheme
+        if parsed.scheme not in ("redis", "rediss"):
+            raise ValueError(f"Unsupported scheme: {parsed.scheme}. Use redis:// or rediss://")
+        
+        # Extract components
+        host = parsed.hostname or "localhost"
+        port = parsed.port or 6379
+        
+        # Password extraction - urlparse handles both "user:pass@host" and ":pass@host"
+        password = parsed.password
+        
+        # Database number from path (e.g., /0, /1)
+        db = 0
+        if parsed.path and len(parsed.path) > 1:
+            try:
+                db = int(parsed.path[1:])  # Skip leading '/'
+            except ValueError:
+                # Invalid db number, use default
+                pass
+        
+        return {
+            "host": host,
+            "port": port,
+            "password": password,
+            "db": db,
+        }
+    except Exception as exc:
+        raise SystemExit(
+            f"Invalid REDIS_URL format: {redis_url}. "
+            f"Expected format: redis://:password@host:port/db. Error: {exc}"
+        )
+
+
+def get_redis_config_from_args(args: argparse.Namespace) -> Dict[str, Any]:
+    """Get Redis configuration with priority: CLI args > REDIS_URL > defaults.
+    
+    Priority order:
+    1. CLI flags (highest priority - explicit override)
+    2. REDIS_URL environment variable (convenient default)
+    3. Hardcoded defaults (localhost:6379)
+    
+    Args:
+        args: Parsed argparse.Namespace with redis_host, redis_port, redis_password, redis_db attributes
+        
+    Returns:
+        Dictionary with keys: host, port, password, db suitable for MailboxConfig
+        
+    Note:
+        CLI flags override environment variables, maintaining backward compatibility.
+        Since argparse applies defaults before this function, we check if CLI values
+        match hardcoded defaults. If they do and REDIS_URL is set, use REDIS_URL instead.
+    """
+    # Start with defaults from REDIS_URL if available
+    env_config = parse_redis_url()
+    
+    # Get CLI values - handle both argparse (with defaults) and direct calls (may have None)
+    cli_host = getattr(args, "redis_host", None)
+    cli_port = getattr(args, "redis_port", None)
+    cli_password = getattr(args, "redis_password", None)
+    cli_db = getattr(args, "redis_db", None)
+    
+    # Priority: CLI explicit values > REDIS_URL > hardcoded defaults
+    # If CLI value is provided and differs from hardcoded default, user explicitly set it - use CLI
+    # If CLI value equals default or is None, prefer REDIS_URL if available, else use hardcoded default
+    default_host = "localhost"
+    default_port = 6379
+    default_db = 0
+    
+    # For host: if CLI is None or equals default, use REDIS_URL or default
+    if cli_host is None or (cli_host == default_host and env_config.get("host")):
+        host = env_config.get("host", default_host)
+    else:
+        host = cli_host
+    
+    # For port: if CLI is None or equals default, use REDIS_URL or default
+    if cli_port is None or (cli_port == default_port and env_config.get("port")):
+        port = env_config.get("port", default_port)
+    else:
+        port = cli_port
+    
+    # For password: if CLI is None, use REDIS_URL or None
+    password = cli_password if cli_password is not None else env_config.get("password")
+    
+    # For db: if CLI is None or equals default, use REDIS_URL or default
+    if cli_db is None or (cli_db == default_db and env_config.get("db") is not None):
+        db = env_config.get("db", default_db)
+    else:
+        db = cli_db
+    
+    config = {
+        "host": host,
+        "port": port,
+        "password": password,
+        "db": db,
+    }
+    
+    return config
 
 
 async def _acknowledge_messages(
@@ -197,11 +333,12 @@ async def run_service_async(args: argparse.Namespace) -> None:
         In service mode, the function runs until interrupted (Ctrl+C) or
         cancelled. The service gracefully shuts down on interruption.
     """
+    redis_config = get_redis_config_from_args(args)
     config = MailboxConfig(
-        host=args.redis_host,
-        port=args.redis_port,
-        password=args.redis_password,
-        db=args.redis_db,
+        host=redis_config["host"],
+        port=redis_config["port"],
+        password=redis_config["password"],
+        db=redis_config["db"],
         stream_prefix=args.stream_prefix,
         max_stream_length=args.maxlen,
         poll_interval=args.poll_interval,
@@ -286,12 +423,34 @@ def run_service(argv: list[str] | None = None) -> None:
     Raises:
         SystemExit: On configuration errors or service failures
     """
-    parser = argparse.ArgumentParser(description="Run Beast mailbox service")
+    parser = argparse.ArgumentParser(
+        description="Run Beast mailbox service",
+        epilog="Note: REDIS_URL environment variable can be used instead of CLI flags. "
+        "Format: redis://:password@host:port/db. CLI flags override REDIS_URL.",
+    )
     parser.add_argument("agent_id", help="Agent identifier for this instance")
-    parser.add_argument("--redis-host", default="localhost")
-    parser.add_argument("--redis-port", type=int, default=6379)
-    parser.add_argument("--redis-password", default=None)
-    parser.add_argument("--redis-db", type=int, default=0)
+    parser.add_argument(
+        "--redis-host",
+        default="localhost",
+        help="Redis server hostname (default: localhost, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-port",
+        type=int,
+        default=6379,
+        help="Redis server port (default: 6379, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-password",
+        default=None,
+        help="Redis password (default: None, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-db",
+        type=int,
+        default=0,
+        help="Redis database number (default: 0, or from REDIS_URL env var)",
+    )
     parser.add_argument("--stream-prefix", default="beast:mailbox")
     parser.add_argument("--maxlen", type=int, default=1000, help="Max stream length")
     parser.add_argument("--poll-interval", type=float, default=2.0)
@@ -346,11 +505,12 @@ async def send_message_async(args: argparse.Namespace) -> None:
         Either --message or --json must be provided (not both).
         The service connects, sends the message, and disconnects cleanly.
     """
+    redis_config = get_redis_config_from_args(args)
     config = MailboxConfig(
-        host=args.redis_host,
-        port=args.redis_port,
-        password=args.redis_password,
-        db=args.redis_db,
+        host=redis_config["host"],
+        port=redis_config["port"],
+        password=redis_config["password"],
+        db=redis_config["db"],
         stream_prefix=args.stream_prefix,
     )
     service = RedisMailboxService(agent_id=args.sender, config=config)
@@ -403,16 +563,38 @@ def send_message(argv: list[str] | None = None) -> None:
         You must provide either --message OR --json (not both).
         The --json payload must be valid JSON.
     """
-    parser = argparse.ArgumentParser(description="Send message via Beast mailbox")
+    parser = argparse.ArgumentParser(
+        description="Send message via Beast mailbox",
+        epilog="Note: REDIS_URL environment variable can be used instead of CLI flags. "
+        "Format: redis://:password@host:port/db. CLI flags override REDIS_URL.",
+    )
     parser.add_argument("sender", help="Sender agent id")
     parser.add_argument("recipient", help="Recipient agent id")
     parser.add_argument("--message", default="hello")
     parser.add_argument("--json")
     parser.add_argument("--message-type", default="direct_message")
-    parser.add_argument("--redis-host", default="localhost")
-    parser.add_argument("--redis-port", type=int, default=6379)
-    parser.add_argument("--redis-password", default=None)
-    parser.add_argument("--redis-db", type=int, default=0)
+    parser.add_argument(
+        "--redis-host",
+        default="localhost",
+        help="Redis server hostname (default: localhost, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-port",
+        type=int,
+        default=6379,
+        help="Redis server port (default: 6379, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-password",
+        default=None,
+        help="Redis password (default: None, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-db",
+        type=int,
+        default=0,
+        help="Redis database number (default: 0, or from REDIS_URL env var)",
+    )
     parser.add_argument("--stream-prefix", default="beast:mailbox")
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)

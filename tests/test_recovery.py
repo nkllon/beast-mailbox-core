@@ -150,8 +150,8 @@ class TestRecoveryWithHandlers:
         mock_client.xpending_range = AsyncMock(return_value=mock_pending_info)
         mock_client.xautoclaim = AsyncMock(
             side_effect=[
-                ("1234567890-0", mock_claimed_messages),  # First batch - returns messages
-                ("0-0", []),  # Second batch - empty, signals completion
+                ("1234567890-0", mock_claimed_messages, []),  # First batch - returns messages
+                ("0-0", [], []),  # Second batch - empty, signals completion
             ]
         )
         mock_client.xack = AsyncMock()
@@ -210,9 +210,9 @@ class TestRecoveryWithHandlers:
         mock_client.xpending_range = AsyncMock(return_value=mock_pending_info)
         mock_client.xautoclaim = AsyncMock(
             side_effect=[
-                ("102-0", [mock_message_1, mock_message_2]),
-                ("0-0", [mock_message_3]),
-                ("0-0", []),
+                ("102-0", [mock_message_1, mock_message_2], []),
+                ("0-0", [mock_message_3], []),
+                ("0-0", [], []),
             ]
         )
         mock_client.xack = AsyncMock()
@@ -254,8 +254,8 @@ class TestRecoveryWithHandlers:
         mock_client.xpending_range = AsyncMock(return_value=mock_pending_info)
         mock_client.xautoclaim = AsyncMock(
             side_effect=[
-                ("1234567890-0", [(mock_message_id, mock_fields)]),
-                ("0-0", []),
+                ("1234567890-0", [(mock_message_id, mock_fields)], []),
+                ("0-0", [], []),
             ]
         )
         mock_client.xack = AsyncMock()
@@ -335,17 +335,13 @@ class TestRecoveryIntegrationWithStart:
         mock_client.ping = AsyncMock()
         mock_client.xgroup_create = AsyncMock()
         mock_client.xpending_range = AsyncMock(return_value=[])
+        # Make xreadgroup return immediately - don't block
         mock_client.xreadgroup = AsyncMock(return_value=[])
         service._client = mock_client
         
-        # Start the service
-        service._client = mock_client
-        await service.connect()
-        
-        # Mock start method to bypass actual recovery
-        original_recover = service._recover_pending_messages
-        
+        # Track recovery execution
         recovery_called = False
+        original_recover = service._recover_pending_messages
         
         async def mock_recover():
             nonlocal recovery_called
@@ -354,15 +350,13 @@ class TestRecoveryIntegrationWithStart:
         
         service._recover_pending_messages = mock_recover
         
+        # Start the service - recovery should run first
         result = await service.start()
         
-        # Give it a moment to start
-        await asyncio.sleep(0.01)
-        
         assert result is True
-        assert recovery_called
+        assert recovery_called  # Recovery was called before consume loop started
         
-        # Cleanup
+        # Cleanup - stop immediately (doesn't wait for consume loop)
         await service.stop()
 
 

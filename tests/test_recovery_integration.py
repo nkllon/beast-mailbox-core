@@ -45,7 +45,8 @@ def integration_config(request):
 @pytest.fixture
 def agent_id():
     """Return test agent ID."""
-    return f"test-agent-{asyncio.get_event_loop().time()}"
+    import time
+    return f"test-agent-{time.time()}"
 
 
 class TestRecoveryIntegration:

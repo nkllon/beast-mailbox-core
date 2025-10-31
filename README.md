@@ -31,19 +31,52 @@ pip install beast-mailbox-core
 
 ## Quickstart
 
+### Redis Configuration
+
+**Priority order:**
+1. CLI flags (highest priority - explicit override)
+2. `REDIS_URL` environment variable (convenient default)
+3. Hardcoded defaults (localhost:6379)
+
+**Using REDIS_URL (recommended for OpenFlow Playground):**
+```bash
+export REDIS_URL="redis://:password@host:port/db"
+beast-mailbox-service my-agent --echo  # Just works!
+```
+
+**Using CLI flags:**
+```bash
+beast-mailbox-service my-agent \
+  --redis-host 192.168.1.119 \
+  --redis-password beastmode2025 \
+  --redis-port 6379 \
+  --redis-db 0
+```
+
+CLI flags override `REDIS_URL` when both are provided.
+
 ### Start a streaming listener
 
 ```bash
-# Start a long-running listener for agent "herbert"
-BEAST_MODE_PROMETHEUS_ENABLED=false beast-mailbox-service herbert \
+# With REDIS_URL set (easiest)
+export REDIS_URL="redis://:beastmode2025@192.168.1.119:6379/0"
+beast-mailbox-service herbert --echo
+
+# Or with CLI flags
+beast-mailbox-service herbert \
   --redis-host 192.168.1.119 --redis-password beastmode2025 --echo
 ```
 
 ### Send messages
 
 ```bash
-# Send a simple text message from devbox to herbert
+# With REDIS_URL set
+export REDIS_URL="redis://:beastmode2025@192.168.1.119:6379/0"
 beast-mailbox-send devbox herbert --message "ping"
+
+# Or with CLI flags
+beast-mailbox-send devbox herbert --message "ping" \
+  --redis-host 192.168.1.119 --redis-password beastmode2025
 
 # Send structured JSON payload
 beast-mailbox-send devbox herbert --json '{"task": "sync", "priority": "high"}' \
@@ -193,8 +226,21 @@ Set `BEAST_MODE_PROMETHEUS_ENABLED=false` to explicitly disable metrics collecti
 - "BUSYGROUP" errors are normal and handled automatically
 - Group names are `<agent_id>:group` format
 
+**REDIS_URL parsing errors:**
+- Verify REDIS_URL format: `redis://:password@host:port/db`
+- Check for URL encoding issues (special characters in password/host)
+- Use `--redis-host` and other CLI flags to override if REDIS_URL is misconfigured
+- Test REDIS_URL parsing: `python -c "from beast_mailbox_core.cli import parse_redis_url; print(parse_redis_url('redis://:pass@host:6379/0'))"`
+
 **Blocking in tests:**
 - See `.kiro/steering/testing-patterns.md` for guidance on mocking ReflectiveModule
+
+## Documentation
+
+- **📘 [API Reference](docs/API.md)** - Comprehensive API documentation for integration
+- **📖 [Usage Guide](docs/USAGE_GUIDE.md)** - Detailed usage patterns and examples
+- **📋 [Quick Reference](docs/QUICK_REFERENCE.md)** - Command cheat sheet
+- **📚 [Lessons Learned](docs/LESSONS_LEARNED_v0.3.0.md)** - 80+ lessons from v0.1.0 → v0.3.0
 
 ## For AI Maintainers
 

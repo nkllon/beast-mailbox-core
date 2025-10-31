@@ -93,12 +93,12 @@ class TestServiceLifecycle:
     async def test_stop_closes_client(self, service):
         """Test stop closes Redis client."""
         mock_client = AsyncMock()
-        mock_client.close = AsyncMock()
+        mock_client.aclose = AsyncMock()  # Use aclose() instead of close()
         service._client = mock_client
         
         await service.stop()
         
-        mock_client.close.assert_called_once()
+        mock_client.aclose.assert_called_once()
         assert service._client is None
 
     @pytest.mark.asyncio
