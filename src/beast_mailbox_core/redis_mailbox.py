@@ -232,14 +232,34 @@ class RedisMailboxService:
             if not pending_info:
                 self.logger.info("No pending messages to recover")
                 metrics.end_time = asyncio.get_event_loop().time()
+                # Invoke callback even when no messages to recover
+                if self.recovery_callback:
+                    try:
+                        await self.recovery_callback(metrics)
+                    except Exception as exc:
+                        self.logger.exception("Recovery callback failed: %s", exc)
                 return metrics
                 
         except Exception as exc:
             if "NOGROUP" in str(exc):
                 self.logger.debug("Consumer group does not exist yet - skipping recovery")
+                metrics.end_time = asyncio.get_event_loop().time()
+                # Invoke callback even when group doesn't exist
+                if self.recovery_callback:
+                    try:
+                        await self.recovery_callback(metrics)
+                    except Exception as exc:
+                        self.logger.exception("Recovery callback failed: %s", exc)
                 return metrics
             else:
                 self.logger.warning("Failed to check pending messages: %s", exc)
+                metrics.end_time = asyncio.get_event_loop().time()
+                # Invoke callback even on error
+                if self.recovery_callback:
+                    try:
+                        await self.recovery_callback(metrics)
+                    except Exception as exc:
+                        self.logger.exception("Recovery callback failed: %s", exc)
                 return metrics
         
         self.logger.info("Starting pending message recovery...")

@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2025-01-27 - REDIS_URL & API DOCUMENTATION 📘
+
+### Added
+- **REDIS_URL environment variable support** for seamless OpenFlow Playground integration
+  - Parse `REDIS_URL` format: `redis://:password@host:port/db`
+  - CLI flags override REDIS_URL (priority: CLI > REDIS_URL > defaults)
+  - Automatic parsing in both `beast-mailbox-service` and `beast-mailbox-send` commands
+- **Comprehensive API documentation** (`docs/API.md`)
+  - Complete RedisMailboxService API reference
+  - MailboxMessage and MailboxConfig API documentation
+  - Integration patterns for BaseAgent classes
+  - Agent discovery patterns (not built-in, but documented approaches)
+  - Error handling patterns and exception types
+- **Comprehensive test suite** for REDIS_URL support (`test_redis_url_support.py`) with 19 tests
+- Updated CLI help text to mention REDIS_URL support
+
+### Changed
+- Enhanced CLI argument help text with REDIS_URL information
+- Updated README with REDIS_URL usage examples and troubleshooting
+
+### Documentation
+- Added `docs/API.md` - Complete API reference for integration
+- Updated README.md with REDIS_URL configuration section
+- Added REDIS_URL troubleshooting section
+
+### Technical Notes
+- REDIS_URL parsing uses `urllib.parse.urlparse()` for robust URL handling
+- Supports both `redis://` and `rediss://` schemes
+- Handles empty password format: `redis://:password@host`
+- Backward compatible - CLI flags continue to work as before
+- Priority order ensures explicit CLI flags always override environment variables
+
+### Migration Notes
+- **No breaking changes** - fully backward compatible
+- Existing CLI usage continues to work unchanged
+- Users can now use `REDIS_URL` environment variable for convenience
+- CLI flags override REDIS_URL when both are provided
+
 ## [0.4.0] - 2025-10-14 - RECOVERY EDITION 🔄
 
 ### Added

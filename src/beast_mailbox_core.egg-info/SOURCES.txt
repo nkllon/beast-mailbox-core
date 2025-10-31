@@ -12,8 +12,12 @@ src/beast_mailbox_core.egg-info/requires.txt
 src/beast_mailbox_core.egg-info/top_level.txt
 tests/test_cli_functions.py
 tests/test_cli_helpers.py
+tests/test_coverage_boost.py
 tests/test_edge_cases.py
 tests/test_mailbox_config.py
 tests/test_mailbox_message.py
 tests/test_mailbox_service.py
+tests/test_recovery.py
+tests/test_recovery_integration.py
 tests/test_redis_mailbox.py
+tests/test_redis_url_support.py
