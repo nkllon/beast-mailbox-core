@@ -13,7 +13,7 @@ pip install beast-agent
 Or pin a specific version:
 
 ```bash
-pip install beast-agent==0.1.2
+pip install beast-agent==0.1.3
 ```
 
 ## Quick Start
