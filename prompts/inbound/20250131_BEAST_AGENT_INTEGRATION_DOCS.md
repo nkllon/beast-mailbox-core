@@ -23,6 +23,8 @@ Users need documentation showing how to use `beast-agent` with `beast-mailbox-co
 - That `mailbox_url` accepts `MailboxConfig` objects, not just URL strings
 - Complete working examples of authenticated agents
 
+**Important:** The code already supports `MailboxConfig` objects - this is a documentation gap, not a feature gap. Users just don't know this capability exists.
+
 **Current Gap:**
 - No examples showing authenticated Redis connections
 - No mention that `mailbox_url` accepts `MailboxConfig` objects
@@ -62,13 +64,29 @@ class MyAgent(BaseAgent):
 - How to query active agents
 - Examples of agent discovery patterns
 
-### 3. Complete Examples
+### 3. Version Requirements Documentation
+
+**Critical:** Users need to know:
+- **v0.1.3+ required for live-fire testing** - Agent registration and discovery methods
+- Without v0.1.3, agents won't appear on cluster
+- Without v0.1.3, discovery methods won't work
+
+**What to Document:**
+- Upgrade requirement: `pip install beast-agent==0.1.3` (or latest)
+- What features are in v0.1.3 vs earlier versions:
+  - ✅ Agent registration (v0.1.0+) - Agents appear on cluster
+  - ✅ Discovery methods (v0.1.3+) - Can find other agents
+  - ✅ MailboxConfig support (existing, undocumented)
+- Clear upgrade path and migration notes
+
+### 4. Complete Examples
 
 **Need:**
 - Authenticated agent example (complete, working code)
-- Agent discovery example
+- Agent discovery example (v0.1.3+)
 - Multi-agent communication examples
 - Environment variable configuration examples
+- Version-specific feature examples (what works in which version)
 
 ---
 
@@ -94,6 +112,9 @@ class MyAgent(BaseAgent):
 - [ ] `beast-agent` README shows `MailboxConfig` usage with `BaseAgent`
 - [ ] `beast-agent` examples include authenticated agent example
 - [ ] `beast-agent` docs include cluster discovery guide
+- [ ] Version requirements clearly documented (v0.1.3+ for discovery)
+- [ ] Upgrade instructions for live-fire testing
+- [ ] Feature version matrix (what's in which version)
 - [ ] All examples are tested and working
 - [ ] Version numbers match actual releases
 
@@ -103,6 +124,8 @@ class MyAgent(BaseAgent):
 
 **Without this documentation:**
 - ❌ Users cannot use beast-agent with authenticated Redis (99% of production clusters)
+- ❌ Users don't know they need v0.1.3 for live-fire testing
+- ❌ Users miss agent registration and discovery features
 - ❌ Users spend 20+ minutes trial-and-error
 - ❌ Users have to read source code to figure it out
 - ❌ Blocks adoption for production use cases
@@ -130,10 +153,12 @@ I've created temporary docs in `beast-mailbox-core` that you can reference:
 
 1. Review the temporary docs in `beast-mailbox-core` (reference only)
 2. Create/update `beast-agent` documentation with:
-   - Authentication section in README
+   - **Authentication section in README** (MailboxConfig usage - code already supports it!)
+   - **Version requirements section** (v0.1.3+ for discovery, v0.1.0+ for registration)
    - Complete authenticated agent example
-   - Cluster discovery guide
-   - Clear API documentation for `BaseAgent.__init__()`
+   - Cluster discovery guide (v0.1.3+ features)
+   - Clear API documentation for `BaseAgent.__init__()` including `mailbox_url` parameter types
+   - Feature version matrix showing what's available in which version
 3. Test all examples against current `beast-agent` releases
 4. Publish updated docs
 5. I'll update `beast-mailbox-core` docs to link to your authoritative docs
