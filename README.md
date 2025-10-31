@@ -239,6 +239,7 @@ Set `BEAST_MODE_PROMETHEUS_ENABLED=false` to explicitly disable metrics collecti
 
 - **📘 [API Reference](docs/API.md)** - Comprehensive API documentation for integration
 - **🤖 [Using beast-agent](docs/USING_BEAST_AGENT.md)** - Guide for building multi-agent systems with beast-agent
+- **🌐 [Cluster Discovery](docs/CLUSTER_DISCOVERY.md)** - Join live cluster and discover other agents 🚀
 - **📖 [Usage Guide](docs/USAGE_GUIDE.md)** - Detailed usage patterns and examples
 - **🔍 [SonarCloud & Integration Testing](docs/SONARCLOUD_INTEGRATION_GUIDE.md)** - Best practices for quality infrastructure
 - **📋 [Quick Reference](docs/QUICK_REFERENCE.md)** - Command cheat sheet
