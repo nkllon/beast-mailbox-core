@@ -192,18 +192,25 @@ export BUNDLE_ID="com.nkllon.ObservatoryApp"
    - It's in your home directory, not the project
    - Already in .gitignore
 
-2. **Protect .p8 key files**
+2. **Use Password Manager (1Password, etc.)**
+   - Store credentials in 1Password or similar
+   - Store .p8 key files as secure notes
+   - Use 1Password CLI for automation (optional)
+   - Sync credentials across devices securely
+
+3. **Protect .p8 key files**
    ```bash
    chmod 600 ~/.appstoreconnect/api_key.p8
    ```
 
-3. **Rotate credentials periodically**
+4. **Rotate credentials periodically**
    - App-Specific Passwords: Generate new ones every 6-12 months
    - API Keys: Revoke and regenerate as needed
 
-4. **Backup securely**
+5. **Backup securely**
    - Keep encrypted backup of credentials
    - Store .p8 files in password manager
+   - 1Password / password manager = encrypted backup
 
 ---
 
