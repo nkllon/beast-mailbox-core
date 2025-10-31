@@ -1,0 +1,45 @@
+name: SonarCloud Analysis - Swift
+
+on:
+  push:
+    branches:
+      - main
+      - docs/add-agent-maintainer-guide
+    paths:
+      - 'observatory/swift/**'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'observatory/swift/**'
+
+jobs:
+  sonarcloud-swift:
+    name: SonarCloud Swift Analysis
+    runs-on: macos-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+      
+      - name: Set up Swift
+        uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: "6.0"
+      
+      - name: Build
+        working-directory: observatory/swift
+        run: swift build
+      
+      - name: Run Tests
+        working-directory: observatory/swift
+        run: swift test
+      
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: observatory/swift
+
