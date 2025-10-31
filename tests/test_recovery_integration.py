@@ -60,14 +60,35 @@ class TestRecoveryIntegration:
         await service1.connect()
         if service1._client:
             try:
-                stream = service1.inbox_stream
-                await service1._client.delete(stream)
-                await service1._client.xgroup_destroy(service1.inbox_stream, f"{agent_id}:group")
+                # Clean up the real agent's stream and group (not temp-cleanup's)
+                real_stream = f"{integration_config.stream_prefix}:{agent_id}:in"
+                real_group = f"{agent_id}:group"
+                await service1._client.delete(real_stream)
+                await service1._client.xgroup_destroy(real_stream, real_group)
             except Exception:
                 pass
         await service1.stop()
         
-        # Create service and send a message
+        # Create consumer group FIRST (before sending message)
+        receiver = RedisMailboxService(agent_id, integration_config)
+        await receiver.connect()
+        
+        # Create consumer group first before reading
+        if receiver._client:
+            try:
+                await receiver._client.xgroup_create(
+                    name=receiver.inbox_stream,
+                    groupname=receiver._consumer_group,
+                    id="0",  # Start from beginning so we can read messages added before group creation
+                    mkstream=True,
+                )
+            except Exception:
+                # Group might already exist, ignore
+                pass
+        
+        await receiver.stop()
+        
+        # Now create service and send a message (after group exists)
         sender = RedisMailboxService("sender", integration_config)
         await sender.connect()
         
@@ -78,32 +99,19 @@ class TestRecoveryIntegration:
         
         await sender.stop()
         
-        # Now create a consumer, read the message to move it to PEL
-        receiver = RedisMailboxService(agent_id, integration_config)
-        await receiver.connect()
-        
-        # Create consumer group first before reading
-        if receiver._client:
-            try:
-                await receiver._client.xgroup_create(
-                    name=receiver.inbox_stream,
-                    groupname=receiver._consumer_group,
-                    id="$",
-                    mkstream=True,
-                )
-            except Exception:
-                # Group might already exist, ignore
-                pass
+        # Now read the message to move it to pending list
+        receiver2 = RedisMailboxService(agent_id, integration_config)
+        await receiver2.connect()
         
         # Read the message to move it to pending list
-        await receiver._client.xreadgroup(
-            groupname=receiver._consumer_group,
+        await receiver2._client.xreadgroup(
+            groupname=receiver2._consumer_group,
             consumername="temp-consumer",
-            streams={receiver.inbox_stream: ">"},
+            streams={receiver2.inbox_stream: ">"},
             count=1,
         )
         
-        await receiver.stop()
+        await receiver2.stop()
         
         # Now create a new service with a handler and start recovery
         received_messages = []
@@ -169,7 +177,26 @@ class TestRecoveryIntegration:
                 pass
         await service1.stop()
         
-        # Send multiple messages
+        # Create consumer group FIRST (before sending messages)
+        receiver = RedisMailboxService(agent_id, integration_config)
+        await receiver.connect()
+        
+        # Create consumer group first before reading
+        if receiver._client:
+            try:
+                await receiver._client.xgroup_create(
+                    name=receiver.inbox_stream,
+                    groupname=receiver._consumer_group,
+                    id="0",  # Start from beginning so we can read messages added before group creation
+                    mkstream=True,
+                )
+            except Exception:
+                # Group might already exist, ignore
+                pass
+        
+        await receiver.stop()
+        
+        # Send multiple messages (after group exists)
         sender = RedisMailboxService("sender", integration_config)
         await sender.connect()
         
@@ -183,32 +210,19 @@ class TestRecoveryIntegration:
         
         await sender.stop()
         
-        # Read all messages to move them to PEL
-        receiver = RedisMailboxService(agent_id, integration_config)
-        await receiver.connect()
-        
-        # Create consumer group first before reading
-        if receiver._client:
-            try:
-                await receiver._client.xgroup_create(
-                    name=receiver.inbox_stream,
-                    groupname=receiver._consumer_group,
-                    id="$",
-                    mkstream=True,
-                )
-            except Exception:
-                # Group might already exist, ignore
-                pass
+        # Now read all messages to move them to PEL
+        receiver2 = RedisMailboxService(agent_id, integration_config)
+        await receiver2.connect()
         
         # Read all messages
-        await receiver._client.xreadgroup(
-            groupname=receiver._consumer_group,
+        await receiver2._client.xreadgroup(
+            groupname=receiver2._consumer_group,
             consumername="temp-consumer",
-            streams={receiver.inbox_stream: ">"},
+            streams={receiver2.inbox_stream: ">"},
             count=10,
         )
         
-        await receiver.stop()
+        await receiver2.stop()
         
         # Now recover them
         received_messages = []

@@ -221,6 +221,7 @@ class RedisMailboxService:
         
         try:
             # Check if consumer group exists by querying pending info
+            self.logger.debug("Checking pending messages: stream=%s, group=%s", self.inbox_stream, self._consumer_group)
             pending_info = await self._client.xpending_range(
                 name=self.inbox_stream,
                 groupname=self._consumer_group,
@@ -228,6 +229,8 @@ class RedisMailboxService:
                 max="+",
                 count=1,
             )
+            
+            self.logger.debug("xpending_range returned: %s (type: %s, len: %s)", pending_info, type(pending_info), len(pending_info) if pending_info else 0)
             
             if not pending_info:
                 self.logger.info("No pending messages to recover")
@@ -384,6 +387,7 @@ class RedisMailboxService:
         await self.connect()
         assert self._client is not None
         try:
+            self.logger.debug("Creating consumer group: stream=%s, group=%s", self.inbox_stream, self._consumer_group)
             await self._client.xgroup_create(
                 name=self.inbox_stream,
                 groupname=self._consumer_group,
@@ -398,9 +402,11 @@ class RedisMailboxService:
         except Exception as exc:
             if "BUSYGROUP" not in str(exc):
                 raise
+            self.logger.debug("Consumer group already exists (BUSYGROUP), continuing")
         
         # Run pending message recovery before starting the consume loop
         if self.config.enable_recovery:
+            self.logger.debug("Starting recovery after group setup")
             await self._recover_pending_messages()
         
         self._running = True
