@@ -10,6 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update SonarCloud GitHub Action from deprecated `SonarSource/sonarcloud-github-action@master` to `sonarqube-scan-action` (backlog item for next release)
 
+## [0.4.4] - 2025-10-31 - CRITICAL BUG FIX 🐛
+
+### Fixed
+- **CRITICAL: Message consumption bug fixed** - Consumer groups now read all messages from stream start
+  - Bug: Groups created with `id="$"` only saw messages added AFTER group creation
+  - Fix: Changed to `id="0"` to read from beginning of stream, ensuring ALL messages are visible
+  - Impact: Agents can now receive messages even if group was created after messages were sent
+  - Fixes "deaf and blind" agents in live-fire testing
+- **Test isolation fixed** - Environment variable tests now properly isolate from `~/.env` file
+
+### Migration Notes
+- **No breaking changes** - bug fix only, fully backward compatible
+- Existing consumer groups will continue to work
+- New groups created after this version will correctly read all messages from stream start
+
+### Technical Notes
+- Fix confirmed via live-fire testing
+- All tests passing
+- Message consumption now works reliably in production deployments
+
 ## [0.4.3] - 2025-10-30 - ENVIRONMENT VARIABLE SUPPORT 🔧
 
 ### Added
