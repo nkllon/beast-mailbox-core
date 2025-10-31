@@ -194,12 +194,14 @@ actor AppleIntelligenceChat {
     
     func query(_ text: String) async throws -> String {
         // Bridge to QueryAppleIntelligenceIntent
-        let intent = QueryAppleIntelligenceIntent()
-        intent.query = text
-        intent.queryType = .general
-        
-        let result = try await intent.perform()
-        return result.value
+        // For now, use AppleIntelligenceProcessor directly
+        // Future: Use AppIntents when fully implemented
+        let response = await AppleIntelligenceProcessor.shared.process(
+            query: text,
+            context: "",
+            type: .general
+        )
+        return response
     }
 }
 
