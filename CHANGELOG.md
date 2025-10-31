@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Update SonarCloud GitHub Action from deprecated `SonarSource/sonarcloud-github-action@master` to `sonarqube-scan-action` (backlog item for next release)
+
 ## [0.4.2] - 2025-01-31 - TEST QUALITY IMPROVEMENTS 🧪
 
 ### Changed
