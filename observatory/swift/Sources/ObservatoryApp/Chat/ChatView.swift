@@ -71,17 +71,17 @@ struct ChatView: View {
         }
         .frame(minWidth: 600, minHeight: 500)
         .navigationTitle("Apple Intelligence Chat")
-        .onAppear {
-            // Configure window to stay open when clicked
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                configureChatWindow()
-            }
-        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Clear") {
                     chatViewModel.clearMessages()
                 }
+            }
+        }
+        .onAppear {
+            // Configure window to have proper window controls
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                configureChatWindow()
             }
         }
     }
@@ -99,12 +99,20 @@ struct ChatView: View {
     }
     
     private func configureChatWindow() {
-        // Configure the chat window to stay open
+        // Configure the chat window to have proper controls and stay open
         for window in NSApplication.shared.windows {
             if window.isVisible && window.contentView != nil {
-                // Make it a proper floating window that stays open
-                window.collectionBehavior = [.stationary, .fullScreenAuxiliary]
-                window.level = .floating
+                // Enable standard window controls (close, minimize, zoom buttons)
+                window.styleMask.insert(.closable)
+                window.styleMask.insert(.miniaturizable)
+                window.styleMask.insert(.resizable)
+                window.standardWindowButton(.closeButton)?.isEnabled = true
+                window.standardWindowButton(.miniaturizeButton)?.isEnabled = true
+                window.standardWindowButton(.zoomButton)?.isEnabled = true
+                
+                // Make it a proper window that stays open but can be closed
+                window.collectionBehavior = [.managed]
+                window.level = .normal
                 window.isReleasedWhenClosed = false
                 window.acceptsMouseMovedEvents = true
                 window.makeKeyAndOrderFront(nil)

@@ -104,7 +104,7 @@ struct MenuBarView: View {
         .sheet(isPresented: $showingChat) {
             ChatView()
                 .frame(minWidth: 600, minHeight: 500)
-                .interactiveDismissDisabled(true)  // Prevent closing when clicking on window
+                .interactiveDismissDisabled(false)  // Allow closing with close button
         }
     }
     
