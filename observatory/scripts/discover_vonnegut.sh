@@ -12,7 +12,7 @@
 set -euo pipefail
 
 VONNEGUT_HOST="${VONNEGUT_HOST:-vonnegut}"
-SSH_USER="${SSH_USER:-root}"
+SSH_USER="${SSH_USER:-lou}"
 OUTPUT_DIR="${OUTPUT_DIR:-docs/discovery}"
 
 echo "🔍 Discovering Observatory stack on $VONNEGUT_HOST..."
