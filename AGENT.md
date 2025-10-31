@@ -369,6 +369,182 @@ pytest tests/ -v --log-cli-level=DEBUG
 
 **v0.2.0 Crisis:** A release was published to PyPI without committing to the repository, causing a critical repository sync failure. This **must never happen again**.
 
+### Hard-Won Lessons: What I Learned the Hard Way (v0.4.x)
+
+**Context:** During v0.4.0-v0.4.2 releases, I learned critical lessons about the actual release process that weren't documented. Documenting them here so future maintainers don't repeat my mistakes.
+
+#### Lesson 1: CI/CD Automation Exists - Check First!
+
+**Mistake Made:** I tried to manually publish to PyPI using `twine upload`, not knowing that GitHub Actions workflow `.github/workflows/publish.yml` automatically publishes when a GitHub release is created.
+
+**What I Learned:**
+- **ALWAYS** check existing workflows before proposing solutions:
+  ```bash
+  gh workflow list  # See all workflows
+  cat .github/workflows/*.yml  # Read them ALL
+  ```
+- The `publish.yml` workflow triggers on:
+  - Release publication (when GitHub release is created)
+  - Manual workflow dispatch
+- **If `PYPI_API_TOKEN` secret is configured, manual `twine upload` is NOT needed!**
+- The workflow automatically:
+  1. Checks out code
+  2. Builds package
+  3. Uploads to PyPI
+  4. Reports status
+
+**Action:** Always check for existing CI/CD automation before creating manual deployment procedures.
+
+#### Lesson 2: SonarCloud Workflow Requires Redis Container
+
+**Mistake Made:** I assumed integration tests would run in CI, but didn't realize the SonarCloud workflow needed a Redis service container.
+
+**What I Learned:**
+- SonarCloud workflow (`.github/workflows/sonarcloud.yml`) includes:
+  ```yaml
+  services:
+    redis:
+      image: redis:latest
+      ports:
+        - 6379:6379
+  ```
+- This allows integration tests (like `test_recovery_integration.py` and `test_fault_injection.py`) to run in CI
+- **Without this, integration tests that require real Redis would fail in CI**
+
+**Action:** Always verify service containers are configured for integration tests in CI workflows.
+
+#### Lesson 3: Local Testing with Docker is Possible
+
+**Mistake Made:** I thought integration tests required manual Redis setup, not realizing we could use Docker automatically in tests.
+
+**What I Learned:**
+- Created `redis_docker` fixture in `tests/conftest.py` that automatically:
+  - Starts Redis container if not running
+  - Uses existing container if available
+  - Cleans up after tests
+- Tests can be marked with `@pytest.mark.skipif(not redis_available)` to skip if Redis unavailable
+- **All integration tests can now run locally without manual Redis setup!**
+
+**Action:** Use Docker fixtures for local integration testing - it's reliable and automatic.
+
+#### Lesson 4: Release Process Reality vs. Documentation
+
+**Mistake Made:** I followed the documented manual process (`twine upload`) when automation existed.
+
+**What I Learned:**
+- **Current Reality (v0.4.2+):**
+  1. Bump version in `pyproject.toml`
+  2. Update `CHANGELOG.md`
+  3. Commit and push to main
+  4. Create git tag: `git tag -a v0.X.Y -m "Release v0.X.Y"`
+  5. Push tag: `git push origin v0.X.Y`
+  6. Create GitHub release: `gh release create v0.X.Y --title "v0.X.Y" --notes-file CHANGELOG.md`
+  7. **GitHub Actions automatically publishes to PyPI** (if `PYPI_API_TOKEN` configured)
+  8. Verify on PyPI: `pip index versions beast-mailbox-core`
+
+- **Manual `twine upload` is only needed if:**
+  - `PYPI_API_TOKEN` secret is not configured
+  - You want to publish without creating a GitHub release
+  - The automated workflow fails
+
+**Action:** For normal releases, rely on GitHub Actions automation. Manual `twine upload` is a fallback only.
+
+#### Lesson 5: Trigger SonarCloud Analysis Before Release
+
+**Mistake Made:** I pushed changes without verifying SonarCloud would pass, causing release delays.
+
+**What I Learned:**
+- SonarCloud workflow runs automatically on:
+  - Push to main
+  - Pull requests
+- **BUT:** You can trigger it manually to verify before release:
+  ```bash
+  gh workflow run "SonarCloud Analysis.yml"
+  gh run watch  # Monitor the run
+  ```
+- Always verify Quality Gate PASSED before creating release tag
+- Check SonarCloud dashboard: https://sonarcloud.io/project/overview?id=nkllon_beast-mailbox-core
+
+**Action:** Trigger SonarCloud analysis manually before release to catch issues early.
+
+#### Lesson 6: Version Bumps Can Be Direct on Main (for Small Releases)
+
+**Mistake Made:** I created release branches for simple version bumps when direct commits to main work fine for patch/minor releases.
+
+**What I Learned:**
+- **Release branches are good for:**
+  - Major releases (breaking changes)
+  - Releases with multiple features
+  - Releases requiring extensive testing
+  
+- **Direct commits to main are fine for:**
+  - Patch releases (bug fixes, version bumps)
+  - Small feature additions
+  - Documentation updates
+
+- **But ALWAYS:**
+  1. Run tests before committing
+  2. Verify SonarCloud passes
+  3. Create git tag after merging
+  4. Create GitHub release
+
+**Action:** Use judgment - release branches for major releases, direct commits for patches.
+
+#### Lesson 7: Check Workflow Status Before Assuming
+
+**Mistake Made:** I assumed workflows existed or didn't exist without checking.
+
+**What I Learned:**
+- **Always verify actual state:**
+  ```bash
+  # List workflows
+  gh workflow list
+  
+  # View specific workflow
+  gh workflow view "Workflow Name"
+  
+  # See recent runs
+  gh run list --workflow "Workflow Name"
+  
+  # Watch a specific run
+  gh run watch <run-id>
+  ```
+- **Check what actually exists vs. what's documented:**
+  - Workflows might exist but not be documented
+  - Workflows might be documented but not exist
+  - Workflows might be updated but documentation outdated
+
+**Action:** Always check actual system state before making assumptions.
+
+#### Summary: Release Process Checklist (Updated)
+
+For a typical release (learned from v0.4.0-v0.4.2):
+
+1. ✅ **Pre-Release Checks:**
+   - All tests pass locally
+   - Coverage ≥ 85%
+   - Code committed and pushed to main
+   - Trigger SonarCloud manually: `gh workflow run "SonarCloud Analysis.yml"`
+   - Verify Quality Gate PASSED
+
+2. ✅ **Version & Changelog:**
+   - Bump version in `pyproject.toml`
+   - Update `CHANGELOG.md` with release notes
+   - Commit: `git commit -m "chore: bump version to 0.X.Y"`
+   - Push: `git push origin main`
+
+3. ✅ **Tag & Release:**
+   - Create tag: `git tag -a v0.X.Y -m "Release v0.X.Y"`
+   - Push tag: `git push origin v0.X.Y`
+   - Create GitHub release: `gh release create v0.X.Y --title "v0.X.Y" --notes-file CHANGELOG.md`
+   - **GitHub Actions automatically publishes to PyPI** (if `PYPI_API_TOKEN` configured)
+
+4. ✅ **Verification:**
+   - Check GitHub Actions: `gh run list`
+   - Verify PyPI: `pip index versions beast-mailbox-core`
+   - Verify GitHub release exists
+   - Check SonarCloud dashboard for quality metrics
+
 ### Mandatory Release Checklist
 
 #### Pre-Release
