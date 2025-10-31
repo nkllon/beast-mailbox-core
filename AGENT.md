@@ -43,7 +43,7 @@ A Python package providing **Redis Streams-based mailbox utilities** for inter-a
 - CLI tools: `beast-mailbox-service` and `beast-mailbox-send`
 - One-shot message inspection with optional ack/trim operations
 
-**Current Version:** 0.4.1  
+**Current Version:** 0.4.2  
 **Python Support:** 3.9, 3.10, 3.11, 3.12  
 **Package:** [pypi.org/project/beast-mailbox-core](https://pypi.org/project/beast-mailbox-core/)
 
