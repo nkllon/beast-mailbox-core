@@ -88,7 +88,7 @@ actor AppleIntelligenceProcessor {
         
         // For now, we use Natural Language framework for understanding
         // In future, we can leverage more direct Apple Intelligence APIs
-        let understanding = await analyzeQuery(query: query, context: context, type: type)
+        let _ = await analyzeQuery(query: query, context: context, type: type)
         
         // Generate response based on query type
         switch type {

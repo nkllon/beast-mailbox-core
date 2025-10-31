@@ -115,7 +115,7 @@ class SimpleHTTPServer {
             return ServerHTTPResponse(status: 400, body: "Missing 'query' parameter")
         }
         
-        let context = json["context"] as? String
+        let _ = json["context"] as? String  // Context available for future use
         let queryType = json["query_type"] as? String ?? "general"
         
         // For now, return placeholder

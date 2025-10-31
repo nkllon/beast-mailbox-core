@@ -110,7 +110,20 @@ struct MenuBarView: View {
     
     private func openLogs() {
         let logPath = NSString(string: "~/Library/Logs/beast-observatory/sync.log").expandingTildeInPath
-        NSWorkspace.shared.openFile(logPath, withApplication: "TextEdit")
+        let fileURL = URL(fileURLWithPath: logPath)
+        
+        // Use modern API instead of deprecated openFile(_:withApplication:)
+        if let textEditURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.TextEdit") {
+            let config = NSWorkspace.OpenConfiguration()
+            NSWorkspace.shared.open([fileURL], withApplicationAt: textEditURL, configuration: config) { _, error in
+                if let error = error {
+                    print("⚠️  Failed to open logs: \(error)")
+                }
+            }
+        } else {
+            // Fallback: open with default application
+            NSWorkspace.shared.open(fileURL)
+        }
     }
 }
 
