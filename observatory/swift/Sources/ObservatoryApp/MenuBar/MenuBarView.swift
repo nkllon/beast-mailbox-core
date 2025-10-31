@@ -12,6 +12,7 @@ struct MenuBarView: View {
     @EnvironmentObject var monitor: StatusMonitor
     @State private var showingDashboard = false
     @State private var showingSettings = false
+    @State private var showingChat = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -62,6 +63,13 @@ struct MenuBarView: View {
             .keyboardShortcut("d", modifiers: .command)
             
             Button(action: {
+                showingChat = true
+            }) {
+                Label("Chat with Apple Intelligence", systemImage: "message.fill")
+            }
+            .keyboardShortcut("c", modifiers: .command)
+            
+            Button(action: {
                 openLogs()
             }) {
                 Label("View Logs", systemImage: "doc.text")
@@ -92,6 +100,10 @@ struct MenuBarView: View {
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
+        }
+        .sheet(isPresented: $showingChat) {
+            ChatView()
+                .frame(minWidth: 600, minHeight: 500)
         }
     }
     

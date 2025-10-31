@@ -27,7 +27,7 @@ class SimpleHTTPServer {
         }
         
         let parameters = NWParameters.tcp
-        let portEndpoint = NWEndpoint.Port(rawValue: port)!
+        let portEndpoint = NWEndpoint.Port(rawValue: self.port)!
         listener = try NWListener(using: parameters, on: portEndpoint)
         
         listener?.newConnectionHandler = { [weak self] connection in
@@ -73,7 +73,7 @@ class SimpleHTTPServer {
         logger.debug("Received request: \(requestString.prefix(200))")
         
         let response = processRequest(requestString)
-        sendResponse(connection: connection, status: response.status, body: response.body, headers: response.headers)
+        sendResponse(connection: connection, status: response.status, body: response.body, headers: response.headers ?? [:])
     }
     
     private func processRequest(_ requestString: String) -> ServerHTTPResponse {
@@ -174,7 +174,13 @@ class SimpleHTTPServer {
 struct ServerHTTPResponse {
     let status: Int
     let body: String
-    let headers: [String: String]
+    let headers: [String: String]?
+    
+    init(status: Int, body: String, headers: [String: String]? = nil) {
+        self.status = status
+        self.body = body
+        self.headers = headers
+    }
 }
 
 func HTTPStatusText(status: Int) -> String {
