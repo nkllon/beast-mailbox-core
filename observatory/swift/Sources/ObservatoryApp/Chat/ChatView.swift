@@ -70,11 +70,10 @@ struct ChatView: View {
             .padding()
         }
         .frame(minWidth: 600, minHeight: 500)
-        .chatWindowFix()
         .navigationTitle("Apple Intelligence Chat")
         .onAppear {
-            // Additional window configuration on appear
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            // Configure window to stay open when clicked
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 configureChatWindow()
             }
         }
