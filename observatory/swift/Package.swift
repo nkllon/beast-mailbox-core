@@ -27,7 +27,7 @@ let package = Package(
         .testTarget(
             name: "ObservatoryAppTests",
             dependencies: ["ObservatoryApp"],
-            path: "Tests"
+            path: "Tests/ObservatoryAppTests"
         ),
     ]
 )
