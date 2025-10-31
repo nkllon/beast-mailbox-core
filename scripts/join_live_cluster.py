@@ -13,6 +13,16 @@ from beast_mailbox_core.redis_mailbox import MailboxConfig
 # Configuration - can be set via environment variables
 import os
 
+# Try to load from ~/.env file if it exists
+_env_file = os.path.expanduser("~/.env")
+if os.path.exists(_env_file):
+    with open(_env_file, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                os.environ.setdefault(key.strip(), value.strip())
+
 REDIS_HOST = os.getenv("REDIS_HOST", "192.168.1.119")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "beastmode2025")
