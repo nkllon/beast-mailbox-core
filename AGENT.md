@@ -530,6 +530,31 @@ This section exists because someone (me) made mistakes and learned lessons the h
 
 **Action:** Always check actual system state before making assumptions.
 
+#### Lesson 8: Express Requirements, Don't Build Solutions for Others
+
+**Mistake Made:** I needed documentation for `beast-agent` integration, but instead of expressing the requirement to `beast-agent` maintainers, I built the documentation myself in `beast-mailbox-core`.
+
+**Root Cause:** I violated the "requirements before solutions" principle. I built a solution when I should have expressed a requirement.
+
+**What I Learned:**
+- **If someone else owns it, express the requirement, don't build the solution:**
+  - Identify what's needed
+  - Express requirement to the owner
+  - Let the owner build the solution
+  
+- **If you build it anyway (because it's needed NOW):**
+  - Mark it as TEMPORARY
+  - Document that it should be replaced by owner's authoritative docs
+  - Express requirement to owner
+  - Link to owner's docs once they create them
+
+- **Ownership matters:**
+  - `beast-agent` owns `BaseAgent` API documentation
+  - `beast-agent` owns agent registration/discovery documentation
+  - I can show integration patterns, but I don't own their API docs
+
+**Action:** Always express requirements to owners. Don't build solutions for things you don't own. If you must build temporary solutions, clearly mark them as temporary and ensure requirements are expressed to the owner.
+
 #### Summary: Release Process Checklist (Updated)
 
 For a typical release (learned from v0.4.0-v0.4.2):
