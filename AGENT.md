@@ -43,7 +43,7 @@ A Python package providing **Redis Streams-based mailbox utilities** for inter-a
 - CLI tools: `beast-mailbox-service` and `beast-mailbox-send`
 - One-shot message inspection with optional ack/trim operations
 
-**Current Version:** 0.3.1  
+**Current Version:** 0.4.1  
 **Python Support:** 3.9, 3.10, 3.11, 3.12  
 **Package:** [pypi.org/project/beast-mailbox-core](https://pypi.org/project/beast-mailbox-core/)
 
@@ -564,6 +564,26 @@ pytest tests/
 
 **Secrets Required:**
 - `SONAR_TOKEN` - SonarCloud authentication
+
+### GitHub Actions - PyPI Publishing
+
+**Workflow:** `.github/workflows/publish.yml`
+
+**Triggers:**
+- Release publication (when GitHub release is created)
+- Manual workflow dispatch
+
+**Steps:**
+1. Checkout code
+2. Set up Python 3.9
+3. Install build tools (build, twine)
+4. Build package (wheel + source dist)
+5. Publish to PyPI using `PYPI_API_TOKEN` secret
+
+**Secrets Required:**
+- `PYPI_API_TOKEN` - PyPI API token (must be configured in GitHub repository settings)
+
+**Note:** This workflow automatically publishes to PyPI when a GitHub release is created. No manual `twine upload` needed if token is configured.
 
 ### Requirement Gathering for CI/CD & Deployment
 
