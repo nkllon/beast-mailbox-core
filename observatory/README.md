@@ -56,6 +56,8 @@ observatory/
 - [x] Boot stack locally
 - [x] Verify all services working
 - [x] Create sync service (periodic SonarCloud → Prometheus)
+- [x] Implement sync service (SonarCloud API → Pushgateway)
+- [x] Fix URL encoding and metrics format issues
 - [x] Design mailbox integration (optional decoupling)
 
 ### CHECK ✅
@@ -63,9 +65,13 @@ observatory/
 - [x] Verify service connectivity
 - [x] Test metric push
 - [x] Verify Prometheus scraping
+- [x] Test sync service end-to-end (SonarCloud → Pushgateway)
+- [x] Verify metrics visible in Pushgateway
 
 ### ACT/ADJUST ✅
 - [x] Fix docker-compose version warning
+- [x] Fix sync service 400 error (URL encoding)
+- [x] Fix metrics format (non-numeric values, label escaping)
 - [x] Verify full integration
 - [x] Document architecture
 

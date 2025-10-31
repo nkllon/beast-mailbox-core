@@ -9,14 +9,28 @@ Decouples sync service from Prometheus availability.
 import asyncio
 import logging
 import os
-from beast_mailbox_core import RedisMailboxService, MailboxMessage, MailboxConfig
-import aiohttp
+from typing import Dict, Optional
+
+try:
+    from beast_mailbox_core import RedisMailboxService, MailboxMessage
+    # MailboxConfig is in redis_mailbox module
+    from beast_mailbox_core.redis_mailbox import MailboxConfig
+except ImportError as e:
+    print(f"ERROR: beast-mailbox-core not installed or incomplete: {e}")
+    print("Install with: pip install beast-mailbox-core>=0.4.4")
+    raise
+
+try:
+    import aiohttp
+except ImportError:
+    print("ERROR: aiohttp not installed. Install with: pip install aiohttp")
+    raise
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger("observatory.consumer")
+logger = logging.getLogger("beast_observatory.consumer")
 
 
 class PushgatewayPusher:
@@ -138,6 +152,11 @@ async def main():
     await consumer.start()
 
 
-if __name__ == "__main__":
+def main_cli():
+    """CLI entry point for setuptools."""
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    main_cli()
 

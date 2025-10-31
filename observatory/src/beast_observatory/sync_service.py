@@ -4,30 +4,60 @@ Observatory Sync Service
 
 Periodically syncs historical metrics from SonarCloud API to Prometheus Pushgateway.
 Can optionally use Redis mailbox for decoupling.
+
+Usage:
+    python sync_service.py
+
+Environment Variables:
+    SONARCLOUD_PROJECT_KEY - SonarCloud project key (default: nkllon_beast-mailbox-core)
+    SONARCLOUD_TOKEN - SonarCloud API token (optional, for auth)
+    PROMETHEUS_PUSHGATEWAY_URL - Pushgateway endpoint (default: http://localhost:9091)
+    PROMETHEUS_PUSHGATEWAY_AUTH - Basic auth (optional, format: user:pass)
+    SYNC_INTERVAL_HOURS - Sync interval in hours (default: 1)
+    USE_MAILBOX - Use Redis mailbox for decoupling (default: false)
+    REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB - Redis config for mailbox
+    GIT_BRANCH - Git branch name (default: main)
+    PACKAGE_VERSION - Package version (optional)
 """
 
 import asyncio
 import json
 import logging
 import os
+import sys
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from urllib.parse import urlencode
-import aiohttp
+
+if TYPE_CHECKING:
+    from beast_mailbox_core import MailboxConfig
+
+try:
+    import aiohttp
+except ImportError:
+    print("ERROR: aiohttp not installed. Install with: pip install aiohttp")
+    sys.exit(1)
 
 # Optionally use beast-mailbox-core for decoupling
 try:
-    from beast_mailbox_core import RedisMailboxService, MailboxMessage, MailboxConfig
+    from beast_mailbox_core import RedisMailboxService, MailboxMessage
+    # MailboxConfig is in redis_mailbox module
+    from beast_mailbox_core.redis_mailbox import MailboxConfig
     HAS_MAILBOX = True
 except ImportError:
     HAS_MAILBOX = False
+    # logger not defined yet, so we'll check later
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger("observatory.sync")
+logger = logging.getLogger("beast_observatory.sync")
+
+# Check mailbox availability after logger is set up
+if not HAS_MAILBOX:
+    logger.warning("beast-mailbox-core not available - mailbox decoupling disabled")
 
 
 class SonarCloudClient:
@@ -127,21 +157,35 @@ class MetricsPusher:
     ) -> bool:
         """Push metrics to Pushgateway."""
         # Build URL: /metrics/job/{job}/instance/{instance}/branch/{branch}/version/{version}
-        url = f"{self.pushgateway_url}/metrics/job/{job}/instance/{instance}"
+        # URL encode label values to handle special characters
+        from urllib.parse import quote
+        
+        url = f"{self.pushgateway_url}/metrics/job/{quote(job, safe='')}/instance/{quote(instance, safe='')}"
         
         if labels:
             for key, value in labels.items():
-                url += f"/{key}/{value}"
+                # URL encode both key and value
+                url += f"/{quote(key, safe='')}/{quote(str(value), safe='')}"
         
         logger.info(f"Pushing metrics to: {url}")
+        logger.debug(f"Metrics content:\n{metrics_content}")
         
         try:
-            async with self.session.put(url, data=metrics_content) as response:
-                response.raise_for_status()
-                logger.info(f"Metrics pushed successfully (HTTP {response.status})")
-                return True
+            # Ensure metrics_content ends with newline
+            if not metrics_content.endswith('\n'):
+                metrics_content += '\n'
+            
+            async with self.session.put(url, data=metrics_content.encode('utf-8'), 
+                                         headers={'Content-Type': 'text/plain; charset=utf-8'}) as response:
+                if response.status == 200:
+                    logger.info(f"Metrics pushed successfully (HTTP {response.status})")
+                    return True
+                else:
+                    error_text = await response.text()
+                    logger.error(f"Failed to push metrics (HTTP {response.status}): {error_text}")
+                    return False
         except Exception as e:
-            logger.error(f"Failed to push metrics: {e}")
+            logger.error(f"Failed to push metrics: {e}", exc_info=True)
             return False
 
 
@@ -178,37 +222,98 @@ class MailboxPublisher:
 
 async def convert_sonarcloud_to_prometheus(
     historical_data: Dict,
+    current_data: Optional[Dict] = None,
     branch: str = "main",
     version: Optional[str] = None
 ) -> str:
-    """Convert SonarCloud historical data to Prometheus format."""
-    lines = []
+    """Convert SonarCloud data to Prometheus format.
     
-    for measure in historical_data.get("measures", []):
-        metric_name = measure["metric"]
-        history = measure.get("history", [])
-        
-        # Convert metric name to Prometheus format
-        prom_metric = f"sonarcloud_{metric_name}"
-        
-        # Add HELP and TYPE
-        help_text = f"Code {metric_name} from SonarCloud"
-        lines.append(f"# HELP {prom_metric} {help_text}")
-        lines.append(f"# TYPE {prom_metric} gauge")
-        
-        # Add data points (use most recent if multiple)
-        if history:
-            latest = history[-1]  # Most recent
-            value = latest["value"]
-            date = latest["date"]
+    Args:
+        historical_data: SonarCloud historical metrics API response
+        current_data: SonarCloud current metrics API response (optional, preferred)
+        branch: Git branch name for labels
+        version: Package version for labels
+    
+    Returns:
+        Prometheus-formatted metrics string
+    """
+    lines = []
+    metrics_seen = set()  # Track which metrics we've added HELP/TYPE for
+    
+    # Escape quotes and backslashes in label values
+    branch_escaped = branch.replace('\\', '\\\\').replace('"', '\\"')
+    version_escaped = version.replace('\\', '\\\\').replace('"', '\\"') if version else None
+    
+    # Build labels string once
+    labels = f'branch="{branch_escaped}"'
+    if version_escaped:
+        labels += f',version="{version_escaped}"'
+    
+    # Use current data if available (preferred)
+    if current_data and "component" in current_data and "measures" in current_data["component"]:
+        for measure in current_data["component"]["measures"]:
+            metric_name = measure.get("metric")
+            if not metric_name:
+                continue
+                
+            # Convert metric name to Prometheus format (replace - with _)
+            prom_metric = f"sonarcloud_{metric_name.replace('-', '_')}"
             
-            # Format: metric{labels} value timestamp
-            labels = f'branch="{branch}"'
-            if version:
-                labels += f',version="{version}"'
+            # Add HELP and TYPE (once per metric)
+            if prom_metric not in metrics_seen:
+                help_text = f"Code {metric_name} from SonarCloud"
+                lines.append(f"# HELP {prom_metric} {help_text}")
+                lines.append(f"# TYPE {prom_metric} gauge")
+                metrics_seen.add(prom_metric)
             
-            # Prometheus format (no timestamp for gauges pushed via Pushgateway)
-            lines.append(f'{prom_metric}{{{labels}}} {value}')
+            # Get value
+            value_obj = measure.get("value")
+            if value_obj is None or value_obj == "":
+                continue
+            
+            # Convert to float (handle strings like "1.0" or numeric)
+            try:
+                value_float = float(value_obj)
+                lines.append(f'{prom_metric}{{{labels}}} {value_float}')
+            except (ValueError, TypeError):
+                logger.warning(f"Non-numeric value for {prom_metric}: {value_obj}, skipping")
+                continue
+    
+    # Fallback to historical data if current_data not available
+    elif historical_data and "measures" in historical_data:
+        for measure in historical_data["measures"]:
+            metric_name = measure.get("metric")
+            if not metric_name:
+                continue
+            
+            # Convert metric name to Prometheus format
+            prom_metric = f"sonarcloud_{metric_name.replace('-', '_')}"
+            
+            # Add HELP and TYPE (once per metric)
+            if prom_metric not in metrics_seen:
+                help_text = f"Code {metric_name} from SonarCloud"
+                lines.append(f"# HELP {prom_metric} {help_text}")
+                lines.append(f"# TYPE {prom_metric} gauge")
+                metrics_seen.add(prom_metric)
+            
+            # Get most recent value from history
+            history = measure.get("history", [])
+            if history:
+                latest = history[-1]  # Most recent
+                value = latest.get("value")
+                if value is None or value == "":
+                    continue
+                
+                try:
+                    value_float = float(value)
+                    lines.append(f'{prom_metric}{{{labels}}} {value_float}')
+                except (ValueError, TypeError):
+                    logger.warning(f"Non-numeric value for {prom_metric}: {value}, skipping")
+                    continue
+    
+    if not lines:
+        logger.warning("No metrics converted - check SonarCloud API response format")
+        return "# No metrics available\n"
     
     return "\n".join(lines) + "\n"
 
@@ -218,7 +323,7 @@ async def sync_job(
     pushgateway_url: str,
     sonarcloud_token: Optional[str] = None,
     use_mailbox: bool = False,
-    redis_config: Optional[MailboxConfig] = None,
+    redis_config: Optional[Any] = None,  # MailboxConfig if mailbox enabled
     sync_interval_hours: int = 1
 ):
     """Main sync job - runs periodically."""
@@ -250,7 +355,8 @@ async def sync_job(
             version = os.getenv("PACKAGE_VERSION", None)
             
             prom_metrics = await convert_sonarcloud_to_prometheus(
-                historical,
+                historical_data=historical,
+                current_data=current,
                 branch=branch,
                 version=version
             )
