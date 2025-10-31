@@ -7,13 +7,34 @@
 
 set -euo pipefail
 
-# Load credentials from home directory .env file
+# Try to extract Team ID and Apple ID from Xcode first
+extract_xcode_credentials() {
+    # Try to get Team ID from Xcode project
+    if [ -f "${PROJECT_NAME}.xcodeproj/project.pbxproj" ]; then
+        XCODE_TEAM_ID=$(grep -m 1 "DEVELOPMENT_TEAM" "${PROJECT_NAME}.xcodeproj/project.pbxproj" 2>/dev/null | \
+            sed -E 's/.*DEVELOPMENT_TEAM = ([^;]*).*/\1/' | tr -d ' ' | tr -d '"')
+        if [ -n "$XCODE_TEAM_ID" ] && [ "$XCODE_TEAM_ID" != "" ]; then
+            if [ -z "${TEAM_ID:-}" ]; then
+                TEAM_ID="$XCODE_TEAM_ID"
+                echo "📋 Using Team ID from Xcode project: $TEAM_ID"
+            fi
+        fi
+    fi
+    
+    # Try to get Apple ID from Xcode preferences (simpler - just use what's in accounts)
+    # Xcode stores this, but it's complex to extract. Better to rely on user setting it.
+}
+
+# Extract from Xcode if available
+extract_xcode_credentials
+
+# Load credentials from home directory .env file (overrides Xcode values if set)
 if [ -f "$HOME/.env" ]; then
     echo "📋 Loading credentials from ~/.env..."
     source "$HOME/.env"
 else
-    echo "⚠️  Warning: ~/.env not found"
-    echo "   Create it with your Apple Developer credentials"
+    echo "⚠️  Note: ~/.env not found (optional - Xcode handles signing)"
+    echo "   Create it if you need App-Specific Password or API Key for CLI"
     echo "   See .env.example for template"
 fi
 
