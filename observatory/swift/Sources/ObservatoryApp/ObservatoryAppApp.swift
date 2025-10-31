@@ -39,24 +39,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         startIntelligenceServer()
         
         // Request notification permissions (only if running as app bundle)
-        Task {
-            // Check if we're running as a proper app bundle
-            guard Bundle.main.bundleURL.pathExtension == "app" || 
-                  ProcessInfo.processInfo.environment["XPC_SERVICE_NAME"] != nil else {
-                // Running from Swift Package - skip notification setup
-                print("ℹ️  Running from Swift Package - skipping notification setup")
-                return
-            }
-            
-            do {
-                let center = UNUserNotificationCenter.current()
-                let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
-                if granted {
-                    print("✅ Notification permission granted")
+        // Note: UNUserNotificationCenter requires proper app bundle, will crash from Swift Package
+        // For now, skip notification setup when running from command line
+        // Will work when running as .app from Xcode
+        if Bundle.main.bundleURL.pathExtension == "app" {
+            Task {
+                do {
+                    let center = UNUserNotificationCenter.current()
+                    let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+                    if granted {
+                        print("✅ Notification permission granted")
+                    }
+                } catch {
+                    print("⚠️  Notification permission error: \(error)")
                 }
-            } catch {
-                print("⚠️  Notification permission error: \(error)")
             }
+        } else {
+            print("ℹ️  Running from Swift Package - skipping notification setup (requires .app bundle)")
         }
     }
     
