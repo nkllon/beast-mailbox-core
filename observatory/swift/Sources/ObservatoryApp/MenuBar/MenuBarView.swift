@@ -122,14 +122,7 @@ struct MenuBarView: View {
         // Keep reference to prevent deallocation
         chatWindow = window
         
-        // Handle window close
-        NotificationCenter.default.addObserver(
-            forName: NSWindow.willCloseNotification,
-            object: window,
-            queue: .main
-        ) { [weak self] _ in
-            self?.chatWindow = nil
-        }
+        // Window will be managed - closed windows will be niled on next open
     }
     
     private func openDashboardWindow() {
@@ -160,8 +153,8 @@ struct MenuBarView: View {
             forName: NSWindow.willCloseNotification,
             object: window,
             queue: .main
-        ) { [weak self] _ in
-            self?.dashboardWindow = nil
+        ) { _ in
+            // Window closed, will be handled by next open call
         }
     }
     
@@ -192,8 +185,8 @@ struct MenuBarView: View {
             forName: NSWindow.willCloseNotification,
             object: window,
             queue: .main
-        ) { [weak self] _ in
-            self?.settingsWindow = nil
+        ) { _ in
+            // Window closed, will be handled by next open call
         }
     }
     

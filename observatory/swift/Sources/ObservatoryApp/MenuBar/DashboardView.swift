@@ -10,7 +10,6 @@ import Charts
 
 struct DashboardView: View {
     @EnvironmentObject var monitor: StatusMonitor
-    @Environment(\.dismiss) var dismiss
     @State private var metrics: [MetricPoint] = []
     @State private var isLoading = false
     
@@ -130,8 +129,6 @@ struct MetricPoint: Identifiable {
 }
 
 struct SettingsView: View {
-    @Environment(\.dismiss) var dismiss
-    
     var body: some View {
         NavigationStack {
             Form {
@@ -149,13 +146,6 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
-            .toolbar {
-                ToolbarItem(placement: .automatic) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
             .frame(width: 500, height: 400)
         }
     }
