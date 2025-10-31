@@ -389,6 +389,8 @@ This section exists because someone (me) made mistakes and learned lessons the h
 
 **Mistake Made:** I tried to manually publish to PyPI using `twine upload`, not knowing that GitHub Actions workflow `.github/workflows/publish.yml` automatically publishes when a GitHub release is created.
 
+**Root Cause:** I created a solution (manual twine upload) without first declaring the requirement ("understand how PyPI publishing currently works") and verifying what already existed.
+
 **What I Learned:**
 - **ALWAYS** check existing workflows before proposing solutions:
   ```bash
@@ -773,6 +775,25 @@ pytest tests/
 
 **Note:** This workflow automatically publishes to PyPI when a GitHub release is created. No manual `twine upload` needed if token is configured.
 
+### Requirement Gathering: Core Principle
+
+⚠️ **FUNDAMENTAL PRINCIPLE:** You own this repository. You own the requirements. There are no solutions without requirements.
+
+**The Rule:**
+- If you need something, **declare it as a requirement first**
+- If you create a solution without requirements, **it's a hallucination - it will fail**
+- **Requirements ARE the solution** - they define what needs to be done
+- Before any solution, there must be requirements
+
+**Why This Matters:**
+- Without requirements, solutions are built on assumptions
+- Assumptions lead to rework when they're wrong
+- Requirements force you to understand the problem before solving it
+- Requirements ensure solutions solve actual needs, not imagined ones
+
+**Application:**
+This applies to **ALL work** - features, fixes, CI/CD, deployment, documentation, everything. If there's no requirement, there's no solution.
+
 ### Requirement Gathering for CI/CD & Deployment
 
 ⚠️ **CRITICAL:** Before creating ANY solution related to CI/CD, deployment, or workflows, you MUST gather requirements first.
@@ -820,20 +841,25 @@ pytest tests/
    - What credentials/secrets are needed?
    - What's the actual deployment process?
 
-#### DO NOT Create Solutions Without:
+#### DO NOT Create Solutions Without Requirements:
 
 ❌ **NEVER:**
-- Create a workflow without checking if one already exists
-- Assume manual deployment without checking for automation
-- Create Docker setup without checking if it exists
-- Propose CI/CD changes without understanding current setup
+- Create a solution without declaring requirements first
+- Assume what needs to be done without understanding the need
+- Create a workflow without checking if one already exists (requirement: "check existing workflows")
+- Assume manual deployment without checking for automation (requirement: "understand current deployment")
+- Create Docker setup without checking if it exists (requirement: "check existing containerization")
+- Propose CI/CD changes without understanding current setup (requirement: "understand current CI/CD")
+- Build features without user needs defined (requirement: "understand user need")
 
 ✅ **ALWAYS:**
-- List and read all existing workflows FIRST
-- Understand what triggers exist
-- Verify what's documented vs. what's implemented
-- Check actual system state before proposing changes
-- Document gaps between docs and reality
+- **Declare requirements BEFORE proposing solutions**
+- List and read all existing workflows FIRST (requirement: "understand existing automation")
+- Understand what triggers exist (requirement: "map current triggers")
+- Verify what's documented vs. what's implemented (requirement: "identify documentation gaps")
+- Check actual system state before proposing changes (requirement: "verify actual state")
+- Document gaps between docs and reality (requirement: "identify discrepancies")
+- For any solution: **What is the requirement that this solves?**
 
 #### Example: Correct Requirement Gathering Process
 
@@ -860,28 +886,39 @@ grep -i "workflow\|CI\|CD\|publish\|deploy" steering/release-procedure-CORRECTED
 
 #### Requirement Documentation Template
 
-When creating a solution, document:
+When creating a solution, **document the requirement first**, then the solution:
 
-1. **What was checked:**
+1. **REQUIREMENT (define first):**
+   - What problem needs to be solved? [describe]
+   - What gap exists? [describe]
+   - What need is not being met? [describe]
+   - Why is this needed? [rationale]
+
+2. **Current State (verify before proposing):**
    - Existing workflows: [list]
    - Documentation reviewed: [files]
    - System state verified: [how]
+   - What already exists that solves this? [check]
 
-2. **What gaps were found:**
-   - Missing automation: [what]
-   - Documentation gaps: [what]
-   - Configuration needed: [what]
+3. **Gap Analysis:**
+   - Missing functionality: [what requirement isn't met]
+   - Documentation gaps: [what requirement isn't documented]
+   - Configuration gaps: [what requirement needs config]
+   - **If no gap exists, STOP - no solution needed**
 
-3. **Solution proposed:**
-   - New workflow: [what it does]
-   - Triggers: [what events]
-   - Dependencies: [secrets, configs needed]
+4. **Solution (only if requirement confirmed and gap exists):**
+   - New workflow: [what requirement it solves]
+   - Triggers: [what requirement they meet]
+   - Dependencies: [what requirements they fulfill]
 
-4. **Verification plan:**
-   - How to test: [steps]
-   - How to verify: [checks]
+5. **Verification:**
+   - How to test requirement is met: [steps]
+   - How to verify solution works: [checks]
+   - **Does this solve the stated requirement?** [yes/no]
 
-This ensures solutions are based on actual requirements, not assumptions.
+**Critical Question:** If you can't state the requirement clearly, you can't build the solution correctly.
+
+This ensures solutions are based on actual requirements, not assumptions or hallucinations.
 
 ### SonarCloud
 
