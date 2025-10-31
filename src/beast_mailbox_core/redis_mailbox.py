@@ -267,6 +267,7 @@ class RedisMailboxService:
         
         while True:
             try:
+                self.logger.debug("Calling xautoclaim with start_id=%s, min_idle_time=%dms", start_id, self.config.recovery_min_idle_time * 1000)
                 # Claim pending messages
                 claimed_data = await self._client.xautoclaim(
                     name=self.inbox_stream,
@@ -277,18 +278,29 @@ class RedisMailboxService:
                     count=self.config.recovery_batch_size,
                 )
                 
+                self.logger.debug("xautoclaim returned: %s (type: %s, len: %s)", claimed_data, type(claimed_data), len(claimed_data) if claimed_data else None)
+                
                 if not claimed_data or len(claimed_data) < 3:
+                    self.logger.debug("No more claims available (claimed_data=%s), breaking", claimed_data)
                     break
                     
                 next_start_id = claimed_data[0]
                 # claimed_data[1] is a list of messages
                 messages = claimed_data[1]
                 
+                self.logger.debug("Next start ID: %s (type: %s), Messages: %d", next_start_id, type(next_start_id), len(messages) if messages else 0)
+                
+                # Convert bytes to string for comparison
+                next_start_id_str = next_start_id.decode() if isinstance(next_start_id, bytes) else str(next_start_id)
+                
                 if not messages:
                     # If no messages were claimed, move to next ID to prevent infinite loop
-                    if next_start_id == "0-0":
+                    self.logger.debug("No messages in this batch, next_start_id_str=%s", next_start_id_str)
+                    if next_start_id_str == "0-0":
+                        self.logger.debug("Next ID is '0-0' with no messages, breaking")
                         break
-                    start_id = next_start_id
+                    start_id = next_start_id_str if isinstance(next_start_id, bytes) else next_start_id
+                    self.logger.debug("Continuing with next start_id=%s", start_id)
                     continue
                 
                 self.logger.debug(
@@ -322,7 +334,8 @@ class RedisMailboxService:
                 metrics.batches_processed += 1
                 
                 # Continue with next batch
-                start_id = next_start_id
+                # Convert bytes to string if needed
+                start_id = next_start_id_str if isinstance(next_start_id, bytes) else str(next_start_id)
                 
             except asyncio.CancelledError:
                 raise
