@@ -265,6 +265,7 @@ Set `BEAST_MODE_PROMETHEUS_ENABLED=false` to explicitly disable metrics collecti
 
 ### Observability
 
+- **🚀 [Complete Deployment Guide](docs/PROMETHEUS_DEPLOYMENT_COMPLETE.md)** - Step-by-step: Dashboard + Data Loading ⭐
 - **⚡ [Prometheus Quick Start](docs/PROMETHEUS_QUICK_START.md)** - 5-minute setup guide for quality metrics
 - **📊 [Prometheus Metrics Design](docs/PROMETHEUS_METRICS_DESIGN.md)** - Complete metrics reference
 - **🚀 [Cluster Setup](docs/PROMETHEUS_CLUSTER_SETUP.md)** - Kubernetes/Docker deployment guide
