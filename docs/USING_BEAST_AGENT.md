@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
 ## Key Features
 
-### Agent Name Registration (v0.1.2+)
+### Agent Name Registration (v0.1.0+)
 
 When your agent starts, it automatically:
 
