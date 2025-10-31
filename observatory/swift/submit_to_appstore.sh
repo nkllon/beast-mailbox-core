@@ -2,19 +2,25 @@
 # Complete App Store submission script
 # Usage: ./submit_to_appstore.sh
 #
-# Set environment variables:
-#   TEAM_ID - Your Apple Developer Team ID
-#   APPLE_ID - Your Apple ID email
-#   APP_STORE_PASSWORD - App-specific password (or API key)
-#   API_KEY_ID - Optional: API Key ID
-#   API_ISSUER_ID - Optional: API Issuer ID
+# Loads credentials from ~/.env
+# Set up your credentials there first (see .env.example)
 
 set -euo pipefail
 
-# Configuration
-PROJECT_NAME="ObservatoryApp"
-SCHEME="ObservatoryApp"
-BUNDLE_ID="com.nkllon.ObservatoryApp"
+# Load credentials from home directory .env file
+if [ -f "$HOME/.env" ]; then
+    echo "📋 Loading credentials from ~/.env..."
+    source "$HOME/.env"
+else
+    echo "⚠️  Warning: ~/.env not found"
+    echo "   Create it with your Apple Developer credentials"
+    echo "   See .env.example for template"
+fi
+
+# Configuration (loaded from ~/.env or defaults)
+PROJECT_NAME="${PROJECT_NAME:-ObservatoryApp}"
+SCHEME="${SCHEME:-ObservatoryApp}"
+BUNDLE_ID="${BUNDLE_ID:-com.nkllon.ObservatoryApp}"
 TEAM_ID="${TEAM_ID:-}"
 APPLE_ID="${APPLE_ID:-}"
 APP_STORE_PASSWORD="${APP_STORE_PASSWORD:-}"
