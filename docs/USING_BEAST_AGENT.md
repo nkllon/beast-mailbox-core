@@ -1,10 +1,18 @@
 # Using beast-agent for Multi-Agent Communication
 
-**⚠️ TEMPORARY INTEGRATION EXAMPLES**
+**✅ DEPRECATED - USE AUTHORITATIVE DOCS**
 
-**Status:** These are temporary integration examples created to fill a documentation gap. **Authoritative `beast-agent` documentation should be in the `beast-agent` repository.**
+**Status:** This was a temporary integration guide. **Authoritative documentation is now available in the `beast-agent` repository (v0.1.3+).**
 
-**Requirement Expressed:** See `prompts/inbound/20250131_BEAST_AGENT_INTEGRATION_DOCS.md` for the requirement sent to beast-agent maintainers.
+**👉 Use This Instead:** See [beast-agent Integration Documentation](https://github.com/nkllon/beast-agent/blob/main/docs/INTEGRATION_WITH_MAILBOX_CORE.md) for complete, authoritative integration guide.
+
+**What Changed:**
+- beast-agent v0.1.3 now includes complete integration documentation
+- Authentication examples with `MailboxConfig` are documented
+- Cluster discovery guide is available
+- All examples are tested and maintained
+
+**Requirement Fulfilled:** See `prompts/inbound/20250131_BEAST_AGENT_INTEGRATION_DOCS.md` for original requirement. All requirements have been fulfilled by beast-agent v0.1.3.
 
 **What This Shows:**
 - How `beast-mailbox-core`'s `MailboxConfig` is used with `beast-agent`

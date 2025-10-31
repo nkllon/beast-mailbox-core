@@ -238,9 +238,10 @@ Set `BEAST_MODE_PROMETHEUS_ENABLED=false` to explicitly disable metrics collecti
 ## Documentation
 
 - **📘 [API Reference](docs/API.md)** - Comprehensive API documentation for integration
-- **🤖 [beast-agent Integration](https://github.com/nkllon/beast-agent/blob/main/docs/INTEGRATION_WITH_MAILBOX_CORE.md)** - Authoritative guide for using beast-agent with beast-mailbox-core ⭐
+- **🤖 [beast-agent Integration](https://github.com/nkllon/beast-agent/blob/main/docs/INTEGRATION_WITH_MAILBOX_CORE.md)** - Authoritative guide for using beast-agent with beast-mailbox-core ⭐ (v0.1.3+)
 - **📖 [Usage Guide](docs/USAGE_GUIDE.md)** - Detailed usage patterns and examples
- Hunt: Deprecated temporary guides (see beast-agent repo for authoritative docs):
+
+**Note:** Deprecated temporary guides (see beast-agent repo for authoritative docs):
   - ~~[Using beast-agent](docs/USING_BEAST_AGENT.md)~~ (deprecated - use beast-agent docs)
   - ~~[Cluster Discovery](docs/CLUSTER_DISCOVERY.md)~~ (deprecated - use beast-agent docs)
 - **🔍 [SonarCloud & Integration Testing](docs/SONARCLOUD_INTEGRATION_GUIDE.md)** - Best practices for quality infrastructure
