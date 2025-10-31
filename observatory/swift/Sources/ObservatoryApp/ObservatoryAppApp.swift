@@ -38,8 +38,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Start Apple Intelligence HTTP server (for Python agents)
         startIntelligenceServer()
         
-        // Request notification permissions
+        // Request notification permissions (only if running as app bundle)
         Task {
+            // Check if we're running as a proper app bundle
+            guard Bundle.main.bundleURL.pathExtension == "app" || 
+                  ProcessInfo.processInfo.environment["XPC_SERVICE_NAME"] != nil else {
+                // Running from Swift Package - skip notification setup
+                print("ℹ️  Running from Swift Package - skipping notification setup")
+                return
+            }
+            
             do {
                 let center = UNUserNotificationCenter.current()
                 let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
