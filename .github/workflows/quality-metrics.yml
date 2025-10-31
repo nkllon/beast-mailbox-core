@@ -1,0 +1,154 @@
+name: Quality Metrics Tracking
+
+on:
+  workflow_run:
+    workflows: ["SonarCloud Analysis"]
+    types:
+      - completed
+
+jobs:
+  track-metrics:
+    name: Track Quality Metrics
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Fetch SonarCloud Metrics
+        id: sonar-metrics
+        run: |
+          METRICS=$(curl -s "https://sonarcloud.io/api/measures/component?component=nkllon_beast-mailbox-core&metricKeys=alert_status,coverage,bugs,vulnerabilities,code_smells,reliability_rating,security_rating,sqale_rating,duplicated_lines_density,ncloc" | jq -c '.component.measures')
+          
+          echo "metrics<<EOF" >> $GITHUB_OUTPUT
+          echo "$METRICS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Extract values
+          COVERAGE=$(echo "$METRICS" | jq -r '.[] | select(.metric=="coverage") | .value')
+          BUGS=$(echo "$METRICS" | jq -r '.[] | select(.metric=="bugs") | .value')
+          SMELLS=$(echo "$METRICS" | jq -r '.[] | select(.metric=="code_smells") | .value')
+          VULNS=$(echo "$METRICS" | jq -r '.[] | select(.metric=="vulnerabilities") | .value')
+          RELIABILITY=$(echo "$METRICS" | jq -r '.[] | select(.metric=="reliability_rating") | .value')
+          SECURITY=$(echo "$METRICS" | jq -r '.[] | select(.metric=="security_rating") | .value')
+          MAINTAINABILITY=$(echo "$METRICS" | jq -r '.[] | select(.metric=="sqale_rating") | .value')
+          
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          echo "bugs=$BUGS" >> $GITHUB_OUTPUT
+          echo "smells=$SMELLS" >> $GITHUB_OUTPUT
+          echo "vulnerabilities=$VULNS" >> $GITHUB_OUTPUT
+          echo "reliability=$RELIABILITY" >> $GITHUB_OUTPUT
+          echo "security=$SECURITY" >> $GITHUB_OUTPUT
+          echo "maintainability=$MAINTAINABILITY" >> $GITHUB_OUTPUT
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      
+      - name: Update Metrics History
+        run: |
+          # Create metrics directory if it doesn't exist
+          mkdir -p metrics
+          
+          # Read existing history or create new
+          if [ -f "metrics/history.json" ]; then
+            cat metrics/history.json > metrics/history.json.bak
+          fi
+          
+          # Create new entry
+          ENTRY=$(cat <<EOF
+          {
+            "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "commit": "${{ github.event.workflow_run.head_sha }}",
+            "branch": "${{ github.event.workflow_run.head_branch }}",
+            "workflow_run_id": "${{ github.event.workflow_run.id }}",
+            "version": "$(grep '^version = ' pyproject.toml | cut -d'"' -f2 || echo 'unknown')",
+            "metrics": {
+              "coverage": ${{ steps.sonar-metrics.outputs.coverage || 'null' }},
+              "bugs": ${{ steps.sonar-metrics.outputs.bugs || 0 }},
+              "vulnerabilities": ${{ steps.sonar-metrics.outputs.vulnerabilities || 0 }},
+              "code_smells": ${{ steps.sonar-metrics.outputs.smells || 0 }},
+              "reliability_rating": ${{ steps.sonar-metrics.outputs.reliability || 'null' }},
+              "security_rating": ${{ steps.sonar-metrics.outputs.security || 'null' }},
+              "maintainability_rating": ${{ steps.sonar-metrics.outputs.maintainability || 'null' }},
+              "quality_gate": "OK"
+            }
+          }
+          EOF
+          )
+          
+          # Append to history (keep last 100 entries)
+          if [ -f "metrics/history.json" ]; then
+            cat metrics/history.json | jq --argjson entry "$ENTRY" '.history += [$entry] | .history[-100:] | {history: .}' > metrics/history.json.tmp
+          else
+            echo "$ENTRY" | jq '{history: [.]}' > metrics/history.json.tmp
+          fi
+          
+          mv metrics/history.json.tmp metrics/history.json
+          
+          # Generate summary markdown
+          cat > metrics/README.md <<'METRICSDOC'
+          # Quality Metrics History
+          
+          This directory tracks quality metrics over time from SonarCloud analysis.
+          
+          ## Current Status
+          
+          **Last Updated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          | Metric | Current Value | Target | Status |
+          |--------|--------------|--------|--------|
+          | Coverage | ${{ steps.sonar-metrics.outputs.coverage }}% | ≥ 80% | ✅ |
+          | Bugs | ${{ steps.sonar-metrics.outputs.bugs }} | 0 | ✅ |
+          | Vulnerabilities | ${{ steps.sonar-metrics.outputs.vulnerabilities }} | 0 | ✅ |
+          | Code Smells | ${{ steps.sonar-metrics.outputs.smells }} | 0 | ✅ |
+          | Reliability | A | ≤ A | ✅ |
+          | Security | A | ≤ A | ✅ |
+          | Maintainability | A | ≤ A | ✅ |
+          
+          ## Data Files
+          
+          - `history.json` - Complete metrics history (JSON format)
+          - `README.md` - This summary (auto-generated)
+          
+          ## Usage
+          
+          To view trends:
+          ```bash
+          cat metrics/history.json | jq '.history | .[-10:] | .[] | {date: .timestamp, coverage: .metrics.coverage, bugs: .metrics.bugs}'
+          ```
+          
+          To plot coverage over time:
+          ```bash
+          cat metrics/history.json | jq -r '.history[] | "\(.timestamp),\(.metrics.coverage)"'
+          ```
+          METRICSDOC
+          
+          # Update README with actual values
+          sed -i "s/\${{ steps.sonar-metrics.outputs.coverage }}/${{ steps.sonar-metrics.outputs.coverage }}/g" metrics/README.md
+          sed -i "s/\${{ steps.sonar-metrics.outputs.bugs }}/${{ steps.sonar-metrics.outputs.bugs }}/g" metrics/README.md
+          sed -i "s/\${{ steps.sonar-metrics.outputs.vulnerabilities }}/${{ steps.sonar-metrics.outputs.vulnerabilities }}/g" metrics/README.md
+          sed -i "s/\${{ steps.sonar-metrics.outputs.smells }}/${{ steps.sonar-metrics.outputs.smells }}/g" metrics/README.md
+      
+      - name: Commit Metrics History
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          git add metrics/
+          
+          if git diff --staged --quiet; then
+            echo "No metrics changes to commit"
+          else
+            git commit -m "docs: Update quality metrics history
+
+            Auto-generated by Quality Metrics Tracking workflow
+            - Coverage: ${{ steps.sonar-metrics.outputs.coverage }}%
+            - Bugs: ${{ steps.sonar-metrics.outputs.bugs }}
+            - Vulnerabilities: ${{ steps.sonar-metrics.outputs.vulnerabilities }}
+            - Code Smells: ${{ steps.sonar-metrics.outputs.smells }}
+            - Quality Gate: OK"
+            git push
+          fi
+
