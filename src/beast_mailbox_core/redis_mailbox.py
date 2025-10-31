@@ -487,7 +487,7 @@ class RedisMailboxService:
             await self._client.xgroup_create(
                 name=self.inbox_stream,
                 groupname=self._consumer_group,
-                id="$",
+                id="0",  # Start from beginning of stream to read all messages, not just new ones
                 mkstream=True,
             )
             self.logger.info(
