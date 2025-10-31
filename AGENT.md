@@ -365,6 +365,18 @@ pytest tests/ -v --log-cli-level=DEBUG
 
 > ⚠️ **CRITICAL:** Read `steering/release-procedure-CORRECTED.md` before any release.
 
+### Philosophy: Learn Once, Document Forever
+
+**Core Principle:** Mistakes are acceptable. Repeating mistakes is not. Work is fine. Rework is wasteful.
+
+This section exists because someone (me) made mistakes and learned lessons the hard way. The documentation below ensures future maintainers **don't repeat those same mistakes** and **don't have to do the same work twice**.
+
+**Every lesson documented here represents:**
+- ❌ A mistake that cost time
+- ❌ Work that had to be redone
+- ❌ Assumptions that proved wrong
+- ✅ Knowledge captured so it doesn't need to be re-learned
+
 ### Historical Context
 
 **v0.2.0 Crisis:** A release was published to PyPI without committing to the repository, causing a critical repository sync failure. This **must never happen again**.
