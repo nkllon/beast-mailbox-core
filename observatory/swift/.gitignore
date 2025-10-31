@@ -1,0 +1,26 @@
+# Build artifacts
+build/
+*.xcarchive
+*.pkg
+*.dSYM.zip
+export/
+
+# Environment variables
+.env
+
+# Xcode
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.swiftpm/xcode/package.xcworkspace/xcuserdata/
+
+# Export options (may contain sensitive info)
+ExportOptions.plist
+
