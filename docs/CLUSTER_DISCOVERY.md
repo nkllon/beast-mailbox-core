@@ -1,15 +1,22 @@
 # Discovering and Interacting with Agents on the Cluster
 
-**⚠️ NOTE:** This document shows Redis patterns and `beast-mailbox-core` usage for cluster discovery. The actual agent registration/discovery implementation is part of `beast-agent`. This guide shows how to use `beast-mailbox-core` features to interact with the cluster.
+**⚠️ TEMPORARY INTEGRATION EXAMPLES**
 
 **Status:** Live-fire testing active 🚀
 
-**Scope:** This guide focuses on:
-- Redis keys used by the cluster (`beast:agents:*`)
-- How to use `beast-mailbox-core` to discover agents
+**Requirement Expressed:** See `prompts/inbound/20250131_BEAST_AGENT_INTEGRATION_DOCS.md` for the requirement sent to beast-agent maintainers to document cluster discovery.
+
+**What This Shows:**
+- Redis patterns used by the cluster (`beast:agents:*`)
+- How to use `beast-mailbox-core` features to discover agents
 - Message patterns for agent interaction
 
-For `BaseAgent` API details and agent registration internals, see the [beast-agent repository](https://github.com/nkllon/beast-agent).
+**What This Does NOT Own:**
+- Agent registration/discovery implementation (owned by beast-agent)
+- `BaseAgent` API details (should be in beast-agent repo)
+- Agent registration internals (should be in beast-agent repo)
+
+**For authoritative documentation:** See the [beast-agent repository](https://github.com/nkllon/beast-agent) for cluster discovery and agent registration documentation.
 
 ## Quick Connect
 

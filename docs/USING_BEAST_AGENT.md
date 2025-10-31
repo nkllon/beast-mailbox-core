@@ -1,8 +1,22 @@
 # Using beast-agent for Multi-Agent Communication
 
-**⚠️ NOTE:** This document shows how `beast-mailbox-core`'s `MailboxConfig` is used with `beast-agent`. For authoritative `BaseAgent` API documentation, see the [beast-agent repository](https://github.com/nkllon/beast-agent).
+**⚠️ TEMPORARY INTEGRATION EXAMPLES**
 
-**Scope:** This guide focuses on `beast-mailbox-core` integration patterns (especially `MailboxConfig` usage) when using `beast-agent`. For `BaseAgent` API details, lifecycle methods, and agent-specific features, refer to `beast-agent`'s own documentation.
+**Status:** These are temporary integration examples created to fill a documentation gap. **Authoritative `beast-agent` documentation should be in the `beast-agent` repository.**
+
+**Requirement Expressed:** See `prompts/inbound/20250131_BEAST_AGENT_INTEGRATION_DOCS.md` for the requirement sent to beast-agent maintainers.
+
+**What This Shows:**
+- How `beast-mailbox-core`'s `MailboxConfig` is used with `beast-agent`
+- Integration patterns for authenticated connections
+- Cluster discovery patterns using `beast-mailbox-core` features
+
+**What This Does NOT Own:**
+- `BaseAgent` API documentation (should be in beast-agent repo)
+- Agent lifecycle methods (should be in beast-agent repo)
+- Agent registration internals (should be in beast-agent repo)
+
+**For authoritative documentation:** See the [beast-agent repository](https://github.com/nkllon/beast-agent) README and docs.
 
 You are working on a component that needs to participate in the Beast Mode agent cluster. The `beast-agent` package provides the base class and infrastructure you need.
 

@@ -1,0 +1,144 @@
+# Request to beast-agent: Integration Documentation Requirements
+
+**From**: beast-mailbox-core maintainer  
+**To**: beast-agent maintainers  
+**Date**: 2025-01-31  
+**Priority**: High - Blocks adoption
+
+---
+
+## Requirement: Integration Documentation
+
+Users need documentation showing how to use `beast-agent` with `beast-mailbox-core`, especially for authenticated Redis connections and cluster discovery.
+
+---
+
+## What's Needed
+
+### 1. Authentication Documentation (CRITICAL)
+
+**Problem:** Users cannot figure out how to authenticate to Redis when using `beast-agent`. They need to know:
+
+- How to pass `MailboxConfig` to `BaseAgent(mailbox_url=config)`
+- That `mailbox_url` accepts `MailboxConfig` objects, not just URL strings
+- Complete working examples of authenticated agents
+
+**Current Gap:**
+- No examples showing authenticated Redis connections
+- No mention that `mailbox_url` accepts `MailboxConfig` objects
+- Users have to reverse-engineer from source code
+
+**What Should Be Documented:**
+```python
+from beast_agent import BaseAgent
+from beast_mailbox_core.redis_mailbox import MailboxConfig
+
+class MyAgent(BaseAgent):
+    def __init__(self):
+        # Create MailboxConfig with password
+        mailbox_config = MailboxConfig(
+            host="192.168.1.119",
+            port=6379,
+            password="beastmode2025",
+            db=0
+        )
+        
+        super().__init__(
+            agent_id="my-agent",
+            capabilities=["my-cap"],
+            mailbox_url=mailbox_config  # Pass MailboxConfig object
+        )
+```
+
+### 2. Cluster Discovery Documentation
+
+**Problem:** Users need to know how to:
+- Discover other agents on the cluster
+- Read agent metadata and capabilities
+- Send messages to discovered agents
+
+**What Should Be Documented:**
+- Redis keys used by the cluster (`beast:agents:all`, `beast:agents:{agent_id}`)
+- How to query active agents
+- Examples of agent discovery patterns
+
+### 3. Complete Examples
+
+**Need:**
+- Authenticated agent example (complete, working code)
+- Agent discovery example
+- Multi-agent communication examples
+- Environment variable configuration examples
+
+---
+
+## What Already Exists (temporary)
+
+**Location:** `beast-mailbox-core/docs/USING_BEAST_AGENT.md` and `docs/CLUSTER_DISCOVERY.md`
+
+**Status:** These are temporary integration examples I created because they were needed, but **you own this documentation**. They should be:
+- Replaced by authoritative docs in `beast-agent` repository
+- Used as reference material
+- Deprecated once you publish your integration docs
+
+**Content:**
+- Shows `MailboxConfig` usage with `BaseAgent`
+- Shows authenticated connection patterns
+- Shows cluster discovery patterns
+
+---
+
+## Success Criteria
+
+- [ ] `beast-agent` README includes authentication section
+- [ ] `beast-agent` README shows `MailboxConfig` usage with `BaseAgent`
+- [ ] `beast-agent` examples include authenticated agent example
+- [ ] `beast-agent` docs include cluster discovery guide
+- [ ] All examples are tested and working
+- [ ] Version numbers match actual releases
+
+---
+
+## Why This Matters
+
+**Without this documentation:**
+- ❌ Users cannot use beast-agent with authenticated Redis (99% of production clusters)
+- ❌ Users spend 20+ minutes trial-and-error
+- ❌ Users have to read source code to figure it out
+- ❌ Blocks adoption for production use cases
+
+**With this documentation:**
+- ✅ Works in 30 seconds
+- ✅ Clear path for production deployments
+- ✅ Shows beast-agent is production-ready
+
+---
+
+## Reference Material
+
+I've created temporary docs in `beast-mailbox-core` that you can reference:
+
+- **`docs/USING_BEAST_AGENT.md`** - Integration guide showing `MailboxConfig` usage
+- **`docs/CLUSTER_DISCOVERY.md`** - Cluster discovery patterns
+- **`docs/API.md`** - Has `MailboxConfig` examples with beast-agent usage
+
+**Note:** These are marked as integration examples from `beast-mailbox-core`'s perspective. You should create authoritative documentation in the `beast-agent` repository.
+
+---
+
+## Next Steps
+
+1. Review the temporary docs in `beast-mailbox-core` (reference only)
+2. Create/update `beast-agent` documentation with:
+   - Authentication section in README
+   - Complete authenticated agent example
+   - Cluster discovery guide
+   - Clear API documentation for `BaseAgent.__init__()`
+3. Test all examples against current `beast-agent` releases
+4. Publish updated docs
+5. I'll update `beast-mailbox-core` docs to link to your authoritative docs
+
+---
+
+**Priority**: High - This blocks production adoption and users are currently reverse-engineering from source code.
+
