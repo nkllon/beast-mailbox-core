@@ -28,9 +28,11 @@ def redis_docker():
     """Start Redis in Docker for testing.
     
     Automatically starts Redis container and stops it after tests.
+    ALWAYS cleans up the container, even if tests fail.
     If Docker is not available or container already exists, uses existing container.
     """
     container_name = "beast-mailbox-test-redis"
+    container_started = False
     
     # Check if container already exists and is running
     result = subprocess.run(
@@ -40,7 +42,8 @@ def redis_docker():
     )
     
     if container_name in result.stdout:
-        # Container already running - use it
+        # Container already running - use it but DO NOT clean it up
+        # (it was started externally, don't remove it)
         yield "localhost", 6379
         return
     
@@ -51,10 +54,14 @@ def redis_docker():
     )
     
     if result.returncode == 0:
-        # Started existing container
+        # Started existing container - we started it, so we clean it up
+        container_started = True
         time.sleep(1)  # Wait for Redis to be ready
-        yield "localhost", 6379
-        _stop_docker_container(container_name)
+        try:
+            yield "localhost", 6379
+        finally:
+            # ALWAYS cleanup, even if tests fail
+            _stop_docker_container(container_name)
         return
     
     # Create and start new container
@@ -69,19 +76,25 @@ def redis_docker():
             capture_output=True,
             check=True,
         )
+        container_started = True
         
         # Wait for Redis to be ready
         time.sleep(2)
         
-        # Register cleanup
-        atexit.register(_stop_docker_container, container_name)
-        
-        yield "localhost", 6379
-        
-        # Cleanup
-        _stop_docker_container(container_name)
+        try:
+            yield "localhost", 6379
+        finally:
+            # ALWAYS cleanup, even if tests fail
+            # Use both atexit (for normal exit) and finally (for immediate cleanup)
+            _stop_docker_container(container_name)
+            # Also register atexit as backup cleanup
+            atexit.register(_stop_docker_container, container_name)
     except (subprocess.CalledProcessError, FileNotFoundError):
         # Docker not available or failed to start
+        # Only skip if we didn't start a container
+        if container_started:
+            # We started it but it failed - clean it up
+            _stop_docker_container(container_name)
         pytest.skip("Docker not available or Redis container failed to start")
 
 
