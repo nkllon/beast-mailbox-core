@@ -69,7 +69,15 @@ struct ChatView: View {
             }
             .padding()
         }
+        .frame(minWidth: 600, minHeight: 500)
+        .chatWindowFix()
         .navigationTitle("Apple Intelligence Chat")
+        .onAppear {
+            // Additional window configuration on appear
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                configureChatWindow()
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Clear") {
@@ -88,6 +96,21 @@ struct ChatView: View {
         
         Task {
             await chatViewModel.sendMessage(userMessage)
+        }
+    }
+    
+    private func configureChatWindow() {
+        // Configure the chat window to stay open
+        for window in NSApplication.shared.windows {
+            if window.isVisible && window.contentView != nil {
+                // Make it a proper floating window that stays open
+                window.collectionBehavior = [.stationary, .fullScreenAuxiliary]
+                window.level = .floating
+                window.isReleasedWhenClosed = false
+                window.acceptsMouseMovedEvents = true
+                window.makeKeyAndOrderFront(nil)
+                break
+            }
         }
     }
 }

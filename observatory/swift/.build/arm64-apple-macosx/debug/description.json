@@ -32,6 +32,14 @@
         },
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Chat/ChatWindowModifier.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Chat/WindowAccessor.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Intelligence/AppleIntelligenceAgent.swift"
         },
         {
@@ -84,6 +92,8 @@
       "moduleOutputPath" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/Modules/ObservatoryApp.swiftmodule",
       "objects" : [
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ChatView.swift.o",
+        "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ChatWindowModifier.swift.o",
+        "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/WindowAccessor.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DashboardView.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/MenuBarView.swift.o",
@@ -146,6 +156,14 @@
         },
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ChatWindowModifier.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/WindowAccessor.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.swift.o"
         },
         {
@@ -192,6 +210,8 @@
       "prepareForIndexing" : false,
       "sources" : [
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Chat/ChatView.swift",
+        "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Chat/ChatWindowModifier.swift",
+        "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Chat/WindowAccessor.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Intelligence/AppleIntelligenceAgent.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/DashboardView.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/MenuBarView.swift",
@@ -396,6 +416,8 @@
       "swift",
       "-c",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Chat/ChatView.swift",
+      "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Chat/ChatWindowModifier.swift",
+      "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Chat/WindowAccessor.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Intelligence/AppleIntelligenceAgent.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/DashboardView.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/MenuBarView.swift",
@@ -621,6 +643,14 @@
         },
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Chat/ChatWindowModifier.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Chat/WindowAccessor.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Intelligence/AppleIntelligenceAgent.swift"
         },
         {
@@ -679,6 +709,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ChatWindowModifier.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DashboardView.swift.o"
         },
         {
@@ -712,6 +746,10 @@
         {
           "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SyncIntent.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/WindowAccessor.swift.o"
         }
       ],
       "outputFilePath" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.product/Objects.LinkFileList"
@@ -747,6 +785,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ChatWindowModifier.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DashboardView.swift.o"
         },
         {
@@ -780,6 +822,10 @@
         {
           "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SyncIntent.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/WindowAccessor.swift.o"
         },
         {
           "kind" : "file",

@@ -104,6 +104,16 @@ struct MenuBarView: View {
         .sheet(isPresented: $showingChat) {
             ChatView()
                 .frame(minWidth: 600, minHeight: 500)
+                .background(WindowAccessor())
+        }
+        .onChange(of: showingChat) { newValue in
+            // Keep window open when chat is shown
+            if newValue {
+                // Force window to stay open
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+            }
         }
     }
     
