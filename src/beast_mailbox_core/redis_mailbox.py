@@ -273,7 +273,7 @@ class RedisMailboxService:
                     groupname=self._consumer_group,
                     consumername=self._consumer_name,
                     min_idle_time=self.config.recovery_min_idle_time * 1000,  # Convert to ms
-                    start=start_id,
+                    start_id=start_id,
                     count=self.config.recovery_batch_size,
                 )
                 

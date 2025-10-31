@@ -24,46 +24,7 @@ except ImportError:
     REDIS_AVAILABLE = False
 
 
-@pytest.fixture(scope="session")
-def redis_available():
-    """Check if Redis is available for testing.
-    
-    Returns True if Redis is available, False otherwise.
-    Tests should use pytest.mark.skipif if Redis is required.
-    """
-    if not REDIS_AVAILABLE:
-        return False
-    
-    # Try to connect to verify Redis is running
-    async def check_redis():
-        try:
-            client = redis.Redis(host="localhost", port=6379, db=15, decode_responses=False)
-            await client.ping()
-            await client.aclose()
-            return True
-        except Exception:
-            return False
-    
-    # Check if Redis is available
-    try:
-        # Create a new event loop if needed
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # Event loop already running - can't use run_until_complete
-                # Assume Redis is available (tests will fail if not)
-                return True
-            else:
-                return loop.run_until_complete(check_redis())
-        except RuntimeError:
-            # No event loop - create one
-            loop = asyncio.new_event_loop()
-            try:
-                return loop.run_until_complete(check_redis())
-            finally:
-                loop.close()
-    except Exception:
-        return False
+# redis_available fixture is now in conftest.py and uses Docker
 
 
 def pytest_configure(config):
@@ -84,7 +45,7 @@ def fault_injection_config():
         poll_interval=0.1,
         enable_recovery=True,
         recovery_batch_size=50,
-        recovery_min_idle_time=0.001,  # Very short idle time for tests
+        recovery_min_idle_time=0,  # 0 means immediate claim (no idle time required)
     )
 
 
@@ -96,10 +57,10 @@ def fault_agent_id():
 
 @pytest.mark.asyncio
 @pytest.mark.skipif(not pytest.importorskip("redis"), reason="Redis library not available")
-async def test_start_with_existing_consumer_group_busygroup(fault_injection_config, fault_agent_id, redis_available):
+async def test_start_with_existing_consumer_group_busygroup(fault_injection_config, fault_agent_id, redis_available, redis_docker):
     """Test start succeeds when consumer group already exists (BUSYGROUP)."""
     if not redis_available:
-        pytest.skip("Redis not running locally - start Redis with: docker run -d -p 6379:6379 redis:latest")
+        pytest.skip("Redis not available - Docker container failed to start")
     """Test start succeeds when consumer group already exists (BUSYGROUP)."""
     # FAULT INJECTION: Create the consumer group first to trigger BUSYGROUP
     service1 = RedisMailboxService(fault_agent_id, fault_injection_config)
@@ -139,11 +100,10 @@ async def test_start_with_existing_consumer_group_busygroup(fault_injection_conf
 
 @pytest.mark.asyncio
 @pytest.mark.skipif(not pytest.importorskip("redis"), reason="Redis library not available")
-async def test_recovery_with_no_consumer_group_nogroup(fault_injection_config, fault_agent_id, redis_available):
+async def test_recovery_with_no_consumer_group_nogroup(fault_injection_config, fault_agent_id, redis_available, redis_docker):
     """Test recovery handles NOGROUP error when group doesn't exist."""
     if not redis_available:
-        pytest.skip("Redis not running locally - start Redis with: docker run -d -p 6379:6379 redis:latest")
-    """Test recovery handles NOGROUP error when group doesn't exist."""
+        pytest.skip("Redis not available - Docker container failed to start")
     # FAULT INJECTION: Don't create consumer group, trigger NOGROUP
     service = RedisMailboxService(fault_agent_id, fault_injection_config)
     
@@ -168,11 +128,10 @@ async def test_recovery_with_no_consumer_group_nogroup(fault_injection_config, f
 
 @pytest.mark.asyncio
 @pytest.mark.skipif(not pytest.importorskip("redis"), reason="Redis library not available")
-async def test_acknowledge_messages_with_existing_group_busygroup(fault_injection_config, fault_agent_id, redis_available):
+async def test_acknowledge_messages_with_existing_group_busygroup(fault_injection_config, fault_agent_id, redis_available, redis_docker):
     """Test _acknowledge_messages handles BUSYGROUP when group exists."""
     if not redis_available:
-        pytest.skip("Redis not running locally - start Redis with: docker run -d -p 6379:6379 redis:latest")
-    """Test _acknowledge_messages handles BUSYGROUP when group exists."""
+        pytest.skip("Redis not available - Docker container failed to start")
     from beast_mailbox_core.cli import _acknowledge_messages
     
     # FAULT INJECTION: Create consumer group first
@@ -222,11 +181,10 @@ async def test_acknowledge_messages_with_existing_group_busygroup(fault_injectio
 
 @pytest.mark.asyncio
 @pytest.mark.skipif(not pytest.importorskip("redis"), reason="Redis library not available")
-async def test_recovery_callback_handles_exception(fault_injection_config, fault_agent_id, redis_available):
+async def test_recovery_callback_handles_exception(fault_injection_config, fault_agent_id, redis_available, redis_docker):
     """Test recovery callback exception handling with real recovery."""
     if not redis_available:
-        pytest.skip("Redis not running locally - start Redis with: docker run -d -p 6379:6379 redis:latest")
-    """Test recovery callback exception handling with real recovery."""
+        pytest.skip("Redis not available - Docker container failed to start")
     # FAULT INJECTION: Create pending message, then have callback raise
     received_messages = []
     
@@ -290,11 +248,10 @@ async def test_recovery_callback_handles_exception(fault_injection_config, fault
 
 @pytest.mark.asyncio
 @pytest.mark.skipif(not pytest.importorskip("redis"), reason="Redis library not available")
-async def test_handler_exception_during_recovery(fault_injection_config, fault_agent_id, redis_available):
+async def test_handler_exception_during_recovery(fault_injection_config, fault_agent_id, redis_available, redis_docker):
     """Test recovery continues even when handler raises exception."""
     if not redis_available:
-        pytest.skip("Redis not running locally - start Redis with: docker run -d -p 6379:6379 redis:latest")
-    """Test recovery continues even when handler raises exception."""
+        pytest.skip("Redis not available - Docker container failed to start")
     # FAULT INJECTION: Handler raises exception during recovery
     good_messages = []
     bad_messages = []
