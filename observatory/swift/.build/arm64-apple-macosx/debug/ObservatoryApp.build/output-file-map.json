@@ -2,6 +2,13 @@
   "": {
     "swift-dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/master.swiftdeps"
   },
+  "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Intelligence/AppleIntelligenceAgent.swift": {
+    "dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.d",
+    "object": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.swift.o",
+    "swiftmodule": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.swiftdeps",
+    "diagnostics": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.dia"
+  },
   "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/DashboardView.swift": {
     "dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DashboardView.d",
     "object": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DashboardView.swift.o",
@@ -30,12 +37,26 @@
     "swift-dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryAppApp.swiftdeps",
     "diagnostics": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryAppApp.dia"
   },
+  "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/IntelligenceHTTPServer.swift": {
+    "dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/IntelligenceHTTPServer.d",
+    "object": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/IntelligenceHTTPServer.swift.o",
+    "swiftmodule": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/IntelligenceHTTPServer~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/IntelligenceHTTPServer.swiftdeps",
+    "diagnostics": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/IntelligenceHTTPServer.dia"
+  },
   "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/ObservatoryService.swift": {
     "dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryService.d",
     "object": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryService.swift.o",
     "swiftmodule": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryService~partial.swiftmodule",
     "swift-dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryService.swiftdeps",
     "diagnostics": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryService.dia"
+  },
+  "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/SimpleHTTPServer.swift": {
+    "dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SimpleHTTPServer.d",
+    "object": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SimpleHTTPServer.swift.o",
+    "swiftmodule": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SimpleHTTPServer~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SimpleHTTPServer.swiftdeps",
+    "diagnostics": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SimpleHTTPServer.dia"
   },
   "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Shortcuts/DiagnoseIntent.swift": {
     "dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DiagnoseIntent.d",

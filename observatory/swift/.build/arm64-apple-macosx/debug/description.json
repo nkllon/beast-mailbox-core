@@ -24,6 +24,10 @@
       "inputs" : [
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Intelligence/AppleIntelligenceAgent.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/DashboardView.swift"
         },
         {
@@ -40,7 +44,15 @@
         },
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/IntelligenceHTTPServer.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/ObservatoryService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/SimpleHTTPServer.swift"
         },
         {
           "kind" : "file",
@@ -67,11 +79,14 @@
       "moduleName" : "ObservatoryApp",
       "moduleOutputPath" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/Modules/ObservatoryApp.swiftmodule",
       "objects" : [
+        "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DashboardView.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/MenuBarView.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/StatusMonitor.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryAppApp.swift.o",
+        "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/IntelligenceHTTPServer.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryService.swift.o",
+        "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SimpleHTTPServer.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DiagnoseIntent.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/StatusIntent.swift.o",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SyncIntent.swift.o"
@@ -123,6 +138,10 @@
       "outputs" : [
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DashboardView.swift.o"
         },
         {
@@ -139,7 +158,15 @@
         },
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/IntelligenceHTTPServer.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SimpleHTTPServer.swift.o"
         },
         {
           "kind" : "file",
@@ -160,11 +187,14 @@
       ],
       "prepareForIndexing" : false,
       "sources" : [
+        "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Intelligence/AppleIntelligenceAgent.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/DashboardView.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/MenuBarView.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/StatusMonitor.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/ObservatoryAppApp.swift",
+        "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/IntelligenceHTTPServer.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/ObservatoryService.swift",
+        "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/SimpleHTTPServer.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Shortcuts/DiagnoseIntent.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Shortcuts/StatusIntent.swift",
         "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Shortcuts/SyncIntent.swift"
@@ -184,11 +214,14 @@
       "-package-name",
       "swift",
       "-c",
+      "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Intelligence/AppleIntelligenceAgent.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/DashboardView.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/MenuBarView.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/StatusMonitor.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/ObservatoryAppApp.swift",
+      "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/IntelligenceHTTPServer.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/ObservatoryService.swift",
+      "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/SimpleHTTPServer.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Shortcuts/DiagnoseIntent.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Shortcuts/StatusIntent.swift",
       "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Shortcuts/SyncIntent.swift",
@@ -279,6 +312,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Intelligence/AppleIntelligenceAgent.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/DashboardView.swift"
         },
         {
@@ -295,7 +332,15 @@
         },
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/IntelligenceHTTPServer.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/ObservatoryService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/Services/SimpleHTTPServer.swift"
         },
         {
           "kind" : "file",
@@ -321,11 +366,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DashboardView.swift.o"
         },
         {
           "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DiagnoseIntent.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/IntelligenceHTTPServer.swift.o"
         },
         {
           "kind" : "file",
@@ -338,6 +391,10 @@
         {
           "kind" : "file",
           "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ObservatoryService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/SimpleHTTPServer.swift.o"
         },
         {
           "kind" : "file",

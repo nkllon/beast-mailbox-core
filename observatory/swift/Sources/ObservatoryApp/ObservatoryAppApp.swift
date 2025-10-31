@@ -29,9 +29,14 @@ struct ObservatoryAppApp: App {
 // MARK: - App Delegate
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    private var intelligenceServer: SimpleHTTPServer?
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon (menu bar only app)
         NSApp.setActivationPolicy(.accessory)
+        
+        // Start Apple Intelligence HTTP server (for Python agents)
+        startIntelligenceServer()
         
         // Request notification permissions
         Task {
@@ -44,6 +49,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             } catch {
                 print("⚠️  Notification permission error: \(error)")
             }
+        }
+    }
+    
+    private func startIntelligenceServer() {
+        let server = SimpleHTTPServer(port: 8081)
+        do {
+            try server.start()
+            intelligenceServer = server
+            print("✅ Apple Intelligence HTTP server started on port 8081")
+            print("   Python agents can query at: http://localhost:8081/query")
+        } catch {
+            print("⚠️  Failed to start intelligence server: \(error)")
         }
     }
 }
