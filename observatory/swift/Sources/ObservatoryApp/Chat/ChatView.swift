@@ -99,26 +99,8 @@ struct ChatView: View {
     }
     
     private func configureChatWindow() {
-        // Configure the chat window to have proper controls and stay open
-        for window in NSApplication.shared.windows {
-            if window.isVisible && window.contentView != nil {
-                // Enable standard window controls (close, minimize, zoom buttons)
-                window.styleMask.insert(.closable)
-                window.styleMask.insert(.miniaturizable)
-                window.styleMask.insert(.resizable)
-                window.standardWindowButton(.closeButton)?.isEnabled = true
-                window.standardWindowButton(.miniaturizeButton)?.isEnabled = true
-                window.standardWindowButton(.zoomButton)?.isEnabled = true
-                
-                // Make it a proper window that stays open but can be closed
-                window.collectionBehavior = [.managed]
-                window.level = .normal
-                window.isReleasedWhenClosed = false
-                window.acceptsMouseMovedEvents = true
-                window.makeKeyAndOrderFront(nil)
-                break
-            }
-        }
+        // Window is now created externally, no need to configure here
+        // This function is kept for backward compatibility but does nothing
     }
 }
 

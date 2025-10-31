@@ -16,6 +16,13 @@
     "swift-dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.swiftdeps",
     "diagnostics": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/AppleIntelligenceAgent.dia"
   },
+  "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/ChatWindow.swift": {
+    "dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ChatWindow.d",
+    "object": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ChatWindow.swift.o",
+    "swiftmodule": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ChatWindow~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ChatWindow.swiftdeps",
+    "diagnostics": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/ChatWindow.dia"
+  },
   "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Sources/ObservatoryApp/MenuBar/DashboardView.swift": {
     "dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DashboardView.d",
     "object": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/debug/ObservatoryApp.build/DashboardView.swift.o",

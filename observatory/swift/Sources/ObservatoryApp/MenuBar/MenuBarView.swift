@@ -10,9 +10,9 @@ import AppKit
 
 struct MenuBarView: View {
     @EnvironmentObject var monitor: StatusMonitor
-    @State private var showingDashboard = false
-    @State private var showingSettings = false
-    @State private var showingChat = false
+    @State private var chatWindow: NSWindow?
+    @State private var dashboardWindow: NSWindow?
+    @State private var settingsWindow: NSWindow?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -79,7 +79,7 @@ struct MenuBarView: View {
             Divider()
             
             Button(action: {
-                showingSettings = true
+                openSettingsWindow()
             }) {
                 Label("Settings...", systemImage: "gearshape")
             }
@@ -94,17 +94,106 @@ struct MenuBarView: View {
         }
         .padding()
         .frame(width: 300)
-        .sheet(isPresented: $showingDashboard) {
-            DashboardView()
-                .environmentObject(monitor)
+    }
+    
+    private func openChatWindow() {
+        // Close existing window if open
+        chatWindow?.close()
+        chatWindow = nil
+        
+        // Create new window
+        let chatView = ChatView()
+            .frame(minWidth: 600, minHeight: 500)
+            .environmentObject(monitor)
+        
+        let hostingView = NSHostingView(rootView: chatView)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentView = hostingView
+        window.center()
+        window.title = "Apple Intelligence Chat"
+        window.makeKeyAndOrderFront(nil)
+        window.isReleasedWhenClosed = false
+        
+        // Keep reference to prevent deallocation
+        chatWindow = window
+        
+        // Handle window close
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: window,
+            queue: .main
+        ) { [weak self] _ in
+            self?.chatWindow = nil
         }
-        .sheet(isPresented: $showingSettings) {
-            SettingsView()
+    }
+    
+    private func openDashboardWindow() {
+        // Close existing window if open
+        dashboardWindow?.close()
+        dashboardWindow = nil
+        
+        // Create new window
+        let dashboardView = DashboardView()
+            .environmentObject(monitor)
+        
+        let hostingView = NSHostingView(rootView: dashboardView)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentView = hostingView
+        window.center()
+        window.title = "Beast Observatory Dashboard"
+        window.makeKeyAndOrderFront(nil)
+        window.isReleasedWhenClosed = false
+        
+        dashboardWindow = window
+        
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: window,
+            queue: .main
+        ) { [weak self] _ in
+            self?.dashboardWindow = nil
         }
-        .sheet(isPresented: $showingChat) {
-            ChatView()
-                .frame(minWidth: 600, minHeight: 500)
-                .interactiveDismissDisabled(false)  // Allow closing with close button
+    }
+    
+    private func openSettingsWindow() {
+        // Close existing window if open
+        settingsWindow?.close()
+        settingsWindow = nil
+        
+        // Create new window
+        let settingsView = SettingsView()
+        
+        let hostingView = NSHostingView(rootView: settingsView)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 400),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentView = hostingView
+        window.center()
+        window.title = "Settings"
+        window.makeKeyAndOrderFront(nil)
+        window.isReleasedWhenClosed = false
+        
+        settingsWindow = window
+        
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: window,
+            queue: .main
+        ) { [weak self] _ in
+            self?.settingsWindow = nil
         }
     }
     
