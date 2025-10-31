@@ -1,0 +1,13 @@
+{
+  "": {
+    "dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/release/ObservatoryAppTests.build/ObservatoryAppTests.d",
+    "object": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/release/ObservatoryAppTests.build/ObservatoryAppTests.o",
+    "swift-dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/release/ObservatoryAppTests.build/master.swiftdeps"
+  },
+  "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/Tests/ObservatoryAppTests/ObservatoryAppTests.swift": {
+    "object": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/release/ObservatoryAppTests.build/ObservatoryAppTests.swift.o",
+    "swiftmodule": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/release/ObservatoryAppTests.build/ObservatoryAppTests~partial.swiftmodule",
+    "swift-dependencies": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/release/ObservatoryAppTests.build/ObservatoryAppTests.swiftdeps",
+    "diagnostics": "/Volumes/lemon/cursor/beast-mailbox-core/observatory/swift/.build/arm64-apple-macosx/release/ObservatoryAppTests.build/ObservatoryAppTests.dia"
+  }
+}
