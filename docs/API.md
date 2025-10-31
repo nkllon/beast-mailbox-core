@@ -40,12 +40,22 @@ RedisMailboxService(
   - Consumer group: `{agent_id}:group`
   - Consumer name: `{agent_id}:{uuid}` (unique per instance)
 
-- `config` (MailboxConfig, optional): Configuration object. Defaults to `MailboxConfig()` with:
+- `config` (MailboxConfig, optional): Configuration object. 
+  
+  **When `config=None` (default):** Automatically reads from environment variables:
+  - **Priority 1:** `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB` (individual env vars)
+  - **Priority 2:** `REDIS_URL` (if `REDIS_HOST` not set, parses URL format: `redis://:password@host:port/db`)
+  - **Priority 3:** Defaults to `localhost:6379` if no environment variables are set
+  
+  **When `config` is provided:** Uses explicit configuration (backward compatible)
+  
+  Default `MailboxConfig()` values:
   - `host="localhost"`
   - `port=6379`
   - `db=0`
   - `password=None`
   - `stream_prefix="beast:mailbox"`
+  - `enable_recovery=True`
   - See [MailboxConfig](#mailboxconfig) for all options.
 
 - `recovery_callback` (Callable, optional): Async callback invoked after pending message recovery completes. Receives a `RecoveryMetrics` object with recovery statistics.
@@ -54,11 +64,18 @@ RedisMailboxService(
 
 ```python
 from beast_mailbox_core import RedisMailboxService, MailboxConfig
+import os
 
-# Basic initialization
-service = RedisMailboxService("my-agent")
+# Option 1: Read from environment variables (production-friendly)
+os.environ["REDIS_HOST"] = "prod-redis.example.com"
+os.environ["REDIS_PASSWORD"] = "secret"
+service = RedisMailboxService("my-agent", config=None)  # Automatically reads from env!
 
-# With custom configuration
+# Option 2: Use REDIS_URL environment variable
+os.environ["REDIS_URL"] = "redis://:secret@prod-redis.example.com:6379/1"
+service = RedisMailboxService("my-agent", config=None)  # Parses REDIS_URL
+
+# Option 3: Explicit configuration (backward compatible)
 config = MailboxConfig(
     host="redis.example.com",
     port=6379,
@@ -67,7 +84,7 @@ config = MailboxConfig(
 )
 service = RedisMailboxService("my-agent", config)
 
-# With recovery metrics callback
+# Option 4: With recovery metrics callback
 async def on_recovery(metrics: RecoveryMetrics):
     print(f"Recovered {metrics.total_recovered} messages in {metrics.batches_processed} batches")
 
@@ -77,6 +94,16 @@ service = RedisMailboxService(
     recovery_callback=on_recovery
 )
 ```
+
+**Environment Variable Priority:**
+
+When `config=None`, the service checks environment variables in this order:
+
+1. **Individual variables** (`REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB`) - highest priority
+2. **REDIS_URL** - if `REDIS_HOST` is not set
+3. **Defaults** (`localhost:6379`) - if no environment variables are set
+
+This enables production deployments to configure Redis connection via environment variables without requiring explicit `MailboxConfig` creation.
 
 ---
 
@@ -487,23 +514,51 @@ class MailboxConfig:
 
 ### Environment Variable Support
 
-`MailboxConfig` can be initialized from the `REDIS_URL` environment variable:
+`RedisMailboxService` automatically reads configuration from environment variables when `config=None`.
 
-**Format:** `redis://:password@host:port/db` or `redis://user:password@host:port/db`
+**Supported Environment Variables:**
+
+1. **Individual variables** (priority 1):
+   - `REDIS_HOST` - Redis server hostname or IP
+   - `REDIS_PORT` - Redis server port (default: 6379)
+   - `REDIS_PASSWORD` - Redis authentication password
+   - `REDIS_DB` - Redis database number (default: 0)
+
+2. **REDIS_URL** (priority 2, if `REDIS_HOST` not set):
+   - Format: `redis://:password@host:port/db` or `redis://user:password@host:port/db`
+   - Also supports `rediss://` for TLS connections
+   - Example: `redis://:secret@redis.example.com:6379/1`
 
 **Priority Order:**
-1. CLI flags (highest priority - explicit override)
-2. `REDIS_URL` environment variable (convenient default)
-3. Hardcoded defaults (`localhost:6379`)
+1. Explicit `MailboxConfig` (if provided)
+2. Individual env vars (`REDIS_HOST`, etc.) - highest priority
+3. `REDIS_URL` - if `REDIS_HOST` not set
+4. Defaults (`localhost:6379`) - if no env vars are set
 
-**Example:**
+**Examples:**
 
 ```python
 import os
-from beast_mailbox_core import MailboxConfig
+from beast_mailbox_core import RedisMailboxService
 
-# Set environment variable
+# Option 1: Individual environment variables (recommended for production)
+os.environ["REDIS_HOST"] = "prod-redis.example.com"
+os.environ["REDIS_PORT"] = "6379"
+os.environ["REDIS_PASSWORD"] = "secret"
+os.environ["REDIS_DB"] = "1"
+service = RedisMailboxService("my-agent", config=None)  # Reads from env!
+
+# Option 2: REDIS_URL (convenient for containerized deployments)
 os.environ["REDIS_URL"] = "redis://:secret@redis.example.com:6379/1"
+service = RedisMailboxService("my-agent", config=None)  # Parses URL
+
+# Option 3: Explicit MailboxConfig (backward compatible)
+from beast_mailbox_core import MailboxConfig
+config = MailboxConfig(
+    host="redis.example.com",
+    password="secret"
+)
+service = RedisMailboxService("my-agent", config)  # Uses explicit config
 
 # Config automatically reads from environment (via CLI parsing)
 # Or manually parse if needed:

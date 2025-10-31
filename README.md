@@ -44,6 +44,24 @@ export REDIS_URL="redis://:password@host:port/db"
 beast-mailbox-service my-agent --echo  # Just works!
 ```
 
+**Using Individual Environment Variables (Programmatic Usage):**
+```bash
+export REDIS_HOST="prod-redis.example.com"
+export REDIS_PORT="6379"
+export REDIS_PASSWORD="secret"
+export REDIS_DB="0"
+```
+
+**Python API automatically reads environment variables:**
+```python
+from beast_mailbox_core import RedisMailboxService
+
+# Automatically reads from REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB
+# Falls back to REDIS_URL if REDIS_HOST not set
+# Only defaults to localhost:6379 if no env vars are set
+service = RedisMailboxService("my-agent", config=None)  # Reads from env!
+```
+
 **Using CLI flags:**
 ```bash
 beast-mailbox-service my-agent \
@@ -53,7 +71,7 @@ beast-mailbox-service my-agent \
   --redis-db 0
 ```
 
-CLI flags override `REDIS_URL` when both are provided.
+CLI flags override environment variables when both are provided.
 
 ### Start a streaming listener
 

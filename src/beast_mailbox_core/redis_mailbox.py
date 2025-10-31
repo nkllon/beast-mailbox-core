@@ -5,8 +5,10 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Dict, List, Optional
+from urllib.parse import urlparse
 from uuid import uuid4
 
 import redis.asyncio as redis
@@ -36,6 +38,82 @@ class MailboxConfig:
     enable_recovery: bool = True
     recovery_min_idle_time: int = 0
     recovery_batch_size: int = 50
+
+
+def _create_config_from_env() -> MailboxConfig:
+    """Create MailboxConfig from environment variables.
+    
+    Priority order:
+    1. REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB (individual env vars)
+    2. REDIS_URL (if REDIS_HOST not set)
+    3. Defaults to localhost:6379 if no env vars are set
+    
+    Returns:
+        MailboxConfig instance populated from environment variables or defaults
+        
+    Example:
+        >>> os.environ["REDIS_HOST"] = "prod-redis.example.com"
+        >>> os.environ["REDIS_PASSWORD"] = "secret"
+        >>> config = _create_config_from_env()
+        >>> assert config.host == "prod-redis.example.com"
+        >>> assert config.password == "secret"
+    """
+    # Priority 1: Individual environment variables (REDIS_HOST, REDIS_PORT, etc.)
+    redis_host = os.getenv("REDIS_HOST")
+    
+    if redis_host:
+        # Individual env vars are set - use them
+        return MailboxConfig(
+            host=redis_host,
+            port=int(os.getenv("REDIS_PORT", "6379")),
+            password=os.getenv("REDIS_PASSWORD"),
+            db=int(os.getenv("REDIS_DB", "0")),
+            stream_prefix="beast:mailbox",
+            enable_recovery=True,
+        )
+    
+    # Priority 2: REDIS_URL (if REDIS_HOST not set)
+    redis_url = os.getenv("REDIS_URL")
+    if redis_url:
+        try:
+            parsed = urlparse(redis_url)
+            
+            # Validate scheme
+            if parsed.scheme not in ("redis", "rediss"):
+                logging.getLogger("beast_mailbox").warning(
+                    f"Unsupported REDIS_URL scheme: {parsed.scheme}. "
+                    "Use redis:// or rediss://. Falling back to defaults."
+                )
+                return MailboxConfig()
+            
+            # Extract components
+            host = parsed.hostname or "localhost"
+            port = parsed.port or 6379
+            password = parsed.password
+            db = 0
+            if parsed.path and len(parsed.path) > 1:
+                try:
+                    db = int(parsed.path[1:])  # Skip leading '/'
+                except ValueError:
+                    pass
+            
+            return MailboxConfig(
+                host=host,
+                port=port,
+                password=password,
+                db=db,
+                stream_prefix="beast:mailbox",
+                enable_recovery=True,
+            )
+        except Exception as exc:
+            logging.getLogger("beast_mailbox").warning(
+                f"Invalid REDIS_URL format: {redis_url}. "
+                f"Error: {exc}. Falling back to defaults."
+            )
+            return MailboxConfig()
+    
+    # Priority 3: Defaults (localhost:6379)
+    return MailboxConfig()
 
 
 @dataclass
@@ -135,16 +213,34 @@ class RedisMailboxService:
         
         Args:
             agent_id: Unique identifier for this agent instance
-            config: Optional configuration (defaults to MailboxConfig())
+            config: Optional configuration. If None, reads from environment variables:
+                   - REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB (priority 1)
+                   - REDIS_URL (priority 2, if REDIS_HOST not set)
+                   - Defaults to localhost:6379 if no env vars are set
             recovery_callback: Optional async callback invoked after recovery completes
                               Receives RecoveryMetrics object with recovery stats
             
         Note:
             The agent_id is used to generate unique inbox streams and consumer groups.
             Multiple service instances with the same agent_id will share the same inbox.
+            
+        Example:
+            >>> # With explicit config
+            >>> config = MailboxConfig(host="redis.example.com", password="secret")
+            >>> service = RedisMailboxService("my-agent", config)
+            
+            >>> # With environment variables (production-friendly)
+            >>> # export REDIS_HOST="prod-redis.example.com"
+            >>> # export REDIS_PASSWORD="secret"
+            >>> service = RedisMailboxService("my-agent", config=None)  # Reads from env
         """
         self.agent_id = agent_id
-        self.config = config or MailboxConfig()
+        if config is None:
+            # Read from environment variables
+            self.config = _create_config_from_env()
+        else:
+            # Use explicit config (backward compatible)
+            self.config = config
         self.recovery_callback = recovery_callback
         self.logger = logging.getLogger(f"beast_mailbox.{agent_id}")
         self._client: Optional[redis.Redis] = None
