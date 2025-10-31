@@ -5,6 +5,21 @@
 
 ---
 
+## The Babel Fish 🐟
+
+**Simple function calls, not distributed system ceremony:**
+
+```python
+from babel_fish import ask_apple_intelligence
+
+# That's it. Just ask.
+response = await ask_apple_intelligence("Review this code", context=code)
+```
+
+No mailbox setup, no message types, no boilerplate. Just ask.
+
+---
+
 ## Quick Start
 
 ### 1. Ensure Swift Server is Running
@@ -17,7 +32,7 @@ swift run ObservatoryApp
 # Server should start on http://localhost:8081
 ```
 
-### 2. Start Python Agent
+### 2. Start Apple Intelligence Agent
 
 ```bash
 cd observatory/python
@@ -33,26 +48,67 @@ export REDIS_DB="0"
 python apple_intelligence_agent.py
 ```
 
-### 3. Query from Other Agents
+### 3. Use Babel Fish in Your Code
 
 ```python
-from beast_mailbox_core import RedisMailboxService, MailboxConfig
-from beast_mailbox_core.redis_mailbox import MailboxConfig
+import asyncio
+from babel_fish import ask_apple_intelligence, review_code, diagnose_error
 
-config = MailboxConfig(host="localhost", port=6379)
-mailbox = RedisMailboxService("my-agent", config=config)
-await mailbox.start()
+async def main():
+    # Simple query
+    response = await ask_apple_intelligence("How should I structure this?")
+    print(response)
+    
+    # Code review
+    feedback = await review_code(my_code)
+    print(feedback)
+    
+    # Error diagnosis
+    diagnosis = await diagnose_error(error_log)
+    print(diagnosis)
 
-# Query Apple Intelligence
-await mailbox.send_message(
-    recipient="apple-intelligence",
-    message_type="QUERY_APPLE_INTELLIGENCE",
-    payload={
-        "query": "Review this code for issues",
-        "context": code,
-        "query_type": "code_review"
-    }
+asyncio.run(main())
+```
+
+---
+
+## API
+
+### `ask_apple_intelligence(query, context=None, query_type="general")`
+
+Ask Apple Intelligence anything.
+
+**Parameters:**
+- `query` (str): Your question
+- `context` (str, optional): Additional context (code, logs, etc.)
+- `query_type` (str): `"general"`, `"code_review"`, `"error_diagnosis"`, `"architecture"`, or `"documentation"`
+
+**Returns:** Apple Intelligence response as string
+
+**Example:**
+```python
+response = await ask_apple_intelligence(
+    "Review this code for issues",
+    context=code,
+    query_type="code_review"
 )
+```
+
+### Convenience Functions
+
+**`review_code(code, query="Review this code for issues and improvements")`**
+```python
+feedback = await review_code(my_code)
+```
+
+**`diagnose_error(error_log, query="Why did this error occur and how do I fix it?")`**
+```python
+diagnosis = await diagnose_error(error_log)
+```
+
+**`get_architecture_advice(query, context=None)`**
+```python
+advice = await get_architecture_advice("How should I structure this?")
 ```
 
 ---
@@ -67,5 +123,62 @@ await mailbox.send_message(
 
 ---
 
-**Status:** Ready to test when Swift server is running
+## Examples
 
+### Code Review
+
+```python
+code = """
+async def sync_metrics():
+    await fetch_from_sonarcloud()
+    await push_to_prometheus()
+"""
+
+feedback = await review_code(code)
+# Apple Intelligence reviews code, suggests improvements
+```
+
+### Error Diagnosis
+
+```python
+error_log = """
+ERROR: Connection refused
+Traceback: ...
+"""
+
+diagnosis = await diagnose_error(error_log)
+# Apple Intelligence analyzes error, suggests fix
+```
+
+### Architecture Advice
+
+```python
+advice = await get_architecture_advice(
+    "How should I structure a sync service for reliability?"
+)
+# Apple Intelligence provides architecture recommendations
+```
+
+---
+
+## Testing
+
+```bash
+python test_babel_fish.py
+```
+
+---
+
+## How It Works
+
+Behind the scenes, Babel Fish:
+1. Connects to Redis mailbox (auto-detects from env)
+2. Sends message to `apple-intelligence` agent
+3. Waits for response
+4. Returns result
+
+You don't care. You just call a function.
+
+---
+
+**Status:** Ready to use. Just import and ask.
