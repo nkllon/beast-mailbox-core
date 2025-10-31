@@ -129,7 +129,9 @@ Other agents can discover you by:
 
 ### Configuration
 
-Configure via environment variables:
+#### Option 1: Environment Variables (Unauthenticated Redis)
+
+For unauthenticated Redis connections:
 
 ```bash
 export REDIS_URL="redis://your-redis-host:6379"
@@ -137,7 +139,19 @@ export AGENT_LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 export AGENT_HEARTBEAT_INTERVAL="30"  # seconds
 ```
 
-Or pass directly to constructor:
+Then in code:
+
+```python
+agent = MyAgent(
+    agent_id="my-agent",
+    capabilities=["my_cap"],
+    mailbox_url=None  # Uses REDIS_URL from environment
+)
+```
+
+#### Option 2: Redis URL String (Unauthenticated)
+
+Pass Redis URL directly:
 
 ```python
 agent = MyAgent(
@@ -145,6 +159,109 @@ agent = MyAgent(
     capabilities=["my_cap"],
     mailbox_url="redis://redis-host:6379"
 )
+```
+
+#### Option 3: MailboxConfig Object (Authenticated Redis) ⭐
+
+**For production clusters with password authentication, use `MailboxConfig`:**
+
+```python
+from beast_agent import BaseAgent
+from beast_mailbox_core.redis_mailbox import MailboxConfig
+
+class MyAgent(BaseAgent):
+    def __init__(self):
+        # Create MailboxConfig with password
+        mailbox_config = MailboxConfig(
+            host="192.168.1.119",
+            port=6379,
+            password="beastmode2025",  # Redis password
+            db=0
+        )
+        
+        super().__init__(
+            agent_id="my-agent",
+            capabilities=["my_cap"],
+            mailbox_url=mailbox_config  # Pass MailboxConfig object, NOT a URL string!
+        )
+```
+
+**Important:** The `mailbox_url` parameter accepts either:
+- **str**: Redis URL string (e.g., `"redis://localhost:6379"`) - for unauthenticated connections
+- **MailboxConfig**: Configuration object - for authenticated or advanced configurations
+- **None**: Uses `REDIS_URL` environment variable
+
+#### Option 4: MailboxConfig from Environment Variables
+
+```python
+import os
+from beast_agent import BaseAgent
+from beast_mailbox_core.redis_mailbox import MailboxConfig
+
+class MyAgent(BaseAgent):
+    def __init__(self):
+        # Load configuration from environment
+        mailbox_config = MailboxConfig(
+            host=os.getenv("REDIS_HOST", "localhost"),
+            port=int(os.getenv("REDIS_PORT", "6379")),
+            password=os.getenv("REDIS_PASSWORD"),  # None if not set
+            db=int(os.getenv("REDIS_DB", "0"))
+        )
+        
+        super().__init__(
+            agent_id="my-agent",
+            capabilities=["my_cap"],
+            mailbox_url=mailbox_config
+        )
+```
+
+#### Complete Authenticated Agent Example
+
+```python
+import asyncio
+from beast_agent import BaseAgent
+from beast_mailbox_core.redis_mailbox import MailboxConfig
+
+class AuthenticatedAgent(BaseAgent):
+    def __init__(self):
+        # Create authenticated mailbox config
+        mailbox_config = MailboxConfig(
+            host="192.168.1.119",
+            port=6379,
+            password="beastmode2025",
+            db=0,
+            stream_prefix="beast:mailbox"
+        )
+        
+        super().__init__(
+            agent_id="authenticated-agent",
+            capabilities=["example"],
+            mailbox_url=mailbox_config
+        )
+    
+    async def on_startup(self) -> None:
+        self._logger.info("Connected to authenticated Redis cluster!")
+        self.register_handler("TEST_MESSAGE", self.handle_test)
+    
+    async def handle_test(self, content: dict) -> None:
+        self._logger.info(f"Received test message: {content}")
+    
+    async def on_shutdown(self) -> None:
+        self._logger.info("Disconnecting from Redis...")
+
+async def main():
+    agent = AuthenticatedAgent()
+    await agent.startup()
+    
+    try:
+        await asyncio.sleep(3600)  # Run for 1 hour
+    except KeyboardInterrupt:
+        pass
+    finally:
+        await agent.shutdown()
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ### Agent ID Best Practices

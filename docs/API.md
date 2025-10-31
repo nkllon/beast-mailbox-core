@@ -413,7 +413,29 @@ class MailboxConfig:
 
 - **`password`** (Optional[str], default: `None`): Redis authentication password.
   
-  **Environment Variable Support:** Can be set via `REDIS_URL` environment variable (e.g., `redis://:password@host:port/db`).
+  **⚠️ CRITICAL for Production:** Most production Redis clusters require authentication. Always set this for production deployments.
+  
+  **Usage with beast-agent:**
+  ```python
+  from beast_mailbox_core.redis_mailbox import MailboxConfig
+  
+  # For authenticated Redis
+  config = MailboxConfig(
+      host="production-redis.example.com",
+      port=6379,
+      password="your-secret-password",  # Set password here
+      db=0
+  )
+  
+  # Pass to beast-agent BaseAgent
+  agent = BaseAgent(
+      agent_id="my-agent",
+      capabilities=["my-cap"],
+      mailbox_url=config  # Pass MailboxConfig, not a URL string!
+  )
+  ```
+  
+  **Environment Variable Support:** Can be set via `REDIS_URL` environment variable (e.g., `redis://:password@host:port/db`). However, for authenticated connections, using `MailboxConfig` directly is recommended as it's more explicit and avoids URL parsing issues.
 
 #### Stream Settings
 
