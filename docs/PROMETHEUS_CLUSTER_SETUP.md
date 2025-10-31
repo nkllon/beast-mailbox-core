@@ -39,7 +39,52 @@ docker ps --format "{{.Names}}" | grep -E "prometheus|grafana"
 
 ## Step 2: Deployment Options
 
-### Kubernetes Cluster
+### ⭐ Recommended: Docker Compose (Simplest)
+
+**Best for:** Most deployments - Pushgateway is a single stateless container.
+
+```yaml
+version: '3.8'
+services:
+  pushgateway:
+    image: prom/pushgateway:v1.7.0
+    container_name: prometheus-pushgateway
+    ports:
+      - "9091:9091"
+    restart: unless-stopped
+    networks:
+      - prometheus-network
+    volumes:
+      - pushgateway_data:/var/lib/pushgateway
+    command:
+      - '--persistence.file=/var/lib/pushgateway/pushgateway.db'
+      - '--persistence.interval=5m'
+
+volumes:
+  pushgateway_data:
+
+networks:
+  prometheus-network:
+    external: true  # Join existing network, or remove for auto-creation
+```
+
+**Deploy:**
+```bash
+docker compose up -d pushgateway
+```
+
+**Why Docker Compose?**
+- ✅ Simple (single file)
+- ✅ Fast deployment
+- ✅ Low overhead
+- ✅ Perfect for single-container services
+- ✅ Easy debugging (`docker logs pushgateway`)
+
+**See:** [Deployment Decision Guide](PROMETHEUS_DEPLOYMENT_DECISION.md) for Docker vs Kubernetes comparison.
+
+---
+
+### Kubernetes Cluster (Only if needed)
 
 1. **Create Pushgateway Deployment:**
 
@@ -132,9 +177,9 @@ kubectl get svc -n monitoring prometheus-pushgateway
 
 ---
 
-### Docker Compose Cluster
+### Alternative: Docker Compose Integration
 
-1. **Add to docker-compose.yml:**
+If you're adding to existing docker-compose.yml:
 
 ```yaml
 services:
@@ -175,7 +220,9 @@ docker compose up -d pushgateway
 
 ---
 
-### Standalone Docker (for Testing)
+### Quick Test: Standalone Docker (Development/Testing)
+
+For quick testing without docker-compose:
 
 ```bash
 docker run -d \
@@ -187,6 +234,8 @@ docker run -d \
     --persistence.file=/var/lib/pushgateway/pushgateway.db \
     --persistence.interval=5m
 ```
+
+**Note:** For production, prefer Docker Compose for easier management.
 
 ---
 
