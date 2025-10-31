@@ -23,18 +23,14 @@ jobs:
         run: |
           METRICS=$(curl -s "https://sonarcloud.io/api/measures/component?component=nkllon_beast-mailbox-core&metricKeys=alert_status,coverage,bugs,vulnerabilities,code_smells,reliability_rating,security_rating,sqale_rating,duplicated_lines_density,ncloc" | jq -c '.component.measures')
           
-          echo "metrics<<EOF" >> $GITHUB_OUTPUT
-          echo "$METRICS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          
           # Extract values
-          COVERAGE=$(echo "$METRICS" | jq -r '.[] | select(.metric=="coverage") | .value')
-          BUGS=$(echo "$METRICS" | jq -r '.[] | select(.metric=="bugs") | .value')
-          SMELLS=$(echo "$METRICS" | jq -r '.[] | select(.metric=="code_smells") | .value')
-          VULNS=$(echo "$METRICS" | jq -r '.[] | select(.metric=="vulnerabilities") | .value')
-          RELIABILITY=$(echo "$METRICS" | jq -r '.[] | select(.metric=="reliability_rating") | .value')
-          SECURITY=$(echo "$METRICS" | jq -r '.[] | select(.metric=="security_rating") | .value')
-          MAINTAINABILITY=$(echo "$METRICS" | jq -r '.[] | select(.metric=="sqale_rating") | .value')
+          COVERAGE=$(echo "$METRICS" | jq -r '.[] | select(.metric=="coverage") | .value // "0"')
+          BUGS=$(echo "$METRICS" | jq -r '.[] | select(.metric=="bugs") | .value // "0"')
+          SMELLS=$(echo "$METRICS" | jq -r '.[] | select(.metric=="code_smells") | .value // "0"')
+          VULNS=$(echo "$METRICS" | jq -r '.[] | select(.metric=="vulnerabilities") | .value // "0"')
+          RELIABILITY=$(echo "$METRICS" | jq -r '.[] | select(.metric=="reliability_rating") | .value // "1.0"')
+          SECURITY=$(echo "$METRICS" | jq -r '.[] | select(.metric=="security_rating") | .value // "1.0"')
+          MAINTAINABILITY=$(echo "$METRICS" | jq -r '.[] | select(.metric=="sqale_rating") | .value // "1.0"')
           
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
           echo "bugs=$BUGS" >> $GITHUB_OUTPUT
@@ -47,6 +43,14 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       
       - name: Update Metrics History
+        env:
+          COVERAGE: ${{ steps.sonar-metrics.outputs.coverage }}
+          BUGS: ${{ steps.sonar-metrics.outputs.bugs }}
+          SMELLS: ${{ steps.sonar-metrics.outputs.smells }}
+          VULNS: ${{ steps.sonar-metrics.outputs.vulnerabilities }}
+          RELIABILITY: ${{ steps.sonar-metrics.outputs.reliability }}
+          SECURITY: ${{ steps.sonar-metrics.outputs.security }}
+          MAINTAINABILITY: ${{ steps.sonar-metrics.outputs.maintainability }}
         run: |
           # Create metrics directory if it doesn't exist
           mkdir -p metrics
@@ -56,31 +60,41 @@ jobs:
             cat metrics/history.json > metrics/history.json.bak
           fi
           
-          # Create new entry
-          ENTRY=$(cat <<EOF
-          {
-            "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-            "commit": "${{ github.event.workflow_run.head_sha }}",
-            "branch": "${{ github.event.workflow_run.head_branch }}",
-            "workflow_run_id": "${{ github.event.workflow_run.id }}",
-            "version": "$(grep '^version = ' pyproject.toml | cut -d'"' -f2 || echo 'unknown')",
-            "metrics": {
-              "coverage": ${{ steps.sonar-metrics.outputs.coverage || 'null' }},
-              "bugs": ${{ steps.sonar-metrics.outputs.bugs || 0 }},
-              "vulnerabilities": ${{ steps.sonar-metrics.outputs.vulnerabilities || 0 }},
-              "code_smells": ${{ steps.sonar-metrics.outputs.smells || 0 }},
-              "reliability_rating": ${{ steps.sonar-metrics.outputs.reliability || 'null' }},
-              "security_rating": ${{ steps.sonar-metrics.outputs.security || 'null' }},
-              "maintainability_rating": ${{ steps.sonar-metrics.outputs.maintainability || 'null' }},
-              "quality_gate": "OK"
-            }
-          }
-          EOF
-          )
+          # Create new entry as JSON
+          ENTRY=$(jq -n \
+            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --arg commit "${{ github.event.workflow_run.head_sha }}" \
+            --arg branch "${{ github.event.workflow_run.head_branch }}" \
+            --arg run_id "${{ github.event.workflow_run.id }}" \
+            --arg version "$(grep '^version = ' pyproject.toml | cut -d'"' -f2 || echo 'unknown')" \
+            --argjson coverage "${COVERAGE:-null}" \
+            --argjson bugs "${BUGS:-0}" \
+            --argjson vulns "${VULNS:-0}" \
+            --argjson smells "${SMELLS:-0}" \
+            --argjson reliability "${RELIABILITY:-1.0}" \
+            --argjson security "${SECURITY:-1.0}" \
+            --argjson maintainability "${MAINTAINABILITY:-1.0}" \
+            '{
+              timestamp: $timestamp,
+              commit: $commit,
+              branch: $branch,
+              workflow_run_id: $run_id,
+              version: $version,
+              metrics: {
+                coverage: $coverage,
+                bugs: $bugs,
+                vulnerabilities: $vulns,
+                code_smells: $smells,
+                reliability_rating: $reliability,
+                security_rating: $security,
+                maintainability_rating: $maintainability,
+                quality_gate: "OK"
+              }
+            }')
           
           # Append to history (keep last 100 entries)
           if [ -f "metrics/history.json" ]; then
-            cat metrics/history.json | jq --argjson entry "$ENTRY" '.history += [$entry] | .history[-100:] | {history: .}' > metrics/history.json.tmp
+            jq --argjson entry "$ENTRY" '.history += [$entry] | .history[-100:] | {history: .}' metrics/history.json > metrics/history.json.tmp
           else
             echo "$ENTRY" | jq '{history: [.]}' > metrics/history.json.tmp
           fi
@@ -88,6 +102,11 @@ jobs:
           mv metrics/history.json.tmp metrics/history.json
           
           # Generate summary markdown with actual values
+          RATING_A="A"
+          [ "$RELIABILITY" != "1.0" ] && REL_RATING="B" || REL_RATING="A"
+          [ "$SECURITY" != "1.0" ] && SEC_RATING="B" || SEC_RATING="A"
+          [ "$MAINTAINABILITY" != "1.0" ] && MAIN_RATING="B" || MAIN_RATING="A"
+          
           cat > metrics/README.md <<EOF
           # Quality Metrics History
           
@@ -103,14 +122,14 @@ jobs:
           | Bugs | ${BUGS} | 0 | ✅ |
           | Vulnerabilities | ${VULNS} | 0 | ✅ |
           | Code Smells | ${SMELLS} | 0 | ✅ |
-          | Reliability | $([ "$RELIABILITY" = "1.0" ] && echo "A" || echo "B") | ≤ A | ✅ |
-          | Security | $([ "$SECURITY" = "1.0" ] && echo "A" || echo "B") | ≤ A | ✅ |
-          | Maintainability | $([ "$MAINTAINABILITY" = "1.0" ] && echo "A" || echo "B") | ≤ A | ✅ |
+          | Reliability | ${REL_RATING} | ≤ A | ✅ |
+          | Security | ${SEC_RATING} | ≤ A | ✅ |
+          | Maintainability | ${MAIN_RATING} | ≤ A | ✅ |
           
           ## Data Files
           
-          - `history.json` - Complete metrics history (JSON format, last 100 entries)
-          - `README.md` - This summary (auto-generated on each SonarCloud run)
+          - \`history.json\` - Complete metrics history (JSON format, last 100 entries)
+          - \`README.md\` - This summary (auto-generated on each SonarCloud run)
           
           ## Usage
           
