@@ -380,7 +380,8 @@ Configuration dataclass for Redis connection and mailbox behavior.
 - ✅ Redis authentication (password-protected clusters)
 - ✅ Custom host/port/database configuration
 - ✅ Advanced mailbox settings (stream prefix, polling, recovery)
-- ✅ **Required for `beast-agent` authenticated connections** - Pass `MailboxConfig` object to `BaseAgent(mailbox_url=config)`
+- ✅ **Required for `beast-agent` authenticated connections** - Pass `MailboxConfig` object to `BaseAgent(mailbox_url=config)`  
+  **Note:** For complete `BaseAgent` API documentation, see the [beast-agent repository](https://github.com/nkllon/beast-agent).
 
 ### Fields
 

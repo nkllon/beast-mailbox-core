@@ -1,5 +1,9 @@
 # Using beast-agent for Multi-Agent Communication
 
+**⚠️ NOTE:** This document shows how `beast-mailbox-core`'s `MailboxConfig` is used with `beast-agent`. For authoritative `BaseAgent` API documentation, see the [beast-agent repository](https://github.com/nkllon/beast-agent).
+
+**Scope:** This guide focuses on `beast-mailbox-core` integration patterns (especially `MailboxConfig` usage) when using `beast-agent`. For `BaseAgent` API details, lifecycle methods, and agent-specific features, refer to `beast-agent`'s own documentation.
+
 You are working on a component that needs to participate in the Beast Mode agent cluster. The `beast-agent` package provides the base class and infrastructure you need.
 
 ## Installation
@@ -348,7 +352,10 @@ if __name__ == "__main__":
 
 - **Package**: https://pypi.org/project/beast-agent/
 - **Repository**: https://github.com/nkllon/beast-agent
-- **Documentation**: See README.md and AGENT.md in the repository
+- **beast-agent Documentation**: See README.md and AGENT.md in the beast-agent repository (authoritative source for BaseAgent API)
+- **This Guide Focus**: Integration patterns, especially `MailboxConfig` usage with authenticated Redis
+
+**Note:** The examples above show how to use `beast-mailbox-core`'s `MailboxConfig` with `beast-agent`. For complete `BaseAgent` API documentation, lifecycle methods, and agent registration details, see the [beast-agent repository](https://github.com/nkllon/beast-agent).
 
 ## Next Steps
 
