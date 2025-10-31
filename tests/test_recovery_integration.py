@@ -82,6 +82,19 @@ class TestRecoveryIntegration:
         receiver = RedisMailboxService(agent_id, integration_config)
         await receiver.connect()
         
+        # Create consumer group first before reading
+        if receiver._client:
+            try:
+                await receiver._client.xgroup_create(
+                    name=receiver.inbox_stream,
+                    groupname=receiver._consumer_group,
+                    id="$",
+                    mkstream=True,
+                )
+            except Exception:
+                # Group might already exist, ignore
+                pass
+        
         # Read the message to move it to pending list
         await receiver._client.xreadgroup(
             groupname=receiver._consumer_group,
@@ -173,6 +186,19 @@ class TestRecoveryIntegration:
         # Read all messages to move them to PEL
         receiver = RedisMailboxService(agent_id, integration_config)
         await receiver.connect()
+        
+        # Create consumer group first before reading
+        if receiver._client:
+            try:
+                await receiver._client.xgroup_create(
+                    name=receiver.inbox_stream,
+                    groupname=receiver._consumer_group,
+                    id="$",
+                    mkstream=True,
+                )
+            except Exception:
+                # Group might already exist, ignore
+                pass
         
         # Read all messages
         await receiver._client.xreadgroup(

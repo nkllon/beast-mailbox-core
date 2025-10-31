@@ -132,7 +132,9 @@ class TestAdditionalCoverage:
 
     @pytest.mark.asyncio
     async def test_run_service_async_with_echo_handler(self):
-        """Test that echo handler is registered when --echo flag is set."""
+        """Test that echo handler is registered and called when --echo flag is set."""
+        from beast_mailbox_core.cli import MailboxMessage
+        
         args = argparse.Namespace(
             agent_id='echo-test',
             redis_host='localhost',
@@ -146,10 +148,90 @@ class TestAdditionalCoverage:
             echo=True,  # Echo flag set
         )
         
+        # Track if echo handler was called
+        echo_called = []
+        
+        # Create a mock service that captures the handler
+        mock_service = MagicMock()
+        mock_service.start = AsyncMock(return_value=True)
+        mock_service.stop = AsyncMock()
+        mock_service.register_handler = MagicMock(side_effect=lambda h: echo_called.append(h))
+        
+        with patch('beast_mailbox_core.cli.RedisMailboxService', return_value=mock_service):
+            with patch('beast_mailbox_core.cli.get_redis_config_from_args', return_value={'host': 'localhost', 'port': 6379, 'password': None, 'db': 0}):
+                with patch('beast_mailbox_core.cli.MailboxConfig'):
+                    with patch('asyncio.Event') as mock_event:
+                        mock_event_instance = MagicMock()
+                        mock_event.return_value = mock_event_instance
+                        
+                        async def raise_interrupt():
+                            # Call the echo handler before raising
+                            if echo_called:
+                                test_msg = MailboxMessage(
+                                    message_id="test-msg",
+                                    sender="test-sender",
+                                    recipient="echo-test",
+                                    message_type="test",
+                                    payload={"test": "data"}
+                                )
+                                await echo_called[0](test_msg)
+                            raise KeyboardInterrupt()
+                        
+                        mock_event_instance.wait = raise_interrupt
+                        
+                        await run_service_async(args)
+                        
+                        # Verify echo handler was registered
+                        mock_service.register_handler.assert_called_once()
+                        
         # Mock service.start() to return False (failure case)
         with patch.object(RedisMailboxService, 'start', new_callable=AsyncMock, return_value=False):
             with pytest.raises(SystemExit, match="Failed to start mailbox service"):
                 await run_service_async(args)
+    
+    @pytest.mark.asyncio
+    async def test_run_service_async_handles_keyboard_interrupt(self):
+        """Test that run_service_async handles KeyboardInterrupt gracefully."""
+        args = argparse.Namespace(
+            agent_id='interrupt-test',
+            redis_host='localhost',
+            redis_port=6379,
+            redis_password=None,
+            redis_db=0,
+            stream_prefix='test:mailbox',
+            maxlen=1000,
+            poll_interval=2.0,
+            latest=False,
+            echo=False,
+        )
+        
+        # Mock service to start successfully, then raise KeyboardInterrupt
+        mock_service = MagicMock()
+        mock_service.start = AsyncMock(return_value=True)
+        mock_service.stop = AsyncMock()
+        mock_service.register_handler = MagicMock()
+        
+        with patch('beast_mailbox_core.cli.RedisMailboxService', return_value=mock_service):
+            with patch('beast_mailbox_core.cli.get_redis_config_from_args', return_value={'host': 'localhost', 'port': 6379, 'password': None, 'db': 0}):
+                with patch('beast_mailbox_core.cli.MailboxConfig') as mock_config_class:
+                    mock_config = MagicMock()
+                    mock_config_class.return_value = mock_config
+                    
+                    # Mock asyncio.Event().wait() to raise KeyboardInterrupt
+                    with patch('asyncio.Event') as mock_event:
+                        mock_event_instance = MagicMock()
+                        mock_event.return_value = mock_event_instance
+                        
+                        async def raise_interrupt():
+                            raise KeyboardInterrupt()
+                        
+                        mock_event_instance.wait = raise_interrupt
+                        
+                        # Should not raise - should handle gracefully
+                        await run_service_async(args)
+                        
+                        # Verify service.stop() was called
+                        mock_service.stop.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_acknowledge_messages_with_xgroup_create_failure(self):

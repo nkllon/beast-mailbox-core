@@ -318,6 +318,33 @@ class TestRecoveryCallback:
         # Should not raise
         metrics = await service._recover_pending_messages()
         assert metrics is not None
+    
+    @pytest.mark.asyncio
+    async def test_recovery_handles_exception_in_loop(self, service):
+        """Test recovery handles exceptions during xautoclaim loop."""
+        async def handler(msg):
+            pass
+        
+        service.register_handler(handler)
+        
+        mock_client = AsyncMock()
+        mock_client.xpending_range = AsyncMock(return_value=[("0-0", "consumer", 1000, 1)])
+        # First call succeeds, second call raises exception
+        mock_client.xautoclaim = AsyncMock(
+            side_effect=[
+                ("1234-0", [("msg-1", {b"payload": b"{}"})], []),
+                Exception("Redis connection lost")
+            ]
+        )
+        mock_client.xack = AsyncMock()
+        service._client = mock_client
+        
+        # Should handle exception and break out of loop
+        metrics = await service._recover_pending_messages()
+        
+        # Should have recovered first message before exception
+        assert metrics.total_recovered >= 1
+        assert mock_client.xack.called
 
 
 class TestRecoveryIntegrationWithStart:
