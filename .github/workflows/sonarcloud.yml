@@ -39,8 +39,36 @@ jobs:
           pip install -e ".[dev]"
       
       - name: Run tests with coverage
+        id: pytest
         run: |
-          pytest tests/ --cov=src/beast_mailbox_core --cov-report=xml --cov-report=term
+          pytest tests/ --cov=src/beast_mailbox_core --cov-report=xml --cov-report=term --tb=short | tee /tmp/pytest_output.txt
+          
+          # Extract test metrics for Prometheus
+          TESTS_TOTAL=$(grep -E "passed|failed|skipped" /tmp/pytest_output.txt | tail -1 | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+' || echo "0")
+          TESTS_FAILED=$(grep -E "failed" /tmp/pytest_output.txt | tail -1 | grep -oE '[0-9]+ failed' | grep -oE '[0-9]+' || echo "0")
+          TESTS_PASSED=$((TESTS_TOTAL - TESTS_FAILED))
+          COVERAGE=$(grep -E "TOTAL" /tmp/pytest_output.txt | tail -1 | grep -oE '[0-9]+%' | grep -oE '[0-9]+' || echo "0")
+          DURATION=$(grep -E "seconds" /tmp/pytest_output.txt | tail -1 | grep -oE '[0-9]+\.[0-9]+ seconds' | grep -oE '[0-9]+\.[0-9]+' || echo "0")
+          
+          echo "tests_total=$TESTS_TOTAL" >> $GITHUB_OUTPUT
+          echo "tests_passed=$TESTS_PASSED" >> $GITHUB_OUTPUT
+          echo "tests_failed=$TESTS_FAILED" >> $GITHUB_OUTPUT
+          echo "coverage_percent=$COVERAGE" >> $GITHUB_OUTPUT
+          echo "test_duration=$DURATION" >> $GITHUB_OUTPUT
+          
+          # Save test summary for Prometheus workflow
+          echo "tests_total=$TESTS_TOTAL" > /tmp/test_metrics.env
+          echo "tests_passed=$TESTS_PASSED" >> /tmp/test_metrics.env
+          echo "tests_failed=$TESTS_FAILED" >> /tmp/test_metrics.env
+          echo "coverage_percent=$COVERAGE" >> /tmp/test_metrics.env
+          echo "test_duration=$DURATION" >> /tmp/test_metrics.env
+      
+      - name: Upload Test Metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-metrics
+          path: /tmp/test_metrics.env
+          retention-days: 1
       
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master

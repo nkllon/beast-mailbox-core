@@ -109,6 +109,8 @@ jobs:
           WORKFLOW_RUN_ID: ${{ steps.workflow-info.outputs.workflow_run_id }}
           STATUS: ${{ steps.workflow-info.outputs.status }}
         run: |
+          # Ensure scripts directory exists
+          mkdir -p scripts
           cat > /tmp/metrics.prom <<EOF
           # HELP sonarcloud_coverage_percent Code coverage percentage from SonarCloud
           # TYPE sonarcloud_coverage_percent gauge
@@ -166,25 +168,30 @@ jobs:
           # HELP github_workflow_runs_total Total workflow runs
           # TYPE github_workflow_runs_total counter
           github_workflow_runs_total{workflow="${WORKFLOW}",status="${STATUS}",branch="${BRANCH}"} 1
+          
+          # HELP github_workflow_duration_seconds Workflow execution duration
+          # TYPE github_workflow_duration_seconds gauge
+          github_workflow_duration_seconds{workflow="${WORKFLOW}",branch="${BRANCH}",status="${STATUS}"} ${{ github.event.workflow_run.run_duration_ms / 1000 || 0 }}
           EOF
           
+          echo "📊 Generated Prometheus metrics:"
           cat /tmp/metrics.prom
+          echo ""
       
       - name: Push to Prometheus Pushgateway
-        if: env.PROMETHEUS_PUSHGATEWAY_URL != ''
         env:
           PROMETHEUS_PUSHGATEWAY_URL: ${{ secrets.PROMETHEUS_PUSHGATEWAY_URL }}
+          PROMETHEUS_PUSHGATEWAY_AUTH: ${{ secrets.PROMETHEUS_PUSHGATEWAY_AUTH }}
+          BRANCH: ${{ steps.workflow-info.outputs.branch }}
+          VERSION: ${{ steps.workflow-info.outputs.version }}
+          COMMIT: ${{ steps.workflow-info.outputs.commit }}
+          WORKFLOW_RUN_ID: ${{ steps.workflow-info.outputs.workflow_run_id }}
+          WORKFLOW_NAME: ${{ steps.workflow-info.outputs.workflow }}
+          WORKFLOW_STATUS: ${{ steps.workflow-info.outputs.status }}
+          METRICS_FILE: /tmp/metrics.prom
         run: |
-          # Push metrics to Prometheus Pushgateway
-          # Format: PUT http://pushgateway:9091/metrics/job/{job_name}/instance/{instance}
-          JOB_NAME="beast-mailbox-core"
-          INSTANCE="${VERSION}-${COMMIT:0:8}"
-          
-          curl -X PUT \
-            --data-binary @/tmp/metrics.prom \
-            "${PROMETHEUS_PUSHGATEWAY_URL}/metrics/job/${JOB_NAME}/instance/${INSTANCE}/branch/${BRANCH}"
-          
-          echo "✅ Metrics pushed to Prometheus Pushgateway"
+          chmod +x scripts/push_metrics_to_prometheus.sh
+          ./scripts/push_metrics_to_prometheus.sh
         continue-on-error: true
       
       - name: Save Metrics Artifact
