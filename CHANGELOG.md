@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2025-01-31 - TEST QUALITY IMPROVEMENTS 🧪
+
+### Changed
+- **Removed heavily mocked tests** that didn't verify real behavior
+  - Removed tests that mocked entire services (RedisMailboxService, CLI functions)
+  - Removed tests that mocked internal dispatch logic
+  - Removed tests that verified only code paths existed, not actual behavior
+- **Added fault injection tests** with real Redis
+  - Tests that create actual error conditions (BUSYGROUP, NOGROUP)
+  - Tests that verify real error handling with actual Redis errors
+  - Tests that verify exception handling in callbacks and handlers
+
+### Technical Notes
+- Coverage maintained at 90% with real tests only
+- Integration tests now run in CI with Redis service container
+- Fault injection tests verify actual Redis error handling
+- Test quality improved - tests verify real behavior, not mocked behavior
+
+### Migration Notes
+- **No breaking changes** - test-only changes
+- Version bump for cache busting
+- All library functionality unchanged
+
 ## [0.4.1] - 2025-01-27 - REDIS_URL & API DOCUMENTATION 📘
 
 ### Added
