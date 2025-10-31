@@ -1,7 +1,7 @@
 # Observatory Architecture Design
 
 **Status:** Design Phase  
-**Date:** 2025-10-31
+**Date:** 2025-01-31
 
 ---
 
