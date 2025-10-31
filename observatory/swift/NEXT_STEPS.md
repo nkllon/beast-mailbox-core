@@ -1,84 +1,137 @@
-# Next Steps - Observatory Swift App
+# Next Steps for Observatory App
 
-**Status:** Phase 1 ✅ | Phase 2 🚧
+## Immediate Priorities
 
----
+### 1. Wire Up Apple Intelligence ⚡ HIGH PRIORITY
+**Status**: Currently stubbed with placeholder responses
 
-## ✅ Completed
+**Tasks**:
+- [ ] Test QueryAppleIntelligenceIntent in isolation
+- [ ] Verify AppIntents permissions are correct
+- [ ] Implement proper error handling for AppIntents
+- [ ] Add fallback handling if Apple Intelligence unavailable
+- [ ] Test with real queries (code review, error diagnosis)
 
-1. **Swift Package Manager Setup**
-   - ✅ `Package.swift` configured
-   - ✅ Command-line build working
-   - ✅ No Xcode required
+**Files to modify**:
+- `Sources/ObservatoryApp/Intelligence/AppleIntelligenceAgent.swift`
+- `Sources/ObservatoryApp/Chat/ChatView.swift`
+- `Sources/ObservatoryApp/Chat/ChatViewModel.swift`
 
-2. **Phase 1: Foundation**
-   - ✅ Menu bar app structure
-   - ✅ Status monitor
-   - ✅ Menu bar UI
-   - ✅ Dashboard view
-   - ✅ Service integration
+### 2. Improve HTTP Server 🚀 MEDIUM PRIORITY
+**Status**: Basic implementation works
 
-3. **Phase 2: Shortcuts (In Progress)**
-   - ✅ Status intent created
-   - ✅ Sync intent created
-   - ✅ Diagnose intent created
-   - 🔄 Testing needed
+**Tasks**:
+- [ ] Add proper JSON request parsing
+- [ ] Add CORS headers for cross-origin requests
+- [ ] Implement request timeout handling
+- [ ] Add authentication (API key or basic auth)
+- [ ] Better error responses with details
 
----
+**Files to modify**:
+- `Sources/ObservatoryApp/Services/SimpleHTTPServer.swift`
 
-## 🚧 Current Status
+### 3. Add Proper Logging 📝 MEDIUM PRIORITY
+**Status**: Using print() statements
 
-**Build Status:** Fixing compilation errors
+**Tasks**:
+- [ ] Replace print() with OSLog
+- [ ] Add structured logging
+- [ ] Add log levels (debug, info, warning, error)
+- [ ] Create log file output
+- [ ] Add log rotation
 
-**Next Immediate Steps:**
-1. Fix any remaining build errors
-2. Test build: `swift build`
-3. Test run: `swift run ObservatoryApp`
-4. Test Shortcuts integration with Siri
+**Files to modify**:
+- All files using print()
+- Create `Sources/ObservatoryApp/Utilities/Logger.swift`
 
----
+### 4. Window Management Abstraction 🏗️ LOW PRIORITY
+**Status**: Working but could be cleaner
 
-## 📋 Phase 2 Testing Checklist
+**Tasks**:
+- [ ] Create WindowManager class
+- [ ] Abstract window creation logic
+- [ ] Add window state persistence
+- [ ] Support multiple instances
 
-- [ ] Build succeeds: `swift build`
-- [ ] App runs: `swift run ObservatoryApp`
-- [ ] Menu bar icon appears
-- [ ] Open Shortcuts app → see "Beast Observatory" intents
-- [ ] Test with Siri: "Hey Siri, check Observatory status"
-- [ ] Test with Siri: "Hey Siri, trigger Observatory sync"
-- [ ] Verify intents execute correctly
+**Files to create**:
+- `Sources/ObservatoryApp/Utilities/WindowManager.swift`
 
----
+### 5. Add Unit Tests 🧪 LOW PRIORITY
+**Status**: No tests currently
 
-## 🔜 Next Phases
+**Tasks**:
+- [ ] Set up test target
+- [ ] Add tests for ChatViewModel
+- [ ] Add tests for AppleIntelligenceProcessor
+- [ ] Add tests for HTTP server
 
-**Phase 3:** Natural Language Queries
-- "What's the code coverage?"
-- "Show me quality metrics"
+## Apple Intelligence Integration Details
 
-**Phase 4:** Intelligent Error Diagnosis (AI-powered)
-- Apple Intelligence integration
-- Error pattern recognition
-
-**Phase 5-8:** See `ImplementationPlan.md`
-
----
-
-## 💡 Development Tips
-
-```bash
-# Quick build and run
-swift build && swift run ObservatoryApp
-
-# Watch for changes (manual rebuild)
-# Edit files, then:
-swift build
-
-# Clean build
-rm -rf .build && swift build
+### Current Architecture
+```
+ChatView → ChatViewModel → AppleIntelligenceChat → AppleIntelligenceProcessor
+                                                         ↓
+                                              QueryAppleIntelligenceIntent
+                                                         ↓
+                                              Apple Intelligence (stubbed)
 ```
 
----
+### What Needs to Happen
 
-**Status:** Ready to test Phase 1 & 2!
+1. **QueryAppleIntelligenceIntent** must be properly configured:
+   - Verify AppIntents framework is linked
+   - Check macOS version requirements (Sequoia 15.0+)
+   - Verify permissions in Info.plist
 
+2. **AppleIntelligenceProcessor.process()** needs:
+   - Real AppIntents calls
+   - Error handling for unavailable AI
+   - Fallback to HTTP server if direct AppIntents fail
+
+3. **Testing**:
+   - Test on actual macOS 15.0+ device
+   - Verify AppIntents permissions
+   - Test with actual queries
+
+### macOS Requirements
+- **Minimum**: macOS Sequoia 15.0 (for AppIntents with Apple Intelligence)
+- **Recommended**: macOS 15.1+ for best compatibility
+
+## Code Quality Improvements
+
+### Swift Best Practices Checklist
+- [ ] Add MARK comments for code organization
+- [ ] Extract magic numbers to constants
+- [ ] Add documentation comments (@param, @returns)
+- [ ] Run SwiftLint and fix issues
+- [ ] Add @available annotations where needed
+- [ ] Ensure all public APIs are documented
+
+## Testing Strategy
+
+### Manual Testing
+- [ ] Test chat window opening/closing
+- [ ] Test Apple Intelligence query flow
+- [ ] Test HTTP server endpoints
+- [ ] Test error scenarios
+- [ ] Test window state persistence
+
+### Automated Testing
+- [ ] Unit tests for business logic
+- [ ] Integration tests for HTTP server
+- [ ] UI tests for chat flow
+- [ ] Performance tests for concurrent queries
+
+## Documentation
+
+### User Documentation
+- [ ] Quick start guide
+- [ ] Apple Intelligence setup guide
+- [ ] Troubleshooting guide
+- [ ] FAQ
+
+### Developer Documentation
+- [ ] Architecture overview
+- [ ] API documentation
+- [ ] Contributing guidelines
+- [ ] Build instructions
