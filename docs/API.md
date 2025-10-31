@@ -376,6 +376,12 @@ message = MailboxMessage.from_redis_fields(redis_fields)
 
 Configuration dataclass for Redis connection and mailbox behavior.
 
+**Key Use Cases:**
+- ✅ Redis authentication (password-protected clusters)
+- ✅ Custom host/port/database configuration
+- ✅ Advanced mailbox settings (stream prefix, polling, recovery)
+- ✅ **Required for `beast-agent` authenticated connections** - Pass `MailboxConfig` object to `BaseAgent(mailbox_url=config)`
+
 ### Fields
 
 ```python
