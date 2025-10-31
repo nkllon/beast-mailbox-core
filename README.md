@@ -262,6 +262,16 @@ Set `BEAST_MODE_PROMETHEUS_ENABLED=false` to explicitly disable metrics collecti
 **Note:** Deprecated temporary guides (see beast-agent repo for authoritative docs):
   - ~~[Using beast-agent](docs/USING_BEAST_AGENT.md)~~ (deprecated - use beast-agent docs)
   - ~~[Cluster Discovery](docs/CLUSTER_DISCOVERY.md)~~ (deprecated - use beast-agent docs)
+
+### Observability
+
+- **⚡ [Prometheus Quick Start](docs/PROMETHEUS_QUICK_START.md)** - 5-minute setup guide for quality metrics
+- **📊 [Prometheus Metrics Design](docs/PROMETHEUS_METRICS_DESIGN.md)** - Complete metrics reference
+- **🚀 [Cluster Setup](docs/PROMETHEUS_CLUSTER_SETUP.md)** - Kubernetes/Docker deployment guide
+- **📈 [Grafana Dashboard](docs/grafana-quality-dashboard.json)** - Pre-configured quality dashboard
+
+### Quality Infrastructure
+
 - **🔍 [SonarCloud & Integration Testing](docs/SONARCLOUD_INTEGRATION_GUIDE.md)** - Best practices for quality infrastructure
 - **📋 [Quick Reference](docs/QUICK_REFERENCE.md)** - Command cheat sheet
 - **📚 [Lessons Learned](docs/LESSONS_LEARNED_v0.3.0.md)** - 80+ lessons from v0.1.0 → v0.3.0
