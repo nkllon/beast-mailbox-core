@@ -21,7 +21,7 @@ class TestEnvironmentVariableSupport:
             "REDIS_PORT": "6380",
             "REDIS_PASSWORD": "secret123",
             "REDIS_DB": "2",
-        }, clear=False):
+        }, clear=True):
             service = RedisMailboxService("test-agent", config=None)
             
             assert service.config.host == "prod-redis.example.com"
@@ -35,15 +35,7 @@ class TestEnvironmentVariableSupport:
         """Test that REDIS_URL is used when REDIS_HOST is not set."""
         with patch.dict(os.environ, {
             "REDIS_URL": "redis://:mypassword@redis-cluster.example.com:6379/1",
-        }, clear=False):
-            # Clear REDIS_HOST if it exists
-            env = os.environ.copy()
-            env.pop("REDIS_HOST", None)
-            env.pop("REDIS_PORT", None)
-            env.pop("REDIS_PASSWORD", None)
-            env.pop("REDIS_DB", None)
-            
-            with patch.dict(os.environ, env, clear=True):
+        }, clear=True):
                 service = RedisMailboxService("test-agent", config=None)
                 
                 assert service.config.host == "redis-cluster.example.com"
@@ -57,7 +49,7 @@ class TestEnvironmentVariableSupport:
             "REDIS_HOST": "priority-host.example.com",
             "REDIS_PORT": "9999",
             "REDIS_URL": "redis://:urlpass@url-host.example.com:6379/0",
-        }, clear=False):
+        }, clear=True):
             service = RedisMailboxService("test-agent", config=None)
             
             # Should use REDIS_HOST values, not REDIS_URL
@@ -66,15 +58,7 @@ class TestEnvironmentVariableSupport:
 
     def test_defaults_to_localhost_when_no_env_vars(self):
         """Test that defaults to localhost:6379 when no env vars are set."""
-        # Clear all Redis-related env vars
-        env = os.environ.copy()
-        env.pop("REDIS_HOST", None)
-        env.pop("REDIS_PORT", None)
-        env.pop("REDIS_PASSWORD", None)
-        env.pop("REDIS_DB", None)
-        env.pop("REDIS_URL", None)
-        
-        with patch.dict(os.environ, env, clear=False):
+        with patch.dict(os.environ, {}, clear=True):
             service = RedisMailboxService("test-agent", config=None)
             
             assert service.config.host == "localhost"
@@ -87,7 +71,7 @@ class TestEnvironmentVariableSupport:
         with patch.dict(os.environ, {
             "REDIS_HOST": "env-host.example.com",
             "REDIS_PASSWORD": "env-password",
-        }, clear=False):
+        }, clear=True):
             # Explicit config should override env vars
             explicit_config = MailboxConfig(
                 host="explicit-host.example.com",
@@ -110,7 +94,7 @@ class TestEnvironmentVariableSupport:
             # REDIS_PORT not set - should default to 6379
             # REDIS_PASSWORD not set - should be None
             "REDIS_DB": "5",
-        }, clear=False):
+        }, clear=True):
             service = RedisMailboxService("test-agent", config=None)
             
             assert service.config.host == "custom-host.example.com"
@@ -120,15 +104,9 @@ class TestEnvironmentVariableSupport:
 
     def test_redis_url_without_password(self):
         """Test REDIS_URL parsing without password."""
-        env = os.environ.copy()
-        env.pop("REDIS_HOST", None)
-        env.pop("REDIS_PORT", None)
-        env.pop("REDIS_PASSWORD", None)
-        env.pop("REDIS_DB", None)
-        
         with patch.dict(os.environ, {
             "REDIS_URL": "redis://redis.example.com:6380/2",
-        }, clear=False):
+        }, clear=True):
             service = RedisMailboxService("test-agent", config=None)
             
             assert service.config.host == "redis.example.com"
@@ -138,15 +116,9 @@ class TestEnvironmentVariableSupport:
 
     def test_redis_url_default_port_and_db(self):
         """Test REDIS_URL with default port and db."""
-        env = os.environ.copy()
-        env.pop("REDIS_HOST", None)
-        env.pop("REDIS_PORT", None)
-        env.pop("REDIS_PASSWORD", None)
-        env.pop("REDIS_DB", None)
-        
         with patch.dict(os.environ, {
             "REDIS_URL": "redis://:password@redis.example.com",
-        }, clear=False):
+        }, clear=True):
             service = RedisMailboxService("test-agent", config=None)
             
             assert service.config.host == "redis.example.com"
@@ -156,12 +128,9 @@ class TestEnvironmentVariableSupport:
 
     def test_invalid_redis_url_falls_back_to_defaults(self):
         """Test that invalid REDIS_URL falls back to defaults."""
-        env = os.environ.copy()
-        env.pop("REDIS_HOST", None)
-        
         with patch.dict(os.environ, {
             "REDIS_URL": "invalid://not-a-redis-url",
-        }, clear=False):
+        }, clear=True):
             # Should log warning but not crash
             service = RedisMailboxService("test-agent", config=None)
             
@@ -171,12 +140,9 @@ class TestEnvironmentVariableSupport:
 
     def test_rediss_scheme_supported(self):
         """Test that rediss:// scheme is supported."""
-        env = os.environ.copy()
-        env.pop("REDIS_HOST", None)
-        
         with patch.dict(os.environ, {
             "REDIS_URL": "rediss://:password@secure-redis.example.com:6380/3",
-        }, clear=False):
+        }, clear=True):
             service = RedisMailboxService("test-agent", config=None)
             
             assert service.config.host == "secure-redis.example.com"
@@ -189,7 +155,7 @@ class TestEnvironmentVariableSupport:
         with patch.dict(os.environ, {
             "REDIS_HOST": "env-host.example.com",
             "REDIS_PORT": "1234",
-        }, clear=False):
+        }, clear=True):
             # Both should behave the same
             service1 = RedisMailboxService("test-agent", config=None)
             service2 = RedisMailboxService("test-agent")  # config=None is default
