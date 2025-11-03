@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0  # Shallow clones should be disabled for better analysis
       
       - name: Set up Swift
-        uses: swift-actions/setup-swift@v1
+        uses: swift-actions/setup-swift@v2
         with:
           swift-version: "5.9"  # Match Package.swift swift-tools-version
       
