@@ -59,7 +59,7 @@ jobs:
       
       - name: Fetch Test Metrics from Artifacts
         id: test-metrics-download
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: test-metrics
           github-token: ${{ secrets.GITHUB_TOKEN }}
