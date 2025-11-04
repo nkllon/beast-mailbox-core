@@ -4,8 +4,8 @@ on:
   workflow_run:
     workflows: 
       - "SonarCloud Analysis"
-      - "Quality Metrics Tracking"
-      - "Publish to PyPI"
+      # Only trigger on SonarCloud Analysis to avoid duplicate runs
+      # This workflow aggregates metrics from multiple sources regardless of trigger
     types:
       - completed
 
@@ -59,7 +59,7 @@ jobs:
       
       - name: Fetch Test Metrics from Artifacts
         id: test-metrics-download
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: test-metrics
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -218,7 +218,7 @@ jobs:
         continue-on-error: true
       
       - name: Save Metrics Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: prometheus-metrics
           path: /tmp/metrics.prom

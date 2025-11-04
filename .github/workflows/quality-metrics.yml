@@ -11,12 +11,15 @@ jobs:
     name: Track Quality Metrics
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: write
     
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
       
       - name: Fetch SonarCloud Metrics
         id: sonar-metrics
@@ -154,6 +157,19 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           
+          # Fetch latest changes to handle conflicts
+          git fetch origin main
+          
+          # Merge latest changes before committing
+          git merge origin/main || {
+            echo "⚠️  Merge conflict detected, attempting automatic resolution..."
+            # Try to resolve conflicts by keeping our metrics changes
+            git checkout --ours metrics/ 2>/dev/null || true
+            git checkout --theirs metrics/ 2>/dev/null || true
+            git add metrics/
+            git commit -m "docs: Merge metrics history (conflict resolved)" || true
+          }
+          
           git add metrics/
           
           if git diff --staged --quiet; then
@@ -167,6 +183,34 @@ jobs:
             - Vulnerabilities: ${{ steps.sonar-metrics.outputs.vulnerabilities }}
             - Code Smells: ${{ steps.sonar-metrics.outputs.smells }}
             - Quality Gate: OK"
-            git push
+            
+            # Retry push with conflict handling
+            MAX_RETRIES=3
+            RETRY_COUNT=0
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if git push origin main 2>&1 | tee /tmp/push_output.txt; then
+                echo "✅ Metrics committed successfully"
+                break
+              else
+                if grep -q "conflict\|rejected\|non-fast-forward" /tmp/push_output.txt; then
+                  RETRY_COUNT=$((RETRY_COUNT + 1))
+                  echo "⚠️  Push conflict detected, retrying (attempt $RETRY_COUNT/$MAX_RETRIES)..."
+                  git fetch origin main
+                  git merge origin/main || {
+                    git checkout --ours metrics/ 2>/dev/null || true
+                    git add metrics/
+                    git commit -m "docs: Update quality metrics history (retry $RETRY_COUNT)" || true
+                  }
+                  sleep 5
+                else
+                  echo "❌ Push failed for non-conflict reason, aborting"
+                  break
+                fi
+              fi
+            done
+            
+            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+              echo "⚠️  Failed to push after $MAX_RETRIES attempts. Continuing without commit."
+            fi
           fi
 
