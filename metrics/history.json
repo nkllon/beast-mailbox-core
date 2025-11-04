@@ -50,6 +50,23 @@
         "maintainability_rating": 1.0,
         "quality_gate": "OK"
       }
+    },
+    {
+      "timestamp": "2025-11-04T16:25:25Z",
+      "commit": "1e55b883caf0db58dd4edc9ba78fb2d69db76eca",
+      "branch": "main",
+      "workflow_run_id": "19075521938",
+      "version": "0.4.5",
+      "metrics": {
+        "coverage": 89.5,
+        "bugs": 0,
+        "vulnerabilities": 0,
+        "code_smells": 0,
+        "reliability_rating": 1.0,
+        "security_rating": 1.0,
+        "maintainability_rating": 1.0,
+        "quality_gate": "OK"
+      }
     }
   ]
 }
