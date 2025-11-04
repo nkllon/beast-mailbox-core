@@ -89,7 +89,7 @@
     - Ensure test isolation and reliability with updated dependencies
     - _Requirements: 2.1, 4.1_
   
-  - [ ]* 5.2 Add regression tests for dependency compatibility
+  - [ ] 5.2 Add regression tests for dependency compatibility
     - Create tests that validate core functionality with updated dependencies
     - Add tests for dependency version constraint validation
     - Write integration tests for CI pipeline components
@@ -137,7 +137,7 @@
     - Validate that all CI steps complete successfully
     - _Requirements: 2.2, 2.3, 4.2_
   
-  - [ ]* 8.3 Create integration tests for the fix process
+  - [ ] 8.3 Create integration tests for the fix process
     - Write tests that validate the entire dependency update process
     - Add tests for the diagnostic utilities created
     - Include tests for preventive measures and validation scripts
