@@ -40,67 +40,68 @@ This specification defines how the GitHub Actions workflow system should operate
 8. THE Beast_Mailbox_Core SHALL verify dependency configuration in pyproject.toml and uv.lock before proposing dependency changes
 9. THE Beast_Mailbox_Core SHALL ensure documentation reflects actual system state, not assumed state
 
-## Requirement 1: Workflow Architecture
+### Requirement 1
 
-### 1.1 Workflow Independence
-- **REQ-1.1.1**: Workflows must be independently triggerable without blocking each other
-- **REQ-1.1.2**: Workflows should not depend on other workflows unless explicitly required for data flow
-- **REQ-1.1.3**: Critical workflows (SonarCloud analysis) must complete before dependent workflows run
+**User Story:** As a project maintainer, I want a well-architected workflow system, so that workflows operate independently and reliably.
 
-### 1.2 External Service Dependencies
-- **REQ-1.2.1**: All external service dependencies must be clearly documented
-- **REQ-1.2.2**: Workflows must handle external service failures gracefully (continue-on-error where appropriate)
-- **REQ-1.2.3**: External service authentication tokens must be stored as GitHub secrets
+#### Acceptance Criteria
 
-### 1.3 Artifact Management
-- **REQ-1.3.1**: Artifacts must have appropriate retention periods
-- **REQ-1.3.2**: Artifact consumers must handle missing artifacts gracefully
-- **REQ-1.3.3**: Artifact names must be unique and descriptive
+1. THE GitHub_Actions_System SHALL trigger workflows independently without blocking each other
+2. THE GitHub_Actions_System SHALL avoid workflow dependencies unless explicitly required for data flow
+3. WHEN critical workflows execute, THE GitHub_Actions_System SHALL complete SonarCloud analysis before dependent workflows run
+4. THE GitHub_Actions_System SHALL document all External_Service dependencies clearly
+5. WHEN External_Service failures occur, THE GitHub_Actions_System SHALL handle them gracefully using continue-on-error where appropriate
+6. THE GitHub_Actions_System SHALL store External_Service authentication tokens as GitHub secrets
+7. THE GitHub_Actions_System SHALL assign appropriate retention periods to all Artifact items
+8. WHEN Artifact items are missing, THE GitHub_Actions_System SHALL handle the situation gracefully with fallback mechanisms
+9. THE GitHub_Actions_System SHALL use unique and descriptive names for all Artifact items
 
-## Requirement 2: SonarCloud Analysis Workflows
+### Requirement 2
 
-### 2.1 Python SonarCloud Analysis
-- **REQ-2.1.1**: Must run on all pushes to `main` and all PR events
-- **REQ-2.1.2**: Must run tests with coverage reporting
-- **REQ-2.1.3**: Must upload test metrics as artifact for downstream workflows
-- **REQ-2.1.4**: Must integrate with SonarCloud API
-- **REQ-2.1.5**: Must provide Redis service for tests
+**User Story:** As a developer, I want comprehensive SonarCloud analysis for both Python and Swift code, so that code quality is maintained across all project components.
 
-### 2.2 Swift SonarCloud Analysis
-- **REQ-2.2.1**: Must run only when Swift code changes (`observatory/swift/**`)
-- **REQ-2.2.2**: Must support both Swift Package Manager and XcodeGen projects
-- **REQ-2.2.3**: Must clean build artifacts before building
-- **REQ-2.2.4**: Must integrate with SonarCloud API
-- **REQ-2.2.5**: Must handle project type detection automatically
+#### Acceptance Criteria
 
-## Requirement 3: Downstream Workflows
+1. WHEN code is pushed to main or PR events occur, THE SonarCloud_Analysis_Workflow SHALL execute for Python code
+2. THE SonarCloud_Analysis_Workflow SHALL execute Test_Suite with Coverage_Report generation
+3. THE SonarCloud_Analysis_Workflow SHALL upload test metrics as Artifact for downstream workflows
+4. THE SonarCloud_Analysis_Workflow SHALL integrate with SonarCloud_Service API
+5. THE SonarCloud_Analysis_Workflow SHALL provide Redis service for Test_Suite execution
+6. WHEN Swift code changes in observatory/swift directory, THE SonarCloud_Analysis_Workflow SHALL execute for Swift code
+7. THE SonarCloud_Analysis_Workflow SHALL support both Swift Package Manager and XcodeGen projects
+8. THE SonarCloud_Analysis_Workflow SHALL clean build artifacts before building Swift projects
+9. THE SonarCloud_Analysis_Workflow SHALL handle Swift project type detection automatically
 
-### 3.1 Quality Metrics Tracking
-- **REQ-3.1.1**: Must run only after successful Python SonarCloud Analysis
-- **REQ-3.1.2**: Must fetch metrics from SonarCloud API
-- **REQ-3.1.3**: Must commit metrics history to repository
-- **REQ-3.1.4**: Must generate readable metrics summary (README.md)
+### Requirement 3
 
-### 3.2 Prometheus Metrics Export
-- **REQ-3.2.1**: Must run after SonarCloud Analysis, Quality Metrics Tracking, or Publish workflows complete
-- **REQ-3.2.2**: Must aggregate metrics from multiple sources
-- **REQ-3.2.3**: Must download test metrics artifact from SonarCloud Analysis
-- **REQ-3.2.4**: Must handle missing artifacts gracefully with fallback values
-- **REQ-3.2.5**: Must export to Prometheus Pushgateway
-- **REQ-3.2.6**: Must not fail if Prometheus Pushgateway is unavailable
+**User Story:** As a project maintainer, I want automated quality metrics tracking and Prometheus export, so that project health is continuously monitored and observable.
 
-## Requirement 4: Dependabot Integration
+#### Acceptance Criteria
 
-### 4.1 Dependabot Configuration
-- **REQ-4.1.1**: Must check pip dependencies weekly
-- **REQ-4.1.2**: Must check GitHub Actions dependencies weekly
-- **REQ-4.1.3**: Must create PRs for dependency updates
+1. WHEN Python SonarCloud analysis completes successfully, THE Quality_Metrics_Workflow SHALL execute
+2. THE Quality_Metrics_Workflow SHALL fetch metrics from SonarCloud_Service API
+3. THE Quality_Metrics_Workflow SHALL commit metrics history to the repository
+4. THE Quality_Metrics_Workflow SHALL generate readable metrics summary in README.md format
+5. WHEN SonarCloud Analysis, Quality Metrics Tracking, or Publish workflows complete, THE Prometheus_Export_Workflow SHALL execute
+6. THE Prometheus_Export_Workflow SHALL aggregate metrics from multiple sources
+7. THE Prometheus_Export_Workflow SHALL download test metrics Artifact from SonarCloud Analysis
+8. WHEN Artifact items are missing, THE Prometheus_Export_Workflow SHALL handle gracefully with fallback values
+9. THE Prometheus_Export_Workflow SHALL export metrics to Prometheus Pushgateway
+10. IF Prometheus Pushgateway is unavailable, THE Prometheus_Export_Workflow SHALL continue without failure
 
-### 4.2 Dependabot PR Workflows
-- **REQ-4.2.1**: Dependabot PRs must trigger all applicable workflows
-- **REQ-4.2.2**: Workflows must pass on Dependabot PRs before merging
-- **REQ-4.2.3**: Workflow failures on Dependabot PRs must be investigated and fixed
-- **REQ-4.2.4**: Workflows must handle dependency version changes correctly
+### Requirement 4
+
+**User Story:** As a project maintainer, I want automated dependency management through Dependabot, so that dependencies stay current and secure without manual intervention.
+
+#### Acceptance Criteria
+
+1. THE Dependabot_System SHALL check pip dependencies weekly
+2. THE Dependabot_System SHALL check GitHub Actions dependencies weekly
+3. THE Dependabot_System SHALL create Dependabot_PR for dependency updates
+4. WHEN Dependabot_PR is created, THE CI_Pipeline SHALL trigger all applicable workflows
+5. THE CI_Pipeline SHALL pass on Dependabot_PR before merging is allowed
+6. WHEN workflows fail on Dependabot_PR, THE Beast_Mailbox_Core SHALL investigate and fix the failures
+7. THE CI_Pipeline SHALL handle dependency version changes correctly in all workflows
 
 ### 4.3 Dependabot PR Failure Investigation
 
@@ -179,98 +180,100 @@ This specification defines how the GitHub Actions workflow system should operate
 - **REQ-4.9.4**: THE Beast_Mailbox_Core SHALL prioritize critical fixes over nice-to-have improvements when resolving dependency issues
 - **REQ-4.9.5**: THE Beast_Mailbox_Core SHALL break down dependency fixes into small, testable increments
 
-## Requirement 5: Dependabot Diagnostic and Investigation Tools
+### Requirement 5
 
 **User Story:** As a project maintainer, I want diagnostic tools and investigation capabilities for Dependabot PR failures, so that root causes can be identified quickly and accurately.
 
-### 5.1 Failure Analysis Tools
-- **REQ-5.1.1**: THE Beast_Mailbox_Core SHALL provide tools to verify PR existence and fetch actual state before analysis
-- **REQ-5.1.2**: THE Beast_Mailbox_Core SHALL provide tools to examine CI pipeline logs and status
-- **REQ-5.1.3**: THE Beast_Mailbox_Core SHALL provide tools to analyze dependency version changes in PRs
-- **REQ-5.1.4**: THE Beast_Mailbox_Core SHALL provide tools to check SonarCloud quality gate results
-- **REQ-5.1.5**: THE Beast_Mailbox_Core SHALL provide tools to identify test failures and their causes
-- **REQ-5.1.6**: THE Beast_Mailbox_Core SHALL provide clear diagnostic information output from analysis tools
+#### Acceptance Criteria
 
-### 5.2 Dependency Resolution Tools
-- **REQ-5.2.1**: THE Beast_Mailbox_Core SHALL provide tools to analyze dependency version constraints
-- **REQ-5.2.2**: THE Beast_Mailbox_Core SHALL provide tools to identify transitive dependency conflicts
-- **REQ-5.2.3**: THE Beast_Mailbox_Core SHALL provide tools to propose version resolution strategies
-- **REQ-5.2.4**: THE Beast_Mailbox_Core SHALL provide tools to validate backward compatibility of dependency changes
-- **REQ-5.2.5**: THE Beast_Mailbox_Core SHALL provide tools to check security vulnerabilities in dependencies
+1. THE Beast_Mailbox_Core SHALL provide tools to verify Dependabot_PR existence and fetch actual state before analysis
+2. THE Beast_Mailbox_Core SHALL provide tools to examine CI_Pipeline logs and status
+3. THE Beast_Mailbox_Core SHALL provide tools to analyze dependency version changes in Dependabot_PR
+4. THE Beast_Mailbox_Core SHALL provide tools to check SonarCloud_Service Quality_Gate results
+5. THE Beast_Mailbox_Core SHALL provide tools to identify Test_Suite failures and their causes
+6. THE Beast_Mailbox_Core SHALL provide clear diagnostic information output from analysis tools
+7. THE Beast_Mailbox_Core SHALL provide tools to analyze dependency version constraints
+8. THE Beast_Mailbox_Core SHALL provide tools to identify transitive dependency conflicts
+9. THE Beast_Mailbox_Core SHALL provide tools to propose version resolution strategies
+10. THE Beast_Mailbox_Core SHALL provide tools to validate backward compatibility of dependency changes
+11. THE Beast_Mailbox_Core SHALL provide tools to check security vulnerabilities in dependencies
+12. THE Beast_Mailbox_Core SHALL provide tools to read and analyze existing GitHub_Actions_System workflows
+13. THE Beast_Mailbox_Core SHALL provide tools to update GitHub Actions workflow configurations
+14. THE Beast_Mailbox_Core SHALL provide tools to modify SonarCloud_Service configuration
+15. THE Beast_Mailbox_Core SHALL provide tools to adjust Test_Suite execution parameters
+16. THE Beast_Mailbox_Core SHALL provide tools to validate Quality_Gate threshold configurations
 
-### 5.3 CI Configuration Management Tools
-- **REQ-5.3.1**: THE Beast_Mailbox_Core SHALL provide tools to read and analyze existing workflows
-- **REQ-5.3.2**: THE Beast_Mailbox_Core SHALL provide tools to update GitHub Actions workflow configurations
-- **REQ-5.3.3**: THE Beast_Mailbox_Core SHALL provide tools to modify SonarCloud configuration
-- **REQ-5.3.4**: THE Beast_Mailbox_Core SHALL provide tools to adjust test execution parameters
-- **REQ-5.3.5**: THE Beast_Mailbox_Core SHALL provide tools to validate quality threshold configurations
+### Requirement 6
 
-## Requirement 6: Failure Handling
+**User Story:** As a developer, I want robust failure handling in workflows, so that critical issues block progress while non-critical issues allow continued operation.
 
-### 6.1 Workflow Failure Behavior
-- **REQ-6.1.1**: Critical workflows (SonarCloud) must fail loudly and block downstream workflows
-- **REQ-6.1.2**: Non-critical workflows (Prometheus export) must use `continue-on-error: true`
-- **REQ-6.1.3**: Workflows must provide clear error messages
+#### Acceptance Criteria
 
-### 6.2 External Service Failure Handling
-- **REQ-6.2.1**: SonarCloud API failures must be handled gracefully
-- **REQ-6.2.2**: Prometheus Pushgateway failures must not block workflow completion
-- **REQ-6.2.3**: Artifact download failures must use fallback values
+1. WHEN critical workflows like SonarCloud_Analysis_Workflow fail, THE GitHub_Actions_System SHALL fail loudly and block downstream workflows
+2. THE GitHub_Actions_System SHALL use continue-on-error for non-critical workflows like Prometheus_Export_Workflow
+3. THE GitHub_Actions_System SHALL provide clear error messages for all workflow failures
+4. WHEN SonarCloud_Service API failures occur, THE GitHub_Actions_System SHALL handle them gracefully
+5. WHEN Prometheus Pushgateway failures occur, THE GitHub_Actions_System SHALL continue workflow completion without blocking
+6. WHEN Artifact download failures occur, THE GitHub_Actions_System SHALL use fallback values
 
-## Requirement 7: Performance and Efficiency
+### Requirement 7
 
-### 7.1 Workflow Execution
-- **REQ-7.1.1**: Workflows should run only when relevant code changes
-- **REQ-7.1.2**: Workflows should cache dependencies where possible
-- **REQ-7.1.3**: Workflows should complete within reasonable time limits
+**User Story:** As a project maintainer, I want efficient workflow execution, so that CI resources are used optimally and builds complete quickly.
 
-### 7.2 Resource Usage
-- **REQ-7.2.1**: Workflows should use appropriate runners (ubuntu-latest vs macos-latest)
-- **REQ-7.2.2**: Artifacts should have appropriate retention periods
-- **REQ-7.2.3**: Build artifacts should be cleaned before builds
+#### Acceptance Criteria
 
-## Requirement 8: Documentation
+1. WHEN relevant code changes occur, THE GitHub_Actions_System SHALL run workflows only for affected components
+2. WHERE possible, THE GitHub_Actions_System SHALL cache dependencies to improve performance
+3. THE GitHub_Actions_System SHALL complete workflows within reasonable time limits
+4. THE GitHub_Actions_System SHALL use appropriate runners for different workflow types
+5. THE GitHub_Actions_System SHALL assign appropriate retention periods to Artifact items
+6. THE GitHub_Actions_System SHALL clean build artifacts before builds to ensure consistency
 
-### 8.1 Workflow Documentation
-- **REQ-8.1.1**: Each workflow must have clear purpose and trigger conditions
-- **REQ-8.1.2**: External service dependencies must be documented
-- **REQ-8.1.3**: Artifact dependencies must be documented
-- **REQ-8.1.4**: Workflow DAG must be documented and visualized
+### Requirement 8
 
-## Requirement 9: Release Management
+**User Story:** As a developer, I want comprehensive workflow documentation, so that I can understand and maintain the CI/CD system effectively.
 
-### 9.1 Release Creation Workflow
-- **REQ-9.1.1**: Must provide automated or semi-automated release creation process
-- **REQ-9.1.2**: Must validate pre-release requirements before creating release
-- **REQ-9.1.3**: Must create git tag automatically (or provide clear instructions)
-- **REQ-9.1.4**: Must generate release notes from CHANGELOG.md
-- **REQ-9.1.5**: Must support manual override (workflow_dispatch)
+#### Acceptance Criteria
 
-### 9.2 Pre-Release Validation
-- **REQ-9.2.1**: Must verify all tests pass before release
-- **REQ-9.2.2**: Must verify coverage ≥ 85% before release
-- **REQ-9.2.3**: Must verify SonarCloud Quality Gate is PASSED
-- **REQ-9.2.4**: Must verify version in pyproject.toml matches intended release
-- **REQ-9.2.5**: Must verify CHANGELOG.md has entry for version
-- **REQ-9.2.6**: Must verify no uncommitted changes
-- **REQ-9.2.7**: ⚠️ **CRITICAL**: Must verify Black formatting passes (`black --check .`)
-- **REQ-9.2.8**: ⚠️ **CRITICAL**: Must verify Ruff linting passes (`ruff check .`)
+1. THE GitHub_Actions_System SHALL document clear purpose and trigger conditions for each workflow
+2. THE GitHub_Actions_System SHALL document all External_Service dependencies
+3. THE GitHub_Actions_System SHALL document all Artifact dependencies between workflows
+4. THE GitHub_Actions_System SHALL provide documented and visualized workflow dependency graph
 
-### 9.3 Release-Triggered Workflows
-- **REQ-9.3.1**: SonarCloud Analysis should run on release events
-- **REQ-9.3.2**: Quality Metrics should be tracked for releases
-- **REQ-9.3.3**: Publish to PyPI must run after release creation
-- **REQ-9.3.4**: All release workflows should reference the release tag (not main branch)
+### Requirement 9
 
-## Requirement 10: Security
+**User Story:** As a project maintainer, I want automated release management with comprehensive validation, so that releases are created reliably with proper quality gates.
 
-### 10.1 Secret Management
-- **REQ-10.1.1**: All API tokens must be stored as GitHub secrets
-- **REQ-10.1.2**: Secrets must have appropriate scopes
-- **REQ-10.1.3**: Secrets must not be logged or exposed in workflow outputs
+#### Acceptance Criteria
 
-### 10.2 Dependency Security
-- **REQ-10.2.1**: Dependabot must check for security vulnerabilities
-- **REQ-10.2.2**: Security updates must be prioritized
-- **REQ-10.2.3**: Workflows must use pinned action versions where possible
+1. THE Release_Workflow SHALL provide automated or semi-automated release creation process
+2. THE Release_Workflow SHALL validate pre-release requirements before creating release
+3. THE Release_Workflow SHALL create git tag automatically or provide clear instructions
+4. THE Release_Workflow SHALL generate release notes from CHANGELOG.md
+5. THE Release_Workflow SHALL support manual override through workflow_dispatch
+6. THE Release_Workflow SHALL verify all Test_Suite pass before release
+7. THE Release_Workflow SHALL verify Coverage_Report meets 85% threshold before release
+8. THE Release_Workflow SHALL verify SonarCloud_Service Quality_Gate is PASSED before release
+9. THE Release_Workflow SHALL verify version in pyproject.toml matches intended release
+10. THE Release_Workflow SHALL verify CHANGELOG.md has entry for version
+11. THE Release_Workflow SHALL verify no uncommitted changes exist
+12. THE Release_Workflow SHALL verify Black formatting passes using black --check command
+13. THE Release_Workflow SHALL verify Ruff linting passes using ruff check command
+14. WHEN release events occur, THE SonarCloud_Analysis_Workflow SHALL execute
+15. WHEN release events occur, THE Quality_Metrics_Workflow SHALL track release metrics
+16. WHEN release is created, THE GitHub_Actions_System SHALL publish to PyPI
+17. THE GitHub_Actions_System SHALL reference release tag in all release workflows
+
+### Requirement 10
+
+**User Story:** As a security-conscious developer, I want secure workflow operations, so that sensitive information is protected and dependencies are kept secure.
+
+#### Acceptance Criteria
+
+1. THE GitHub_Actions_System SHALL store all API tokens as GitHub secrets
+2. THE GitHub_Actions_System SHALL assign appropriate scopes to all secrets
+3. THE GitHub_Actions_System SHALL prevent secrets from being logged or exposed in workflow outputs
+4. THE Dependabot_System SHALL check for security vulnerabilities in dependencies
+5. THE Dependabot_System SHALL prioritize security updates over regular updates
+6. WHERE possible, THE GitHub_Actions_System SHALL use pinned action versions for security
 
