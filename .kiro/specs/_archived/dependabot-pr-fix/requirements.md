@@ -22,7 +22,7 @@ This specification addresses the investigation and resolution of a failing Depen
 
 #### Acceptance Criteria
 
-1. BEFORE creating any solutions, THE Beast_Mailbox_Core SHALL gather requirements first per AGENT.md guidelines
+1. THE Beast_Mailbox_Core SHALL gather requirements first per AGENT.md guidelines before creating any solutions
 2. THE Beast_Mailbox_Core SHALL list and read all existing workflows before proposing changes per AGENT.md guidelines
 3. THE Beast_Mailbox_Core SHALL verify actual system state including PR existence and workflow status before assuming state
 4. THE Beast_Mailbox_Core SHALL declare explicit requirements before designing solutions
