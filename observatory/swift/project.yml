@@ -1,0 +1,16 @@
+name: ObservatoryApp
+
+options:
+  deploymentTarget:
+    macOS: "15.0"
+  bundleIdPrefix: com.nkllon
+
+targets:
+  ObservatoryApp:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/ObservatoryApp
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.nkllon.ObservatoryApp
+      INFOPLIST_KEY_LSUIElement: YES
