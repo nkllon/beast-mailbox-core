@@ -6,6 +6,8 @@ on:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
+  release:
+    types: [published]
 
 jobs:
   sonarcloud:
@@ -27,6 +29,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Explicitly checkout release tag for release events (not main branch)
+          ref: ${{ github.event.release.tag_name || github.ref }}
       
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -64,7 +68,7 @@ jobs:
           echo "test_duration=$DURATION" >> /tmp/test_metrics.env
       
       - name: Upload Test Metrics
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: test-metrics
           path: /tmp/test_metrics.env

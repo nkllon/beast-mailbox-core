@@ -1,6 +1,6 @@
 [project]
 name = "beast-mailbox-core"
-version = "0.4.4"
+version = "0.4.5"
 description = "Redis-backed mailbox utilities from Beast Mode"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -28,6 +28,8 @@ dev = [
   "pytest-asyncio>=0.21.0",
   "pytest-cov>=4.0.0",
   "docker>=6.0.0",
+  "black>=24.0.0",
+  "ruff>=0.1.0",
 ]
 
 [tool.pytest.ini_options]

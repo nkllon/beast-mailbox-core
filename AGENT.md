@@ -584,17 +584,51 @@ For a typical release (learned from v0.4.0-v0.4.2):
    - Verify GitHub release exists
    - Check SonarCloud dashboard for quality metrics
 
+### Release Validation Workflow
+
+**New in v0.4.5+**: Automated release validation workflow ensures all pre-release requirements are met before creating a release.
+
+#### Running Release Validation
+
+1. **Trigger workflow manually**:
+   - Go to GitHub Actions → "Release Validation" workflow
+   - Click "Run workflow"
+   - Enter version (e.g., "0.4.5")
+   - Click "Run workflow"
+
+2. **Validation checks performed**:
+   - ✅ Git state (no uncommitted changes, tag doesn't exist)
+   - ✅ Version match (pyproject.toml matches input version)
+   - ✅ CHANGELOG.md has entry for version
+   - ✅ Black formatting check (`black --check .`)
+   - ✅ Ruff linting check (`ruff check .`)
+   - ✅ All tests pass
+   - ✅ Coverage ≥ 85%
+   - ✅ SonarCloud Quality Gate is PASSED
+
+3. **If validation passes**:
+   - Workflow provides next steps in summary
+   - Proceed with manual release creation (see Release Steps below)
+
+4. **If validation fails**:
+   - Fix the errors shown in workflow output
+   - Re-run validation workflow
+   - Repeat until all validations pass
+
+**Note**: Validation workflow does NOT create the release - it validates readiness. After validation passes, create release manually following the steps below.
+
 ### Mandatory Release Checklist
 
 #### Pre-Release
 
 1. ✅ All changes committed and pushed to GitHub
-2. ✅ All tests pass locally (`pytest tests/`)
-3. ✅ Coverage ≥ 85% (`pytest --cov`)
-4. ✅ Quality Gate PASSED on SonarCloud
-5. ✅ No linter errors
-6. ✅ CHANGELOG.md updated with release notes
-7. ✅ Version bumped in `pyproject.toml`
+2. ✅ **Run Release Validation workflow** (new - validates all requirements automatically)
+3. ✅ All tests pass locally (`pytest tests/`) - validated by workflow
+4. ✅ Coverage ≥ 85% (`pytest --cov`) - validated by workflow
+5. ✅ Quality Gate PASSED on SonarCloud - validated by workflow
+6. ✅ No linter errors (Black/Ruff) - validated by workflow
+7. ✅ CHANGELOG.md updated with release notes - validated by workflow
+8. ✅ Version bumped in `pyproject.toml` - validated by workflow
 
 #### Release Steps
 
@@ -612,30 +646,32 @@ git push origin release/v0.X.Y
 
 # 3. Create PR, get review, merge to main
 
-# 4. Pull merged changes and tag
+# 4. Pull merged changes
 git checkout main
 git pull origin main
+
+# 5. Run Release Validation workflow (NEW)
+# Go to GitHub Actions → "Release Validation" → "Run workflow"
+# Enter version: 0.X.Y
+# Wait for validation to pass
+
+# 6. Create git tag (only after validation passes)
 git tag -a v0.X.Y -m "Release version 0.X.Y"
 git push origin v0.X.Y
 
-# 5. Verify tag exists
+# 7. Verify tag exists
 git ls-remote --tags origin | grep v0.X.Y
 
-# 6. Build package
-rm -rf dist/ build/ *.egg-info
-python -m build
-
-# 7. Upload to PyPI
-twine upload dist/*
-
-# 8. Verify on PyPI
-pip install beast-mailbox-core==0.X.Y
-pip show beast-mailbox-core
-
-# 9. Create GitHub Release
+# 8. Create GitHub Release (triggers automated PyPI publish)
 gh release create v0.X.Y \
   --title "v0.X.Y" \
   --notes "$(cat CHANGELOG.md | sed -n '/\[0.X.Y\]/,/\[0/p' | head -n -1)"
+
+# 9. Verify on PyPI (after GitHub Actions publishes)
+pip index versions beast-mailbox-core
+
+# 10. Verify SonarCloud analysis ran on release
+# Check GitHub Actions for "SonarCloud Analysis" workflow triggered by release
 ```
 
 ### Release Rules (Never Break These)

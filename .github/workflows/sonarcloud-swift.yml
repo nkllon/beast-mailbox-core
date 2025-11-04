@@ -11,6 +11,8 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'observatory/swift/**'
+  release:
+    types: [published]
 
 jobs:
   sonarcloud-swift:
@@ -21,6 +23,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for better analysis
+          # Explicitly checkout release tag for release events (not main branch)
+          ref: ${{ github.event.release.tag_name || github.ref }}
       
       - name: Set up Swift
         uses: swift-actions/setup-swift@v1
