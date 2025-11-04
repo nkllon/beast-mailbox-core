@@ -1,0 +1,26 @@
+{
+  // swift-format configuration file
+  // https://github.com/apple/swift-format
+
+  "version": 1,
+  // Maximum line length before wrapping
+  "lineLength": 120,
+
+  // Indentation settings
+  "indentation": {
+    "spaces": 4,
+    "tabs": false
+  },
+
+  // Enable modern Swift 6 rules
+  "swiftVersion": "6",
+
+  // Enable resilience mode (if applicable)
+  "resilience": true,
+
+  // Organize imports to remove unused and sort alphabetically
+  "organizeImports": {
+    "enabled": true,
+    "groupedImports": false
+  }
+}

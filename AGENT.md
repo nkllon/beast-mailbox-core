@@ -1188,6 +1188,56 @@ rm -rf dist/ build/ *.egg-info
 python -m build
 ```
 
+### Dependabot PR Failures
+
+**Problem:** Dependabot PR fails CI checks, but dependency update looks correct
+
+**Investigation Steps:**
+1. **Verify PR changes are correct:**
+   ```bash
+   gh pr view <PR_NUMBER> --json files
+   gh pr diff <PR_NUMBER>
+   ```
+
+2. **Check actual failure location:**
+   - PR may fail due to pre-existing workflow issues, not the dependency change
+   - Review workflow run logs to identify actual failure point
+   - Check if failure is in unrelated workflow (e.g., Swift workflow failing on Python dependency PR)
+
+3. **Common causes:**
+   - **Build cache issues:** Swift Package Manager or Xcode build cache incompatibility
+     - **Fix:** Add cleanup step before build: `rm -rf .build .swiftpm ~/Library/Developer/Xcode/DerivedData`
+   - **Workflow configuration:** Workflow may not support project type (Swift PM vs Xcode)
+     - **Fix:** Add conditional logic to detect project type and use appropriate build command
+   - **Unrelated failures:** Pre-existing workflow bugs exposed by PR trigger
+
+4. **Verification:**
+   ```bash
+   # Check if PR changes are actually in the failing workflow
+   gh pr diff <PR_NUMBER> -- .github/workflows/
+   
+   # Verify dependency version is correct
+   # Check official action version on GitHub Marketplace
+   ```
+
+**Example Fix (Swift Workflow):**
+```yaml
+- name: Clean build artifacts
+  run: |
+    rm -rf .build .swiftpm
+    rm -rf ~/Library/Developer/Xcode/DerivedData
+
+- name: Build
+  run: |
+    if [ -f "Package.swift" ]; then
+      swift build
+    elif [ -f "project.yml" ] && [ -d "*.xcodeproj" ]; then
+      xcodebuild -project *.xcodeproj -scheme <scheme> clean build
+    fi
+```
+
+**Rule:** Always investigate the actual failure, not just assume it's the dependency change. Dependabot PRs can fail due to pre-existing issues.
+
 ---
 
 ## Quick Reference
