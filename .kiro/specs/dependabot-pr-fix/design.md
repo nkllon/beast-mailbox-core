@@ -206,7 +206,9 @@ class ErrorRecoveryManager:
 
 3. **Quality Assurance Validation**
    - Run SonarCloud analysis locally before pushing
-   - Verify test coverage meets or exceeds current thresholds
+   - Verify test coverage meets or exceeds 85% threshold (AGENT.md requirement)
+   - Ensure zero bugs and zero code smells (AGENT.md quality standards)
+   - Maintain comment density ≥25% (AGENT.md requirement)
    - Ensure no new critical quality issues are introduced
 
 ### Implementation Testing
@@ -248,8 +250,15 @@ class TestExecutor:
 
 ## Implementation Phases
 
+### Phase 0: Requirements Gathering and System Verification (AGENT.md Compliance)
+1. List and read all existing workflows (AGENT.md requirement)
+2. Verify PR #10 actual state (don't assume)
+3. Declare explicit requirements before solutions (AGENT.md principle)
+4. Check existing dependency configuration
+5. Document current system state
+
 ### Phase 1: Investigation and Diagnosis
-1. Fetch and analyze Dependabot PR #10 details
+1. Fetch and analyze Dependabot PR #10 details (after verification)
 2. Examine CI pipeline failure logs
 3. Identify specific failure points (tests, build, quality gates)
 4. Document root cause analysis findings
@@ -282,10 +291,12 @@ class TestExecutor:
 
 1. **Dependabot PR #10 passes all CI checks**
 2. **SonarCloud quality gate remains PASSED**
-3. **Test coverage maintains ≥84% threshold**
-4. **All existing functionality preserved**
-5. **Future Dependabot PRs have higher success rate**
-6. **Documentation updated with troubleshooting guidance**
+3. **Test coverage maintains ≥85% threshold** (AGENT.md requirement, not 84%)
+4. **Zero bugs and zero code smells** (AGENT.md quality standards)
+5. **Comment density maintained ≥25%** (AGENT.md requirement)
+6. **All existing functionality preserved**
+7. **Future Dependabot PRs have higher success rate**
+8. **Documentation updated with troubleshooting guidance** (AGENT.md lines 729-741)
 
 ## Risk Mitigation
 

@@ -15,6 +15,18 @@ This specification addresses the investigation and resolution of a failing Depen
 
 ## Requirements
 
+### Requirement 0 (AGENT.md Compliance)
+
+**User Story:** As a project maintainer, I want to follow AGENT.md requirements-first principles, so that solutions are built on actual requirements rather than assumptions.
+
+#### Acceptance Criteria
+
+1. BEFORE creating any solutions, THE system SHALL gather requirements first (AGENT.md lines 803-946)
+2. THE system SHALL list and read all existing workflows before proposing changes (AGENT.md lines 826-888)
+3. THE system SHALL verify actual system state (PR existence, workflow status) before assuming state
+4. THE system SHALL declare explicit requirements before designing solutions
+5. THE system SHALL document current configuration state before making changes
+
 ### Requirement 1
 
 **User Story:** As a project maintainer, I want to understand why the Dependabot pull request is failing, so that I can maintain automated dependency updates.
@@ -57,8 +69,10 @@ This specification addresses the investigation and resolution of a failing Depen
 
 #### Acceptance Criteria
 
-1. THE Test_Suite SHALL maintain or improve current test coverage after fixes
+1. THE Test_Suite SHALL maintain or improve current test coverage after fixes, with minimum coverage of 85% (AGENT.md requirement)
 2. THE SonarCloud_Service SHALL report no new quality gate failures
-3. THE updated dependencies SHALL not introduce security vulnerabilities
-4. THE code quality metrics SHALL remain within acceptable thresholds
-5. WHERE quality improvements are possible, THE system SHALL implement them as part of the fix
+3. THE SonarCloud_Service SHALL report zero bugs and zero code smells (AGENT.md quality standards)
+4. THE code SHALL maintain comment density ≥25% (AGENT.md requirement)
+5. THE updated dependencies SHALL not introduce security vulnerabilities
+6. THE code quality metrics SHALL remain within acceptable thresholds as defined in AGENT.md (lines 149-173)
+7. WHERE quality improvements are possible, THE system SHALL implement them as part of the fix
