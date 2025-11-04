@@ -1,6 +1,6 @@
-# GitHub Workflows Requirements Specification
+# Requirements Document
 
-## Overview
+## Introduction
 
 This specification defines how the GitHub Actions workflow system should operate for the beast-mailbox-core project, including all workflows, their dependencies, external service integrations, failure handling, and Dependabot integration.
 
@@ -13,25 +13,32 @@ This specification defines how the GitHub Actions workflow system should operate
 - **Test_Suite**: The collection of automated tests using pytest that validate the functionality of the codebase
 - **Coverage_Report**: The measurement of code coverage generated during test execution, with a minimum threshold of 85%
 - **Quality_Gate**: The SonarCloud quality criteria that must be met, including zero bugs and zero code smells
+- **GitHub_Actions_System**: The complete set of automated workflows that run on GitHub events for the beast-mailbox-core project
+- **SonarCloud_Analysis_Workflow**: A workflow that performs code quality analysis and uploads results to SonarCloud
+- **Quality_Metrics_Workflow**: A workflow that fetches metrics from SonarCloud API and commits them to the repository
+- **Prometheus_Export_Workflow**: A workflow that aggregates metrics and exports them to Prometheus Pushgateway
+- **Dependabot_PR**: A pull request created automatically by GitHub's Dependabot service for dependency updates
+- **Release_Workflow**: A workflow that validates pre-release conditions and creates GitHub releases
+- **External_Service**: Third-party services like SonarCloud API, Prometheus Pushgateway, or PyPI
+- **Artifact**: A file or set of files uploaded by one workflow and consumed by another workflow
 
-## Requirement 0: AGENT.md Compliance
+## Requirements
+
+### Requirement 0
 
 **User Story:** As a project maintainer, I want to follow AGENT.md requirements-first principles, so that solutions are built on actual requirements rather than assumptions.
 
-### 0.1 Requirements-First Approach
-- **REQ-0.1.1**: BEFORE creating any solutions, THE Beast_Mailbox_Core SHALL gather requirements first per AGENT.md guidelines
-- **REQ-0.1.2**: THE Beast_Mailbox_Core SHALL declare explicit requirements before designing solutions
-- **REQ-0.1.3**: Requirements must be documented before implementation begins
+#### Acceptance Criteria
 
-### 0.2 Workflow Verification
-- **REQ-0.2.1**: THE Beast_Mailbox_Core SHALL list and read all existing workflows before proposing changes per AGENT.md guidelines
-- **REQ-0.2.2**: THE Beast_Mailbox_Core SHALL understand all triggers and dependencies before creating new workflows
-- **REQ-0.2.3**: THE Beast_Mailbox_Core SHALL document current workflow configuration state before making changes
-
-### 0.3 System State Verification
-- **REQ-0.3.1**: THE Beast_Mailbox_Core SHALL verify actual system state including PR existence and workflow status before assuming state
-- **REQ-0.3.2**: THE Beast_Mailbox_Core SHALL verify dependency configuration (pyproject.toml, uv.lock) before proposing dependency changes
-- **REQ-0.3.3**: Documentation must reflect actual system state, not assumed state
+1. BEFORE creating any solutions, THE Beast_Mailbox_Core SHALL gather requirements first per AGENT.md guidelines
+2. THE Beast_Mailbox_Core SHALL declare explicit requirements before designing solutions
+3. THE Beast_Mailbox_Core SHALL document requirements before implementation begins
+4. THE Beast_Mailbox_Core SHALL list and read all existing workflows before proposing changes per AGENT.md guidelines
+5. THE Beast_Mailbox_Core SHALL understand all triggers and dependencies before creating new workflows
+6. THE Beast_Mailbox_Core SHALL document current workflow configuration state before making changes
+7. THE Beast_Mailbox_Core SHALL verify actual system state including PR existence and workflow status before assuming state
+8. THE Beast_Mailbox_Core SHALL verify dependency configuration in pyproject.toml and uv.lock before proposing dependency changes
+9. THE Beast_Mailbox_Core SHALL ensure documentation reflects actual system state, not assumed state
 
 ## Requirement 1: Workflow Architecture
 
