@@ -27,13 +27,48 @@ jobs:
         with:
           swift-version: "5.9"  # Match Package.swift swift-tools-version
       
-      - name: Build
+      - name: Clean build artifacts
         working-directory: observatory/swift
-        run: swift build
+        run: |
+          # Clean Swift Package Manager build cache
+          rm -rf .build
+          rm -rf .swiftpm
+          # Clean Xcode build artifacts
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+      
+      - name: Check project type and build
+        working-directory: observatory/swift
+        run: |
+          if [ -f "Package.swift" ]; then
+            echo "Building with Swift Package Manager..."
+            swift build
+          elif [ -f "project.yml" ] && [ -d "ObservatoryApp.xcodeproj" ]; then
+            echo "Building Xcode project with xcodebuild..."
+            xcodebuild -project ObservatoryApp.xcodeproj \
+              -scheme ObservatoryApp \
+              -configuration Release \
+              -derivedDataPath ./DerivedData \
+              clean build
+          else
+            echo "⚠️  No Package.swift or Xcode project found, skipping build"
+            exit 1
+          fi
       
       - name: Run Tests
         working-directory: observatory/swift
-        run: swift test
+        run: |
+          if [ -f "Package.swift" ]; then
+            swift test
+          elif [ -f "project.yml" ] && [ -d "ObservatoryApp.xcodeproj" ]; then
+            xcodebuild -project ObservatoryApp.xcodeproj \
+              -scheme ObservatoryApp \
+              -configuration Release \
+              -derivedDataPath ./DerivedData \
+              test
+          else
+            echo "⚠️  No Package.swift or Xcode project found, skipping tests"
+            exit 1
+          fi
       
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
