@@ -1,0 +1,21 @@
+{
+  "history": [
+    {
+      "timestamp": "2025-11-04T15:27:52Z",
+      "commit": "6fb5d31ba6344c49ecfdafa8efa1395edee32bce",
+      "branch": "main",
+      "workflow_run_id": "19073782637",
+      "version": "0.4.5",
+      "metrics": {
+        "coverage": 89.5,
+        "bugs": 0,
+        "vulnerabilities": 0,
+        "code_smells": 0,
+        "reliability_rating": 1.0,
+        "security_rating": 1.0,
+        "maintainability_rating": 1.0,
+        "quality_gate": "OK"
+      }
+    }
+  ]
+}
