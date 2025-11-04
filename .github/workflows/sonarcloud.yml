@@ -6,6 +6,8 @@ on:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
+  release:
+    types: [published]
 
 jobs:
   sonarcloud:

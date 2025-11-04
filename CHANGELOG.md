@@ -7,8 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Release Validation Workflow** - Automated validation of all pre-release requirements
+  - Validates git state (no uncommitted changes, tag doesn't exist)
+  - Validates version match between input and pyproject.toml
+  - Validates CHANGELOG.md has entry for version
+  - Validates Black formatting (`black --check .`)
+  - Validates Ruff linting (`ruff check .`)
+  - Validates all tests pass
+  - Validates coverage ≥ 85%
+  - Validates SonarCloud Quality Gate is PASSED
+  - Provides clear error messages and actionable guidance
+  - Manual trigger via GitHub Actions workflow_dispatch
+  - Usage: GitHub Actions → "Release Validation" → "Run workflow" → Enter version
+- **SonarCloud Analysis on Releases** - SonarCloud now runs on release events
+  - Python analysis runs on every release
+  - Swift analysis runs on every release (if Swift code present)
+  - Captures final quality state for each release
+  - Enables quality metrics tracking for releases
+
 ### Changed
 - Update SonarCloud GitHub Action from deprecated `SonarSource/sonarcloud-github-action@master` to `sonarqube-scan-action` (backlog item for next release)
+- **Release Process Enhanced** - Added automated validation before release creation
+  - Release validation workflow must pass before creating release
+  - All pre-release checks now automated (tests, coverage, linting, quality gate)
+  - Manual release creation still required (workflow validates, doesn't create)
 
 ## [0.4.4] - 2025-10-31 - CRITICAL BUG FIX 🐛
 

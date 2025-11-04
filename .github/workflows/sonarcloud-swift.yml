@@ -11,6 +11,8 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'observatory/swift/**'
+  release:
+    types: [published]
 
 jobs:
   sonarcloud-swift:

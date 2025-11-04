@@ -1,0 +1,205 @@
+name: Release Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.4.5)'
+        required: true
+        type: string
+      skip_validation:
+        description: 'Skip validation (emergency only)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  validate:
+    name: Validate Release Readiness
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    
+    services:
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      
+      - name: Check for uncommitted changes
+        if: ${{ !inputs.skip_validation }}
+        run: |
+          if ! git diff-index --quiet HEAD --; then
+            echo "❌ ERROR: Uncommitted changes detected"
+            echo "Please commit or stash all changes before releasing"
+            git status
+            exit 1
+          fi
+          echo "✅ No uncommitted changes"
+      
+      - name: Validate version in pyproject.toml
+        if: ${{ !inputs.skip_validation }}
+        id: version-check
+        run: |
+          EXPECTED_VERSION="${{ inputs.version }}"
+          ACTUAL_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          
+          if [ "$ACTUAL_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "❌ ERROR: Version mismatch"
+            echo "Expected: $EXPECTED_VERSION"
+            echo "Actual: $ACTUAL_VERSION"
+            echo "Please update pyproject.toml version to match"
+            exit 1
+          fi
+          
+          echo "✅ Version matches: $ACTUAL_VERSION"
+          echo "version=$ACTUAL_VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Validate CHANGELOG.md has entry
+        if: ${{ !inputs.skip_validation }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          if ! grep -q "\[$VERSION\]" CHANGELOG.md; then
+            echo "❌ ERROR: CHANGELOG.md missing entry for version $VERSION"
+            echo "Please add a [${VERSION}] section to CHANGELOG.md"
+            exit 1
+          fi
+          echo "✅ CHANGELOG.md has entry for $VERSION"
+      
+      - name: Check git tag does not exist
+        if: ${{ !inputs.skip_validation }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          TAG="v$VERSION"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "❌ ERROR: Git tag $TAG already exists"
+            echo "Please use a different version or delete the existing tag"
+            exit 1
+          fi
+          echo "✅ Git tag $TAG does not exist"
+      
+      - name: Check Black formatting
+        if: ${{ !inputs.skip_validation }}
+        run: |
+          echo "Checking Black formatting..."
+          black --check . || {
+            echo "❌ ERROR: Black formatting errors found"
+            echo "Run 'black .' to fix formatting issues"
+            exit 1
+          }
+          echo "✅ Black formatting check passed"
+      
+      - name: Check Ruff linting
+        if: ${{ !inputs.skip_validation }}
+        run: |
+          echo "Checking Ruff linting..."
+          ruff check . || {
+            echo "❌ ERROR: Ruff linting errors found"
+            echo "Run 'ruff check . --fix' to auto-fix issues, or fix manually"
+            exit 1
+          }
+          echo "✅ Ruff linting check passed"
+      
+      - name: Run tests
+        if: ${{ !inputs.skip_validation }}
+        id: pytest
+        run: |
+          pytest tests/ --cov=src/beast_mailbox_core --cov-report=xml --cov-report=term --tb=short | tee /tmp/pytest_output.txt
+          
+          # Extract test metrics
+          TESTS_TOTAL=$(grep -E "passed|failed|skipped" /tmp/pytest_output.txt | tail -1 | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+' || echo "0")
+          TESTS_FAILED=$(grep -E "failed" /tmp/pytest_output.txt | tail -1 | grep -oE '[0-9]+ failed' | grep -oE '[0-9]+' || echo "0")
+          TESTS_PASSED=$((TESTS_TOTAL - TESTS_FAILED))
+          COVERAGE=$(grep -E "TOTAL" /tmp/pytest_output.txt | tail -1 | grep -oE '[0-9]+%' | grep -oE '[0-9]+' || echo "0")
+          
+          echo "tests_total=$TESTS_TOTAL" >> $GITHUB_OUTPUT
+          echo "tests_passed=$TESTS_PASSED" >> $GITHUB_OUTPUT
+          echo "tests_failed=$TESTS_FAILED" >> $GITHUB_OUTPUT
+          echo "coverage_percent=$COVERAGE" >> $GITHUB_OUTPUT
+          
+          if [ "$TESTS_FAILED" -gt 0 ]; then
+            echo "❌ ERROR: Tests failed"
+            exit 1
+          fi
+          
+          echo "✅ All tests passed"
+      
+      - name: Validate coverage threshold
+        if: ${{ !inputs.skip_validation }}
+        run: |
+          COVERAGE="${{ steps.pytest.outputs.coverage_percent }}"
+          THRESHOLD=85
+          
+          if [ "$COVERAGE" -lt "$THRESHOLD" ]; then
+            echo "❌ ERROR: Coverage below threshold"
+            echo "Coverage: ${COVERAGE}%"
+            echo "Required: ${THRESHOLD}%"
+            exit 1
+          fi
+          
+          echo "✅ Coverage check passed: ${COVERAGE}% (threshold: ${THRESHOLD}%)"
+      
+      - name: Check SonarCloud Quality Gate
+        if: ${{ !inputs.skip_validation }}
+        run: |
+          echo "Checking SonarCloud Quality Gate..."
+          
+          METRICS=$(curl -s "https://sonarcloud.io/api/measures/component?component=nkllon_beast-mailbox-core&metricKeys=alert_status" -u "${{ secrets.SONAR_TOKEN }}:" | jq -c '.component.measures')
+          
+          QUALITY_GATE=$(echo "$METRICS" | jq -r '.[] | select(.metric=="alert_status") | .value // "ERROR"')
+          
+          if [ "$QUALITY_GATE" != "OK" ]; then
+            echo "❌ ERROR: SonarCloud Quality Gate is not PASSED"
+            echo "Quality Gate Status: $QUALITY_GATE"
+            echo "Please check https://sonarcloud.io/project/overview?id=nkllon_beast-mailbox-core"
+            exit 1
+          fi
+          
+          echo "✅ SonarCloud Quality Gate: PASSED"
+      
+      - name: Validation Summary
+        if: always()
+        run: |
+          echo "## Release Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ **All validations passed!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Version:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Tests:** ${{ steps.pytest.outputs.tests_passed }}/${{ steps.pytest.outputs.tests_total }} passed" >> $GITHUB_STEP_SUMMARY
+            echo "**Coverage:** ${{ steps.pytest.outputs.coverage_percent }}%" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Create git tag: \`git tag -a v${{ inputs.version }} -m \"Release v${{ inputs.version }}\"\`" >> $GITHUB_STEP_SUMMARY
+            echo "2. Push tag: \`git push origin v${{ inputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "3. Create GitHub release: \`gh release create v${{ inputs.version }} --title \"v${{ inputs.version }}\" --notes-file CHANGELOG.md\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Validation failed!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please fix the errors above and re-run validation." >> $GITHUB_STEP_SUMMARY
+          fi
+
