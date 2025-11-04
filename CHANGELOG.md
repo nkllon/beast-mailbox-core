@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Update SonarCloud GitHub Action from deprecated `SonarSource/sonarcloud-github-action@master` to `sonarqube-scan-action` (backlog item for next release)
+
+## [0.4.5] - 2025-11-04 - WORKFLOW AUTOMATION & DEVELOPER TOOLS 🚀
+
 ### Added
+- **Automated Release Creation** - Release validation workflow now automatically creates git tags and GitHub releases
+  - Automatic git tag creation with release notes from CHANGELOG.md
+  - Automatic GitHub release creation with extracted notes
+  - Release notes extracted from CHANGELOG.md using version-specific sections
+  - PyPI publish triggers automatically via release event
+  - Complete automation of release process (validation → tag → release → publish)
 - **Release Validation Workflow** - Automated validation of all pre-release requirements
   - Validates git state (no uncommitted changes, tag doesn't exist)
   - Validates version match between input and pyproject.toml
@@ -25,13 +36,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Swift analysis runs on every release (if Swift code present)
   - Captures final quality state for each release
   - Enables quality metrics tracking for releases
+- **Comprehensive Workflow Documentation** - Complete documentation for all GitHub Actions workflows
+  - `.github/workflows/README.md` with full workflow documentation
+  - Workflow dependency graphs (ASCII visualization)
+  - Individual workflow descriptions with triggers, dependencies, artifacts
+  - External service dependencies (SonarCloud, Prometheus, PyPI)
+  - Troubleshooting guide with common failure scenarios
+  - Required secrets and permissions documentation
+- **Diagnostic Tools** - Developer tools for PR and dependency analysis
+  - `scripts/diagnose_pr.py` - Comprehensive PR failure diagnostic tool
+    - PR information and file changes analysis
+    - Dependency version changes detection
+    - CI workflow failure analysis
+    - SonarCloud quality gate status checking
+    - JSON and human-readable output formats
+  - `scripts/analyze_dependencies.py` - Dependency constraint analyzer
+    - Parses dependency constraints from pyproject.toml
+    - Identifies pinned vs range constraints
+    - Lock file status checking
+    - Optional security vulnerability checking (with pip-audit)
+- **AGENT.md Compliance Procedures** - Comprehensive procedures for AGENT.md compliance
+  - `.kiro/procedures/AGENT_COMPLIANCE.md` - Requirements-first approach procedures
+  - Workflow verification procedures
+  - System state verification procedures
+  - Compliance checklists and templates
+  - Integration with diagnostic tools
+- **Dependabot Procedures** - Complete procedures for handling Dependabot PR failures
+  - `.kiro/procedures/DEPENDABOT_PROCEDURES.md` - Comprehensive Dependabot procedures
+  - Investigation procedures (PR verification, dependency analysis, workflow failure analysis)
+  - Resolution procedures (test fixes, dependency conflicts, quality gate)
+  - Preventive measures (root cause fixes, backward compatibility)
+  - Quality assurance (coverage ≥85%, zero bugs/smells, security checks)
+  - Error recovery strategies (conflict resolution, test handling, quality gate handling)
+  - Testing and validation procedures
+  - Risk mitigation strategies
+- **CI Configuration Management Tools** - Tools for managing GitHub Actions workflows
+  - `scripts/manage_workflows.py` - Workflow management tool
+    - List all workflows
+    - Analyze workflow structure (triggers, jobs, actions, permissions)
+    - Update action versions in workflows
+    - Validate workflow YAML syntax
+    - List action versions used in workflows
+- **Workflow Monitoring** - Tools and documentation for workflow monitoring
+  - `scripts/monitor_workflows.py` - Workflow monitoring tool
+    - Workflow status monitoring (success/failure rates)
+    - Quality metrics checking from history.json
+    - SonarCloud quality gate status checking
+    - Alert detection (high failure rates, quality issues)
+  - `.kiro/docs/BRANCH_PROTECTION.md` - Branch protection and monitoring documentation
+    - Recommended branch protection settings
+    - Monitoring setup guide
+    - Prometheus metrics integration
+    - Alerting configuration
 
 ### Changed
-- Update SonarCloud GitHub Action from deprecated `SonarSource/sonarcloud-github-action@master` to `sonarqube-scan-action` (backlog item for next release)
-- **Release Process Enhanced** - Added automated validation before release creation
-  - Release validation workflow must pass before creating release
-  - All pre-release checks now automated (tests, coverage, linting, quality gate)
-  - Manual release creation still required (workflow validates, doesn't create)
+- **Release Process Fully Automated** - Complete automation of release process
+  - Release validation workflow validates all requirements
+  - Automatic git tag creation after validation passes
+  - Automatic GitHub release creation with CHANGELOG notes
+  - PyPI publish triggers automatically via release event
+  - No manual steps required after workflow trigger
 
 ## [0.4.4] - 2025-10-31 - CRITICAL BUG FIX 🐛
 
