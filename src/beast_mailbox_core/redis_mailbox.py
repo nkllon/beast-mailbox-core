@@ -581,7 +581,7 @@ class RedisMailboxService:
             self._processing_task.cancel()
             try:
                 await self._processing_task
-            except asyncio.CancelledError:  # noqa: S7497
+            except asyncio.CancelledError:
                 # NOTE: SonarCloud flags this as python:S7497 (should re-raise)
                 # However, stop() IS the cleanup handler - re-raising would propagate
                 # to callers expecting graceful shutdown. This is intentional suppression.

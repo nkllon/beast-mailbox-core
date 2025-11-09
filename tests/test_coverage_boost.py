@@ -3,7 +3,7 @@
 
 import argparse
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 from beast_mailbox_core.cli import run_service_async
 from beast_mailbox_core.redis_mailbox import RedisMailboxService, MailboxConfig

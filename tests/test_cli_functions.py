@@ -2,7 +2,7 @@
 """Tests for CLI functions and _fetch_latest_messages."""
 
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 from beast_mailbox_core import RedisMailboxService
 from beast_mailbox_core.redis_mailbox import MailboxConfig

@@ -6,12 +6,17 @@ Requires: pip install beast-agent==0.1.3
 """
 
 import asyncio
-import sys
-from beast_agent import BaseAgent
-from beast_mailbox_core.redis_mailbox import MailboxConfig
-
-# Configuration - can be set via environment variables
 import os
+import sys
+
+try:
+    from beast_agent import BaseAgent
+except ImportError:
+    print("❌ ERROR: beast-agent not installed")
+    print("   Install: pip install beast-agent==0.1.3")
+    sys.exit(1)
+
+from beast_mailbox_core.redis_mailbox import MailboxConfig
 
 # Try to load from ~/.env file if it exists
 _env_file = os.path.expanduser("~/.env")
@@ -153,25 +158,9 @@ async def main():
 
 
 if __name__ == "__main__":
-    # Check if beast-agent is installed
-    try:
-        import beast_agent
-
-        # Try to import discovery methods to verify v0.1.3+
-        try:
-            from beast_agent import BaseAgent
-
-            # Check if discover_agents method exists (v0.1.3+)
-            if not hasattr(BaseAgent, "discover_agents"):
-                print("⚠️  WARNING: beast-agent v0.1.3+ required for discovery methods")
-                print("   Upgrade: pip install beast-agent==0.1.3")
-                sys.exit(1)
-        except Exception:
-            print("⚠️  WARNING: Could not verify beast-agent version")
-            print("   Ensure v0.1.3+ is installed: pip install beast-agent==0.1.3")
-    except ImportError:
-        print("❌ ERROR: beast-agent not installed")
-        print("   Install: pip install beast-agent==0.1.3")
+    if not hasattr(BaseAgent, "discover_agents"):
+        print("⚠️  WARNING: beast-agent v0.1.3+ required for discovery methods")
+        print("   Upgrade: pip install beast-agent==0.1.3")
         sys.exit(1)
 
     # Print connection info (but not password)

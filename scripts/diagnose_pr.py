@@ -13,7 +13,6 @@ Usage:
 import argparse
 import json
 import os
-import subprocess
 import sys
 from typing import Dict, List, Optional, Any
 
@@ -147,7 +146,7 @@ class PRDiagnostic:
             return {"error": "SONAR_TOKEN not set"}
 
         project_key = "nkllon_beast-mailbox-core"
-        url = f"https://sonarcloud.io/api/measures/component"
+        url = "https://sonarcloud.io/api/measures/component"
         params = {
             "component": project_key,
             "metricKeys": "alert_status,coverage,bugs,vulnerabilities,code_smells",
@@ -271,7 +270,7 @@ class PRDiagnostic:
         print(f"PR #{report['pr_info']['number']}: {report['pr_info']['title']}")
         print("=" * 80)
 
-        print(f"\n📋 PR Information:")
+        print("\n📋 PR Information:")
         print(f"  State: {report['pr_info']['state']}")
         print(f"  Author: {report['pr_info']['author']}")
         print(f"  Created: {report['pr_info']['created_at']}")
@@ -279,7 +278,7 @@ class PRDiagnostic:
         print(f"  Head SHA: {report['pr_info']['head_sha'][:7]}")
         print(f"  URL: {report['pr_info']['url']}")
 
-        print(f"\n📦 Dependency Changes:")
+        print("\n📦 Dependency Changes:")
         if report["dependency_changes"]["pyproject_toml"]:
             print("  pyproject.toml:")
             for change in report["dependency_changes"]["pyproject_toml"]:
@@ -293,7 +292,7 @@ class PRDiagnostic:
         if not any(report["dependency_changes"].values()):
             print("  No dependency changes detected")
 
-        print(f"\n🔄 Workflow Status:")
+        print("\n🔄 Workflow Status:")
         print(f"  Total Runs: {report['workflow_status']['total_runs']}")
         print(f"  Failed Runs: {report['workflow_status']['failed_runs']}")
 
@@ -308,7 +307,7 @@ class PRDiagnostic:
                         if job["steps"]:
                             print(f"         Failed Steps: {', '.join(job['steps'])}")
 
-        print(f"\n🔍 SonarCloud Quality Gate:")
+        print("\n🔍 SonarCloud Quality Gate:")
         if "error" in report["sonarcloud_quality_gate"]:
             print(f"  ⚠️  {report['sonarcloud_quality_gate']['error']}")
         else:

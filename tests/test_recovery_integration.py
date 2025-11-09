@@ -22,11 +22,7 @@ def pytest_generate_tests(metafunc):
     if "redis_url" in metafunc.fixturenames:
         # Check for REDIS_URL environment variable
         redis_url = os.environ.get("REDIS_URL")
-        if redis_url:
-            # External Redis instance provided
-            host = redis_url
-            port = 6379
-        else:
+        if not redis_url:
             # Skip tests unless external Redis is configured
             pytest.skip("Set REDIS_URL environment variable to run integration tests")
 

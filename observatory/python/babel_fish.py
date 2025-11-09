@@ -16,6 +16,7 @@ Usage:
 """
 
 import asyncio
+import atexit
 import logging
 from typing import Optional, Dict, Any
 from beast_mailbox_core import RedisMailboxService, MailboxMessage, MailboxConfig
@@ -211,8 +212,5 @@ def close_all_connections():
         # No event loop, create one
         asyncio.run(_close())
 
-
-# Auto-cleanup on exit
-import atexit
 
 atexit.register(close_all_connections)

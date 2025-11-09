@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """Tests for pending message recovery functionality."""
 
-import asyncio
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 from beast_mailbox_core import (
     MailboxConfig,
-    MailboxMessage,
     RecoveryMetrics,
     RedisMailboxService,
 )

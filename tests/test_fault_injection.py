@@ -9,26 +9,14 @@ They run automatically in CI where Redis is available as a service container.
 """
 
 import asyncio
-import os
 import pytest
 import time
 
 from beast_mailbox_core import (
     MailboxConfig,
-    MailboxMessage,
     RecoveryMetrics,
     RedisMailboxService,
 )
-
-
-# Check if Redis is available
-try:
-    import redis.asyncio as redis
-
-    REDIS_AVAILABLE = True
-except ImportError:
-    REDIS_AVAILABLE = False
-
 
 # redis_available fixture is now in conftest.py and uses Docker
 
@@ -237,7 +225,7 @@ async def test_recovery_callback_handles_exception(
             pass
 
         # Add a message and mark it as pending
-        message_id = await service._client.xadd(
+        await service._client.xadd(
             name=service.inbox_stream,
             fields={
                 "message_id": "msg-1",
@@ -310,7 +298,7 @@ async def test_handler_exception_during_recovery(
             pass
 
         # Add message and mark as pending
-        message_id = await service._client.xadd(
+        await service._client.xadd(
             name=service.inbox_stream,
             fields={
                 "message_id": "msg-1",

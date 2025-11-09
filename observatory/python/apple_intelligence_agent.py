@@ -10,7 +10,7 @@ import asyncio
 import httpx
 import logging
 import os
-from typing import Dict, Any, Optional
+from typing import Optional
 
 # Import beast-mailbox-core
 from beast_mailbox_core import RedisMailboxService, MailboxMessage, MailboxConfig
@@ -36,7 +36,7 @@ class AppleIntelligenceAgent:
         # Register handler
         self.mailbox.register_handler(self.handle_message)
 
-        logger.info(f"Apple Intelligence Agent initialized")
+        logger.info("Apple Intelligence Agent initialized")
         logger.info(f"Server URL: {self.server_url}")
 
     async def handle_message(self, message: MailboxMessage) -> None:

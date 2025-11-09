@@ -21,14 +21,17 @@ Environment Variables:
 """
 
 import asyncio
-import json
 import logging
 import os
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional
-from urllib.parse import urlencode
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("observatory.sync")
 
 try:
     import aiohttp
@@ -38,20 +41,13 @@ except ImportError:
 
 # Optionally use beast-mailbox-core for decoupling
 try:
-    import sys
-
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
-    from beast_mailbox_core import RedisMailboxService, MailboxMessage, MailboxConfig
+    from beast_mailbox_core import MailboxConfig, RedisMailboxService
 
     HAS_MAILBOX = True
 except ImportError:
     HAS_MAILBOX = False
     logger.warning("beast-mailbox-core not available - mailbox decoupling disabled")
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger("observatory.sync")
 
 
 class SonarCloudClient:
@@ -192,22 +188,23 @@ class MailboxPublisher:
 
     async def publish_metrics(self, metrics_content: str, metadata: Dict) -> bool:
         """Publish metrics to mailbox."""
+        if not HAS_MAILBOX:
+            logger.error(
+                "beast-mailbox-core not available - mailbox decoupling disabled"
+            )
+            return False
+
         try:
-            message = MailboxMessage(
-                sender="observatory-sync",
+            logger.info(f"Publishing metrics to mailbox: {self.stream_name}")
+            await self.mailbox.send_message(
                 recipient="metrics-consumer",
-                message_type="METRICS_UPDATE",
                 payload={
                     "metrics": metrics_content,
                     "metadata": metadata,
                     "timestamp": datetime.utcnow().isoformat(),
                 },
+                message_type="METRICS_UPDATE",
             )
-
-            # Use mailbox service to send
-            # Note: This would need integration with Redis client directly
-            # For now, use direct Redis stream API
-            logger.info(f"Publishing metrics to mailbox: {self.stream_name}")
             return True
         except Exception as e:
             logger.error(f"Failed to publish to mailbox: {e}")

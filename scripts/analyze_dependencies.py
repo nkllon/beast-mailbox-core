@@ -15,14 +15,14 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
 try:
-    import tomli  # Python 3.11+ or tomli for older versions
-except ImportError:
+    import tomllib as tomli  # Python 3.11+
+except ModuleNotFoundError:
     try:
-        import tomllib  # Python 3.11+
-    except ImportError:
+        import tomli  # Fallback for older versions
+    except ModuleNotFoundError:
         print("ERROR: 'tomli' library required. Install with: pip install tomli")
         sys.exit(1)
 
@@ -43,13 +43,7 @@ class DependencyAnalyzer:
             )
 
         with open(self.pyproject_path, "rb") as f:
-            try:
-                return tomli.load(f)
-            except NameError:
-                # Fallback for tomllib
-                import tomllib
-
-                return tomllib.load(f)
+            return tomli.load(f)
 
     def parse_version_constraint(self, constraint: str) -> Dict[str, str]:
         """Parse version constraint string"""
@@ -229,7 +223,7 @@ class DependencyAnalyzer:
         print("=" * 80)
 
         constraints = report["constraints"]
-        print(f"\n📦 Dependencies:")
+        print("\n📦 Dependencies:")
         print(f"  Total: {constraints['total_dependencies']}")
         print(f"  Pinned versions: {len(constraints['pinned_versions'])}")
         print(f"  Range constraints: {len(constraints['range_constraints'])}")
@@ -246,7 +240,7 @@ class DependencyAnalyzer:
                 print(f"    {pkg['package']} {pkg['constraint']}")
 
         lock_status = report["lock_file"]
-        print(f"\n🔒 Lock File Status:")
+        print("\n🔒 Lock File Status:")
         print(f"  Exists: {lock_status['lock_file_exists']}")
         print(f"  Status: {lock_status['status']}")
         if "error" in lock_status:
@@ -254,7 +248,7 @@ class DependencyAnalyzer:
 
         if "security" in report:
             security = report["security"]
-            print(f"\n🛡️  Security Status:")
+            print("\n🛡️  Security Status:")
             print(f"  Tool: {security['tool']}")
             print(f"  Status: {security['status']}")
             if security["vulnerabilities"]:

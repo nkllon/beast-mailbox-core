@@ -163,7 +163,6 @@ class WorkflowManager:
                         # Extract action name (before @)
                         action_name = line.split("@")[0].strip().split(":")[-1].strip()
                         if action_name == action or action in action_name:
-                            old_line = line
                             if "uses:" in line:
                                 new_line = line.split("@")[0] + f"@{version}"
                                 new_lines.append(new_line)
@@ -283,7 +282,7 @@ def main():
             else:
                 print(f"\nWorkflow Analysis: {analysis['name']}")
                 print("=" * 80)
-                print(f"\nTriggers:")
+                print("\nTriggers:")
                 for trigger, config in analysis["triggers"].items():
                     print(f"  {trigger}: {config}")
                 print(f"\nJobs: {len(analysis['jobs'])}")
@@ -319,7 +318,7 @@ def main():
             if args.json:
                 print(json.dumps(results, indent=2))
             else:
-                print(f"\nWorkflow Validation:")
+                print("\nWorkflow Validation:")
                 print("=" * 80)
                 print(f"Total: {results['total']}")
                 print(f"Valid: {results['valid']}")

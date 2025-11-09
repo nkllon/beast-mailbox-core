@@ -2,9 +2,9 @@
 """Tests for RedisMailboxService."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
-from beast_mailbox_core import RedisMailboxService, MailboxMessage
+from beast_mailbox_core import RedisMailboxService
 from beast_mailbox_core.redis_mailbox import MailboxConfig
 
 
@@ -104,6 +104,7 @@ class TestMailboxServiceMessaging:
 
             # Verify message was sent
             mock_client.xadd.assert_called_once()
+            assert message_id == "1234567890-0"
 
 
 if __name__ == "__main__":
