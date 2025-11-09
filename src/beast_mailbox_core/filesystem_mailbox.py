@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Awaitable, Callable, Dict, List, Optional
@@ -14,6 +15,7 @@ from uuid import uuid4
 from .redis_mailbox import MailboxMessage
 
 _TEMP_FILE_SUFFIXES = (".tmp",)
+_TEMP_FILE_GRACE_SECONDS = 1.0
 
 
 @dataclass
@@ -151,8 +153,15 @@ class FileSystemMailboxService:
         )
 
         recipient_inbox = Path(self.config.base_path, recipient, "inbox")
+        temp_dir = recipient_inbox / ".tmp"
         await asyncio.to_thread(
             recipient_inbox.mkdir,
+            mode=self.config.mkdir_mode,
+            parents=True,
+            exist_ok=True,
+        )
+        await asyncio.to_thread(
+            temp_dir.mkdir,
             mode=self.config.mkdir_mode,
             parents=True,
             exist_ok=True,
@@ -160,7 +169,7 @@ class FileSystemMailboxService:
 
         filename = f"{msg.timestamp:.9f}_{msg.message_id}.json"
         destination = recipient_inbox / filename
-        tmp_file = destination.with_suffix(".tmp")
+        tmp_file = temp_dir / f"{filename}.tmp"
 
         data = {
             "message_id": msg.message_id,
@@ -262,9 +271,20 @@ class FileSystemMailboxService:
     def _cleanup_temporary_files(self, inbox_path: Path) -> None:
         """Remove orphaned temporary files left from interrupted writes."""
 
-        for entry in inbox_path.iterdir():
-            if entry.is_file() and entry.suffix in _TEMP_FILE_SUFFIXES:
-                try:
-                    entry.unlink()
-                except FileNotFoundError:  # pragma: no cover - race condition
-                    continue
+        now = time.time()
+
+        def _cleanup_directory(path: Path) -> None:
+            if not path.exists():
+                return
+
+            for entry in path.iterdir():
+                if entry.is_file() and entry.suffix in _TEMP_FILE_SUFFIXES:
+                    try:
+                        if now - entry.stat().st_mtime < _TEMP_FILE_GRACE_SECONDS:
+                            continue
+                        entry.unlink()
+                    except FileNotFoundError:  # pragma: no cover - race condition
+                        continue
+
+        _cleanup_directory(inbox_path)
+        _cleanup_directory(inbox_path / ".tmp")

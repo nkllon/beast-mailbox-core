@@ -3,6 +3,8 @@
 import asyncio
 import json
 import logging
+import os
+import time
 from pathlib import Path
 
 import pytest
@@ -126,6 +128,7 @@ async def test_process_pending_cleans_orphaned_tmp_files(tmp_path: Path) -> None
     inbox = service.inbox_path
     tmp_file = inbox / "orphan.tmp"
     tmp_file.write_text("partial write", encoding="utf-8")
+    os.utime(tmp_file, (time.time() - 3600, time.time() - 3600))
 
     await service._process_pending_files()
 
