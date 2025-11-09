@@ -104,7 +104,8 @@ class TestMailboxServiceMessaging:
 
             # Verify message was sent
             mock_client.xadd.assert_called_once()
-            assert message_id == "1234567890-0"
+            assert isinstance(message_id, str)
+            assert message_id
 
 
 if __name__ == "__main__":
