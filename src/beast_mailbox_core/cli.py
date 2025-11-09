@@ -15,10 +15,19 @@ import asyncio
 import json
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 
+from .filesystem_mailbox import (
+    FileSystemMailboxConfig,
+    FileSystemMailboxService,
+    _create_fs_config_from_env,
+)
 from .redis_mailbox import MailboxConfig, MailboxMessage, RedisMailboxService
+
+BACKEND_REDIS = "redis"
+BACKEND_FILESYSTEM = "filesystem"
+BACKEND_CHOICES = (BACKEND_REDIS, BACKEND_FILESYSTEM)
 
 
 def configure_logging(verbose: bool) -> None:
@@ -306,6 +315,53 @@ async def _fetch_latest_messages(
         await service.stop()
 
 
+async def _fetch_latest_filesystem_messages(
+    service: FileSystemMailboxService,
+    count: int,
+    delete: bool = False,
+) -> None:
+    """Retrieve and display latest filesystem messages."""
+
+    await service.connect()
+    inbox_path = service.inbox_path
+    if not inbox_path.exists():
+        logging.info("No messages found in %s", inbox_path)
+        return
+
+    files = sorted(
+        [path for path in inbox_path.iterdir() if path.is_file() and path.suffix == ".json"],
+        key=lambda path: path.name,
+        reverse=True,
+    )[:count]
+
+    if not files:
+        logging.info("No messages found in %s", inbox_path)
+        return
+
+    for path in files:
+        try:
+            data = await asyncio.to_thread(lambda: json.loads(path.read_text(encoding="utf-8")))
+        except FileNotFoundError:
+            continue
+        except json.JSONDecodeError as exc:
+            logging.error("Failed to decode message file %s: %s", path, exc)
+            if delete:
+                await asyncio.to_thread(path.unlink, missing_ok=True)
+            continue
+
+        logging.info(
+            "📬 %s <- %s (%s) [%s]: %s",
+            data.get("recipient"),
+            data.get("sender"),
+            data.get("message_type", "direct_message"),
+            path.name,
+            data.get("payload"),
+        )
+
+        if delete:
+            await asyncio.to_thread(path.unlink, missing_ok=True)
+
+
 async def run_service_async(args: argparse.Namespace) -> None:
     """Async implementation of the mailbox service command.
     
@@ -333,22 +389,49 @@ async def run_service_async(args: argparse.Namespace) -> None:
         In service mode, the function runs until interrupted (Ctrl+C) or
         cancelled. The service gracefully shuts down on interruption.
     """
-    redis_config = get_redis_config_from_args(args)
-    config = MailboxConfig(
-        host=redis_config["host"],
-        port=redis_config["port"],
-        password=redis_config["password"],
-        db=redis_config["db"],
-        stream_prefix=args.stream_prefix,
-        max_stream_length=args.maxlen,
-        poll_interval=args.poll_interval,
-    )
-
-    service = RedisMailboxService(agent_id=args.agent_id, config=config)
+    backend = getattr(args, "backend", BACKEND_REDIS)
+    if backend == BACKEND_FILESYSTEM:
+        fs_config = _create_fs_config_from_env()
+        filesystem_root = getattr(args, "filesystem_root", None)
+        filesystem_mkdir_mode = getattr(args, "filesystem_mkdir_mode", None)
+        base_path = filesystem_root or fs_config.base_path
+        mkdir_mode = filesystem_mkdir_mode or fs_config.mkdir_mode
+        service = FileSystemMailboxService(
+            agent_id=args.agent_id,
+            config=FileSystemMailboxConfig(
+                base_path=base_path,
+                poll_interval=getattr(args, "poll_interval", fs_config.poll_interval),
+                mkdir_mode=mkdir_mode,
+            ),
+        )
+    else:
+        redis_config = get_redis_config_from_args(args)
+        config = MailboxConfig(
+            host=redis_config["host"],
+            port=redis_config["port"],
+            password=redis_config["password"],
+            db=redis_config["db"],
+            stream_prefix=getattr(args, "stream_prefix", "beast:mailbox"),
+            max_stream_length=getattr(args, "maxlen", 1000),
+            poll_interval=getattr(args, "poll_interval", 2.0),
+        )
+        service = RedisMailboxService(agent_id=args.agent_id, config=config)
 
     # Handle one-shot latest message retrieval
-    if args.latest:
-        await _fetch_latest_messages(service, args.count, args.ack, args.trim)
+    if getattr(args, "latest", False):
+        if backend == BACKEND_FILESYSTEM:
+            await _fetch_latest_filesystem_messages(
+                service,
+                getattr(args, "count", 10),
+                delete=bool(getattr(args, "ack", False) or getattr(args, "trim", False)),
+            )
+        else:
+            await _fetch_latest_messages(
+                service,
+                getattr(args, "count", 10),
+                getattr(args, "ack", False),
+                getattr(args, "trim", False),
+            )
         return
 
     # Streaming mode - echo handler
@@ -364,7 +447,7 @@ async def run_service_async(args: argparse.Namespace) -> None:
         # Yield to event loop (proper async pattern for I/O-less async functions)
         await asyncio.sleep(0)
 
-    if args.echo:
+    if getattr(args, "echo", False):
         service.register_handler(echo_handler)
 
     if not await service.start():
@@ -377,6 +460,79 @@ async def run_service_async(args: argparse.Namespace) -> None:
     finally:
         await service.stop()
         logging.info("Mailbox service stopped")
+
+
+def create_service_parser() -> argparse.ArgumentParser:
+    """Create the argument parser for the service CLI command."""
+
+    parser = argparse.ArgumentParser(
+        description="Run Beast mailbox service",
+        epilog="Note: REDIS_URL environment variable can be used instead of CLI flags. "
+        "Format: redis://:password@host:port/db. CLI flags override REDIS_URL.",
+    )
+    parser.add_argument("agent_id", help="Agent identifier for this instance")
+    parser.add_argument(
+        "--backend",
+        choices=BACKEND_CHOICES,
+        default=BACKEND_REDIS,
+        help="Mailbox backend to use (default: redis)",
+    )
+    parser.add_argument(
+        "--redis-host",
+        default="localhost",
+        help="Redis server hostname (default: localhost, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-port",
+        type=int,
+        default=6379,
+        help="Redis server port (default: 6379, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-password",
+        default=None,
+        help="Redis password (default: None, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-db",
+        type=int,
+        default=0,
+        help="Redis database number (default: 0, or from REDIS_URL env var)",
+    )
+    parser.add_argument("--stream-prefix", default="beast:mailbox")
+    parser.add_argument("--maxlen", type=int, default=1000, help="Max stream length")
+    parser.add_argument("--poll-interval", type=float, default=2.0)
+    parser.add_argument("--filesystem-root", help="Filesystem mailbox root path")
+    parser.add_argument(
+        "--filesystem-mkdir-mode",
+        type=lambda value: int(value, 8),
+        default=None,
+        help="Filesystem mailbox directory mode (octal, e.g., 755)",
+    )
+    parser.add_argument("--echo", action="store_true", help="Print received messages to stdout")
+    parser.add_argument(
+        "--latest",
+        action="store_true",
+        help="Print the latest message(s) and exit instead of streaming",
+    )
+    parser.add_argument(
+        "--count",
+        type=int,
+        default=1,
+        help="Number of latest messages to display when using --latest",
+    )
+    parser.add_argument(
+        "--ack",
+        action="store_true",
+        help="Acknowledge messages after displaying them (requires --latest)",
+    )
+    parser.add_argument(
+        "--trim",
+        action="store_true",
+        help="Delete messages after acknowledging them (requires --latest and --ack)",
+    )
+    parser.add_argument("--verbose", action="store_true")
+    return parser
 
 
 def run_service(argv: list[str] | None = None) -> None:
@@ -423,60 +579,7 @@ def run_service(argv: list[str] | None = None) -> None:
     Raises:
         SystemExit: On configuration errors or service failures
     """
-    parser = argparse.ArgumentParser(
-        description="Run Beast mailbox service",
-        epilog="Note: REDIS_URL environment variable can be used instead of CLI flags. "
-        "Format: redis://:password@host:port/db. CLI flags override REDIS_URL.",
-    )
-    parser.add_argument("agent_id", help="Agent identifier for this instance")
-    parser.add_argument(
-        "--redis-host",
-        default="localhost",
-        help="Redis server hostname (default: localhost, or from REDIS_URL env var)",
-    )
-    parser.add_argument(
-        "--redis-port",
-        type=int,
-        default=6379,
-        help="Redis server port (default: 6379, or from REDIS_URL env var)",
-    )
-    parser.add_argument(
-        "--redis-password",
-        default=None,
-        help="Redis password (default: None, or from REDIS_URL env var)",
-    )
-    parser.add_argument(
-        "--redis-db",
-        type=int,
-        default=0,
-        help="Redis database number (default: 0, or from REDIS_URL env var)",
-    )
-    parser.add_argument("--stream-prefix", default="beast:mailbox")
-    parser.add_argument("--maxlen", type=int, default=1000, help="Max stream length")
-    parser.add_argument("--poll-interval", type=float, default=2.0)
-    parser.add_argument("--echo", action="store_true", help="Print received messages to stdout")
-    parser.add_argument(
-        "--latest",
-        action="store_true",
-        help="Print the latest message(s) and exit instead of streaming",
-    )
-    parser.add_argument(
-        "--count",
-        type=int,
-        default=1,
-        help="Number of latest messages to display when using --latest",
-    )
-    parser.add_argument(
-        "--ack",
-        action="store_true",
-        help="Acknowledge messages after displaying them (requires --latest)",
-    )
-    parser.add_argument(
-        "--trim",
-        action="store_true",
-        help="Delete messages after acknowledging them (requires --latest and --ack)",
-    )
-    parser.add_argument("--verbose", action="store_true")
+    parser = create_service_parser()
     args = parser.parse_args(argv)
     configure_logging(args.verbose)
     asyncio.run(run_service_async(args))
@@ -505,23 +608,102 @@ async def send_message_async(args: argparse.Namespace) -> None:
         Either --message or --json must be provided (not both).
         The service connects, sends the message, and disconnects cleanly.
     """
-    redis_config = get_redis_config_from_args(args)
-    config = MailboxConfig(
-        host=redis_config["host"],
-        port=redis_config["port"],
-        password=redis_config["password"],
-        db=redis_config["db"],
-        stream_prefix=args.stream_prefix,
-    )
-    service = RedisMailboxService(agent_id=args.sender, config=config)
+    backend = getattr(args, "backend", BACKEND_REDIS)
+    if backend == BACKEND_FILESYSTEM:
+        fs_config = _create_fs_config_from_env()
+        filesystem_root = getattr(args, "filesystem_root", None)
+        filesystem_mkdir_mode = getattr(args, "filesystem_mkdir_mode", None)
+        base_path = filesystem_root or fs_config.base_path
+        mkdir_mode = filesystem_mkdir_mode or fs_config.mkdir_mode
+        service = FileSystemMailboxService(
+            agent_id=args.sender,
+            config=FileSystemMailboxConfig(
+                base_path=base_path,
+                poll_interval=fs_config.poll_interval,
+                mkdir_mode=mkdir_mode,
+            ),
+        )
+    else:
+        redis_config = get_redis_config_from_args(args)
+        config = MailboxConfig(
+            host=redis_config["host"],
+            port=redis_config["port"],
+            password=redis_config["password"],
+            db=redis_config["db"],
+            stream_prefix=args.stream_prefix,
+        )
+        service = RedisMailboxService(agent_id=args.sender, config=config)
     payload: Dict[str, Any]
-    if args.json:
+    if getattr(args, "json", None):
         payload = json.loads(args.json)
     else:
-        payload = {"message": args.message}
-    await service.send_message(recipient=args.recipient, payload=payload, message_type=args.message_type)
+        payload = {"message": getattr(args, "message", None)}
+    await service.send_message(
+        recipient=args.recipient,
+        payload=payload,
+        message_type=args.message_type,
+        message_id=getattr(args, "message_id", None),
+    )
     await service.stop()
     logging.info("Sent message from %s to %s", args.sender, args.recipient)
+
+
+def create_send_parser() -> argparse.ArgumentParser:
+    """Create the argument parser for the send CLI command."""
+
+    parser = argparse.ArgumentParser(
+        description="Send message via Beast mailbox",
+        epilog="Note: REDIS_URL environment variable can be used instead of CLI flags. "
+        "Format: redis://:password@host:port/db. CLI flags override REDIS_URL.",
+    )
+    parser.add_argument("sender", help="Sender agent id")
+    parser.add_argument("recipient", help="Recipient agent id")
+    payload_group = parser.add_mutually_exclusive_group(required=True)
+    payload_group.add_argument("--message", help="Plain text message payload")
+    payload_group.add_argument("--json", help="JSON message payload")
+    parser.add_argument("--message-type", default="direct_message")
+    parser.add_argument(
+        "--message-id",
+        help="Optional immutable message identifier to support idempotent sends",
+    )
+    parser.add_argument(
+        "--backend",
+        choices=BACKEND_CHOICES,
+        default=BACKEND_REDIS,
+        help="Mailbox backend to use (default: redis)",
+    )
+    parser.add_argument(
+        "--redis-host",
+        default="localhost",
+        help="Redis server hostname (default: localhost, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-port",
+        type=int,
+        default=6379,
+        help="Redis server port (default: 6379, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-password",
+        default=None,
+        help="Redis password (default: None, or from REDIS_URL env var)",
+    )
+    parser.add_argument(
+        "--redis-db",
+        type=int,
+        default=0,
+        help="Redis database number (default: 0, or from REDIS_URL env var)",
+    )
+    parser.add_argument("--stream-prefix", default="beast:mailbox")
+    parser.add_argument("--filesystem-root", help="Filesystem mailbox root path")
+    parser.add_argument(
+        "--filesystem-mkdir-mode",
+        type=lambda value: int(value, 8),
+        default=None,
+        help="Filesystem mailbox directory mode (octal, e.g., 755)",
+    )
+    parser.add_argument("--verbose", action="store_true")
+    return parser
 
 
 def send_message(argv: list[str] | None = None) -> None:
@@ -563,40 +745,7 @@ def send_message(argv: list[str] | None = None) -> None:
         You must provide either --message OR --json (not both).
         The --json payload must be valid JSON.
     """
-    parser = argparse.ArgumentParser(
-        description="Send message via Beast mailbox",
-        epilog="Note: REDIS_URL environment variable can be used instead of CLI flags. "
-        "Format: redis://:password@host:port/db. CLI flags override REDIS_URL.",
-    )
-    parser.add_argument("sender", help="Sender agent id")
-    parser.add_argument("recipient", help="Recipient agent id")
-    parser.add_argument("--message", default="hello")
-    parser.add_argument("--json")
-    parser.add_argument("--message-type", default="direct_message")
-    parser.add_argument(
-        "--redis-host",
-        default="localhost",
-        help="Redis server hostname (default: localhost, or from REDIS_URL env var)",
-    )
-    parser.add_argument(
-        "--redis-port",
-        type=int,
-        default=6379,
-        help="Redis server port (default: 6379, or from REDIS_URL env var)",
-    )
-    parser.add_argument(
-        "--redis-password",
-        default=None,
-        help="Redis password (default: None, or from REDIS_URL env var)",
-    )
-    parser.add_argument(
-        "--redis-db",
-        type=int,
-        default=0,
-        help="Redis database number (default: 0, or from REDIS_URL env var)",
-    )
-    parser.add_argument("--stream-prefix", default="beast:mailbox")
-    parser.add_argument("--verbose", action="store_true")
+    parser = create_send_parser()
     args = parser.parse_args(argv)
     configure_logging(args.verbose)
     asyncio.run(send_message_async(args))

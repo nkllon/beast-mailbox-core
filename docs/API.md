@@ -10,12 +10,13 @@ This document provides comprehensive API reference for `beast-mailbox-core`, a R
 ## Table of Contents
 
 1. [RedisMailboxService](#redismailboxservice)
-2. [MailboxMessage](#mailboxmessage)
-3. [MailboxConfig](#mailboxconfig)
-4. [RecoveryMetrics](#recoverymetrics)
-5. [Integration Patterns](#integration-patterns)
-6. [Error Handling](#error-handling)
-7. [Agent Registration & Discovery](#agent-registration--discovery)
+2. [FileSystemMailboxService](#filesystemmailboxservice)
+3. [MailboxMessage](#mailboxmessage)
+4. [MailboxConfig](#mailboxconfig)
+5. [RecoveryMetrics](#recoverymetrics)
+6. [Integration Patterns](#integration-patterns)
+7. [Error Handling](#error-handling)
+8. [Agent Registration & Discovery](#agent-registration--discovery)
 
 ---
 
@@ -300,6 +301,65 @@ The agent identifier for this service instance.
 #### `config: MailboxConfig` (read-only)
 
 The configuration object used by this service.
+
+---
+
+## FileSystemMailboxService
+
+Async mailbox transport implemented with the local file system. Suitable when all
+agents share a host (or network mount) and Redis is unavailable or undesired.
+
+### Initialization
+
+```python
+FileSystemMailboxService(
+    agent_id: str,
+    config: Optional[FileSystemMailboxConfig] = None,
+)
+```
+
+- `agent_id`: Identifier for this service. Determines inbox directory.
+- `config`: Optional configuration. When omitted the service reads from environment
+  variables via `_create_fs_config_from_env()`.
+
+### Configuration
+
+```python
+FileSystemMailboxConfig(
+    base_path: str = "/tmp/beast_mailbox",
+    poll_interval: float = 0.5,
+    mkdir_mode: int = 0o755,
+)
+```
+
+| Environment Variable             | Description                                  | Default                |
+|----------------------------------|----------------------------------------------|------------------------|
+| `BEAST_MAILBOX_FS_ROOT`          | Root directory for all inboxes               | `/tmp/beast_mailbox`   |
+| `BEAST_MAILBOX_FS_POLL_INTERVAL` | Seconds between directory scans              | `0.5`                  |
+| `BEAST_MAILBOX_FS_MKDIR_MODE`    | Octal permissions applied to new directories | `755` (converted to `0o755`) |
+
+### Usage Example
+
+```python
+from beast_mailbox_core import FileSystemMailboxService, FileSystemMailboxConfig
+
+config = FileSystemMailboxConfig(base_path="/var/beast/mailbox", poll_interval=0.1)
+mailbox = FileSystemMailboxService("observer", config)
+
+async def handle(message):
+    print(message.payload)
+
+mailbox.register_handler(handle)
+await mailbox.start()
+```
+
+### Message Lifecycle
+
+- Messages are serialized to JSON files named `{timestamp}_{uuid}.json`.
+- Files are written atomically using `os.replace` to avoid partially written data.
+- The background consumer scans `{base_path}/{agent_id}/inbox` each `poll_interval`,
+  dispatches messages to registered handlers, and deletes successfully processed files.
+- If no handlers are registered, files remain untouched until a handler is added.
 
 ---
 

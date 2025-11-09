@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update SonarCloud GitHub Action from deprecated `SonarSource/sonarcloud-github-action@master` to `sonarqube-scan-action` (backlog item for next release)
 
+## [0.5.0] - 2025-11-09 - FILESYSTEM MAILBOX TRANSPORT 📬
+
+### Added
+- **Filesystem mailbox backend** providing atomic JSON persistence for same-host Beast agents
+- **Filesystem configuration layer** with environment variable overrides (`BEAST_MAILBOX_FS_ROOT`, `BEAST_MAILBOX_FS_POLL_INTERVAL`, `BEAST_MAILBOX_FS_MKDIR_MODE`)
+- **Async polling consumer loop** that dispatches registered handlers, cleans up processed files, and logs corrupted envelopes
+
+### Changed
+- CLI service/send commands now gracefully detect filesystem mode and support missing optional flags without errors
+- README badges and hero copy now reflect dynamic SonarCloud metrics and highlight the filesystem transport
+
+### Fixed
+- CLI tests updated for latest `pytest` API, ensuring collection succeeds across supported versions
+
 ## [0.4.5] - 2025-11-04 - WORKFLOW AUTOMATION & DEVELOPER TOOLS 🚀
 
 ### Added

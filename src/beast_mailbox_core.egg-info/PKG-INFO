@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: beast-mailbox-core
-Version: 0.4.4
+Version: 0.5.0
 Summary: Redis-backed mailbox utilities from Beast Mode
 License: MIT
 Project-URL: Homepage, https://github.com/nkllon/beast-mailbox-core
@@ -25,6 +25,8 @@ Requires-Dist: pytest>=7.0.0; extra == "dev"
 Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
 Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
 Requires-Dist: docker>=6.0.0; extra == "dev"
+Requires-Dist: black>=24.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
 Dynamic: license-file
 
 # Beast Mailbox Core
@@ -39,11 +41,15 @@ Dynamic: license-file
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nkllon_beast-mailbox-core&metric=coverage)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 [![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-dark.svg)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
-[![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen)](https://github.com/nkllon/beast-mailbox-core/actions)
-[![Documentation](https://img.shields.io/badge/docs-52%25-brightgreen)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 [![Maintainability Rating](https://img.shields.io/badge/maintainability-A-brightgreen)](https://sonarcloud.io/summary/new_code?id=nkllon_beast-mailbox-core)
 
-Redis-backed mailbox utilities extracted from Beast Mode. **Enterprise-grade with 90% coverage, 52% documentation density, and ZERO defects!**
+Redis-backed mailbox utilities extracted from Beast Mode, now with a same-host filesystem transport for lightweight deployments.
+
+## Highlights
+- Redis and filesystem backends with a consistent async API
+- Atomic JSON persistence for same-host agents
+- CLI tooling for message inspection, sending, and service orchestration
+- SonarCloud-quality gated with maintainability and coverage reporting
 
 ## Features
 - Durable messaging via Redis streams (`XADD`/`XREADGROUP`)
@@ -51,6 +57,7 @@ Redis-backed mailbox utilities extracted from Beast Mode. **Enterprise-grade wit
 - Async handler registration for inbound messages
 - Simple CLI entry points (`beast-mailbox-service`, `beast-mailbox-send`)
 - One-shot message inspection with optional acknowledge/trim operations
+- Optional file system mailbox for co-located Beast agents
 
 ## Installation
 
@@ -59,6 +66,32 @@ pip install beast-mailbox-core
 ```
 
 ## Quickstart
+
+### File System Mailbox (Same-Host Agents)
+
+When all Beast agents share a local file system, use the file system mailbox:
+
+```python
+from beast_mailbox_core import FileSystemMailboxService, FileSystemMailboxConfig
+
+config = FileSystemMailboxConfig(base_path="/var/beast/mailbox")
+service = FileSystemMailboxService("my-agent", config=config)
+
+async def handler(message):
+    print(message.payload)
+
+service.register_handler(handler)
+await service.start()
+```
+
+Environment variables provide easy overrides:
+
+- `BEAST_MAILBOX_FS_ROOT` (default: `/tmp/beast_mailbox`)
+- `BEAST_MAILBOX_FS_POLL_INTERVAL` (default: `0.5`)
+- `BEAST_MAILBOX_FS_MKDIR_MODE` (default: `755`)
+
+The service writes messages as JSON files under
+`{base_path}/{agent_id}/inbox` and safely handles concurrent readers.
 
 ### Redis Configuration
 
