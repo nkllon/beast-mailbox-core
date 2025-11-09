@@ -1,3 +1,0 @@
-[console_scripts]
-beast-mailbox-send = beast_mailbox_core.cli:send_message
-beast-mailbox-service = beast_mailbox_core.cli:run_service
