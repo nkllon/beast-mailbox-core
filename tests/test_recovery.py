@@ -5,7 +5,12 @@ import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from beast_mailbox_core import MailboxConfig, MailboxMessage, RecoveryMetrics, RedisMailboxService
+from beast_mailbox_core import (
+    MailboxConfig,
+    MailboxMessage,
+    RecoveryMetrics,
+    RedisMailboxService,
+)
 
 
 @pytest.fixture
@@ -54,9 +59,9 @@ class TestRecoveryWithoutHandlers:
         """Test recovery skips gracefully when no handlers registered."""
         mock_client = AsyncMock()
         service._client = mock_client
-        
+
         metrics = await service._recover_pending_messages()
-        
+
         assert metrics.total_recovered == 0
         assert metrics.batches_processed == 0
         # Client should not be called when no handlers
@@ -72,14 +77,14 @@ class TestRecoveryWithHandlers:
         service.config.enable_recovery = False
         mock_client = AsyncMock()
         service._client = mock_client
-        
+
         async def handler(msg):
             pass
-        
+
         service.register_handler(handler)
-        
+
         metrics = await service._recover_pending_messages()
-        
+
         assert metrics.total_recovered == 0
         # Client should not be called when disabled
         mock_client.assert_not_called()
@@ -87,36 +92,38 @@ class TestRecoveryWithHandlers:
     @pytest.mark.asyncio
     async def test_recovery_handles_nogroup_error(self, service):
         """Test recovery handles NOGROUP error gracefully."""
+
         async def handler(msg):
             pass
-        
+
         service.register_handler(handler)
-        
+
         mock_client = AsyncMock()
         mock_client.xpending_range = AsyncMock(
             side_effect=Exception("NOGROUP Consumer Group does not exist")
         )
         service._client = mock_client
-        
+
         metrics = await service._recover_pending_messages()
-        
+
         assert metrics.total_recovered == 0
         assert metrics.batches_processed == 0
 
     @pytest.mark.asyncio
     async def test_recovery_no_pending_messages(self, service):
         """Test recovery when no pending messages exist."""
+
         async def handler(msg):
             pass
-        
+
         service.register_handler(handler)
-        
+
         mock_client = AsyncMock()
         mock_client.xpending_range = AsyncMock(return_value=[])
         service._client = mock_client
-        
+
         metrics = await service._recover_pending_messages()
-        
+
         assert metrics.total_recovered == 0
         assert metrics.batches_processed == 0
 
@@ -124,15 +131,15 @@ class TestRecoveryWithHandlers:
     async def test_recovery_processes_pending_messages(self, service):
         """Test recovery processes pending messages successfully."""
         received_messages = []
-        
+
         async def handler(msg):
             received_messages.append(msg)
-        
+
         service.register_handler(handler)
-        
+
         # Mock pending info
         mock_pending_info = [("0-0", "test-consumer", 1000, 1)]
-        
+
         # Mock messages to claim
         mock_message_id = "1234567890-0"
         mock_fields = {
@@ -143,22 +150,26 @@ class TestRecoveryWithHandlers:
             b"message_type": b"direct_message",
             b"timestamp": b"1.0",
         }
-        
+
         mock_claimed_messages = [(mock_message_id, mock_fields)]
-        
+
         mock_client = AsyncMock()
         mock_client.xpending_range = AsyncMock(return_value=mock_pending_info)
         mock_client.xautoclaim = AsyncMock(
             side_effect=[
-                ("1234567890-0", mock_claimed_messages, []),  # First batch - returns messages
+                (
+                    "1234567890-0",
+                    mock_claimed_messages,
+                    [],
+                ),  # First batch - returns messages
                 ("0-0", [], []),  # Second batch - empty, signals completion
             ]
         )
         mock_client.xack = AsyncMock()
         service._client = mock_client
-        
+
         metrics = await service._recover_pending_messages()
-        
+
         assert metrics.total_recovered == 1
         assert metrics.batches_processed == 1
         assert len(received_messages) == 1
@@ -169,43 +180,52 @@ class TestRecoveryWithHandlers:
     async def test_recovery_processes_multiple_batches(self, service):
         """Test recovery processes multiple batches of messages."""
         received_messages = []
-        
+
         async def handler(msg):
             received_messages.append(msg)
-        
+
         service.register_handler(handler)
         service.config.recovery_batch_size = 2
-        
+
         mock_pending_info = [("0-0", "test-consumer", 1000, 3)]
-        
+
         # First batch: 2 messages
-        mock_message_1 = ("100-0", {
-            b"message_id": b"msg-1",
-            b"sender": b"alice",
-            b"recipient": b"test-agent",
-            b"payload": b'{"text": "msg1"}',
-            b"message_type": b"direct_message",
-            b"timestamp": b"1.0",
-        })
-        mock_message_2 = ("101-0", {
-            b"message_id": b"msg-2",
-            b"sender": b"bob",
-            b"recipient": b"test-agent",
-            b"payload": b'{"text": "msg2"}',
-            b"message_type": b"direct_message",
-            b"timestamp": b"2.0",
-        })
-        
+        mock_message_1 = (
+            "100-0",
+            {
+                b"message_id": b"msg-1",
+                b"sender": b"alice",
+                b"recipient": b"test-agent",
+                b"payload": b'{"text": "msg1"}',
+                b"message_type": b"direct_message",
+                b"timestamp": b"1.0",
+            },
+        )
+        mock_message_2 = (
+            "101-0",
+            {
+                b"message_id": b"msg-2",
+                b"sender": b"bob",
+                b"recipient": b"test-agent",
+                b"payload": b'{"text": "msg2"}',
+                b"message_type": b"direct_message",
+                b"timestamp": b"2.0",
+            },
+        )
+
         # Second batch: 1 message
-        mock_message_3 = ("102-0", {
-            b"message_id": b"msg-3",
-            b"sender": b"charlie",
-            b"recipient": b"test-agent",
-            b"payload": b'{"text": "msg3"}',
-            b"message_type": b"direct_message",
-            b"timestamp": b"3.0",
-        })
-        
+        mock_message_3 = (
+            "102-0",
+            {
+                b"message_id": b"msg-3",
+                b"sender": b"charlie",
+                b"recipient": b"test-agent",
+                b"payload": b'{"text": "msg3"}',
+                b"message_type": b"direct_message",
+                b"timestamp": b"3.0",
+            },
+        )
+
         mock_client = AsyncMock()
         mock_client.xpending_range = AsyncMock(return_value=mock_pending_info)
         mock_client.xautoclaim = AsyncMock(
@@ -217,9 +237,9 @@ class TestRecoveryWithHandlers:
         )
         mock_client.xack = AsyncMock()
         service._client = mock_client
-        
+
         metrics = await service._recover_pending_messages()
-        
+
         assert metrics.total_recovered == 3
         assert metrics.batches_processed == 2
         assert len(received_messages) == 3
@@ -229,16 +249,16 @@ class TestRecoveryWithHandlers:
     async def test_recovery_handles_handler_errors(self, service):
         """Test recovery continues even if handler raises exception."""
         received_messages = []
-        
+
         async def good_handler(msg):
             received_messages.append(msg)
-        
+
         async def bad_handler(msg):
             raise ValueError("Handler failed!")
-        
+
         service.register_handler(bad_handler)
         service.register_handler(good_handler)
-        
+
         mock_pending_info = [("0-0", "test-consumer", 1000, 1)]
         mock_message_id = "1234567890-0"
         mock_fields = {
@@ -249,7 +269,7 @@ class TestRecoveryWithHandlers:
             b"message_type": b"direct_message",
             b"timestamp": b"1.0",
         }
-        
+
         mock_client = AsyncMock()
         mock_client.xpending_range = AsyncMock(return_value=mock_pending_info)
         mock_client.xautoclaim = AsyncMock(
@@ -260,10 +280,10 @@ class TestRecoveryWithHandlers:
         )
         mock_client.xack = AsyncMock()
         service._client = mock_client
-        
+
         # Should not raise
         metrics = await service._recover_pending_messages()
-        
+
         # Even though one handler failed, the message is still processed
         assert metrics.total_recovered == 1
         assert len(received_messages) == 1
@@ -277,24 +297,24 @@ class TestRecoveryCallback:
         """Test recovery callback is invoked with metrics."""
         callback_invoked = False
         callback_metrics = None
-        
+
         async def handler(msg):
             pass
-        
+
         async def callback(metrics):
             nonlocal callback_invoked, callback_metrics
             callback_invoked = True
             callback_metrics = metrics
-        
+
         service.register_handler(handler)
         service.recovery_callback = callback
-        
+
         mock_client = AsyncMock()
         mock_client.xpending_range = AsyncMock(return_value=[])
         service._client = mock_client
-        
+
         await service._recover_pending_messages()
-        
+
         assert callback_invoked is True
         assert callback_metrics is not None
         assert isinstance(callback_metrics, RecoveryMetrics)
@@ -302,23 +322,23 @@ class TestRecoveryCallback:
     @pytest.mark.asyncio
     async def test_recovery_callback_handles_errors(self, service):
         """Test recovery continues even if callback raises exception."""
+
         async def handler(msg):
             pass
-        
+
         async def callback(metrics):
             raise RuntimeError("Callback failed!")
-        
+
         service.register_handler(handler)
         service.recovery_callback = callback
-        
+
         mock_client = AsyncMock()
         mock_client.xpending_range = AsyncMock(return_value=[])
         service._client = mock_client
-        
+
         # Should not raise
         metrics = await service._recover_pending_messages()
         assert metrics is not None
-    
 
 
 class TestRecoveryIntegrationWithStart:
@@ -327,11 +347,12 @@ class TestRecoveryIntegrationWithStart:
     @pytest.mark.asyncio
     async def test_start_runs_recovery_before_consume_loop(self, service):
         """Test start() runs recovery before launching consume loop."""
+
         async def handler(msg):
             pass
-        
+
         service.register_handler(handler)
-        
+
         mock_client = AsyncMock()
         mock_client.ping = AsyncMock()
         mock_client.xgroup_create = AsyncMock()
@@ -339,30 +360,27 @@ class TestRecoveryIntegrationWithStart:
         # Make xreadgroup return immediately - don't block
         mock_client.xreadgroup = AsyncMock(return_value=[])
         service._client = mock_client
-        
+
         # Track recovery execution
         recovery_called = False
         original_recover = service._recover_pending_messages
-        
+
         async def mock_recover():
             nonlocal recovery_called
             recovery_called = True
             return await original_recover()
-        
+
         service._recover_pending_messages = mock_recover
-        
+
         # Start the service - recovery should run first
         result = await service.start()
-        
+
         assert result is True
         assert recovery_called  # Recovery was called before consume loop started
-        
+
         # Cleanup - stop immediately (doesn't wait for consume loop)
         await service.stop()
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-
-
-

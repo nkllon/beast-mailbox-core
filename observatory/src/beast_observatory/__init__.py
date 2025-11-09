@@ -6,4 +6,3 @@ from . import sync_service
 from . import metrics_consumer
 
 __all__ = ["sync_service", "metrics_consumer", "__version__"]
-

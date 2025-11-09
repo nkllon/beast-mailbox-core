@@ -12,7 +12,7 @@ class TestMailboxConfig:
     def test_default_config(self):
         """Test that defaults are set correctly."""
         config = MailboxConfig()
-        
+
         assert config.host == "localhost"
         assert config.port == 6379
         assert config.db == 0
@@ -32,7 +32,7 @@ class TestMailboxConfig:
             max_stream_length=5000,
             poll_interval=1.5,
         )
-        
+
         assert config.host == "redis.example.com"
         assert config.port == 6380
         assert config.db == 5
@@ -43,11 +43,8 @@ class TestMailboxConfig:
 
     def test_partial_config(self):
         """Test creating config with some custom values."""
-        config = MailboxConfig(
-            host="192.168.1.100",
-            password="mypass"
-        )
-        
+        config = MailboxConfig(host="192.168.1.100", password="mypass")
+
         assert config.host == "192.168.1.100"
         assert config.password == "mypass"
         # Other values should still be defaults
@@ -57,4 +54,3 @@ class TestMailboxConfig:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

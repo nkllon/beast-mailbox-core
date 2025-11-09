@@ -53,15 +53,16 @@ class TestMailboxServiceBasics:
 
     def test_register_handler(self, service):
         """Test registering message handlers."""
+
         async def handler1(msg):
             pass
-        
+
         async def handler2(msg):
             pass
-        
+
         service.register_handler(handler1)
         assert len(service._handlers) == 1
-        
+
         service.register_handler(handler2)
         assert len(service._handlers) == 2
 
@@ -74,16 +75,16 @@ class TestMailboxServiceMessaging:
         """Test sending a basic message."""
         mock_client = AsyncMock()
         mock_client.xadd = AsyncMock(return_value=b"1234567890-0")
-        
-        with patch.object(service, '_client', mock_client):
+
+        with patch.object(service, "_client", mock_client):
             message_id = await service.send_message(
                 recipient="bob",
                 payload={"text": "hello"},
             )
-            
+
             assert message_id is not None
             mock_client.xadd.assert_called_once()
-            
+
             # Verify stream name
             call_args = mock_client.xadd.call_args
             assert call_args[0][0] == "test:mailbox:bob:in"
@@ -93,18 +94,17 @@ class TestMailboxServiceMessaging:
         """Test sending message with custom type."""
         mock_client = AsyncMock()
         mock_client.xadd = AsyncMock(return_value=b"1234567890-0")
-        
-        with patch.object(service, '_client', mock_client):
+
+        with patch.object(service, "_client", mock_client):
             message_id = await service.send_message(
                 recipient="alice",
                 payload={"data": [1, 2, 3]},
                 message_type="test_type",
             )
-            
+
             # Verify message was sent
             mock_client.xadd.assert_called_once()
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -7,7 +7,10 @@ from unittest import mock
 import pytest
 
 from beast_mailbox_core import cli
-from beast_mailbox_core.filesystem_mailbox import FileSystemMailboxConfig, FileSystemMailboxService
+from beast_mailbox_core.filesystem_mailbox import (
+    FileSystemMailboxConfig,
+    FileSystemMailboxService,
+)
 
 
 def test_service_parser_supports_backend_choices() -> None:
@@ -112,7 +115,9 @@ async def test_run_service_async_uses_filesystem_backend(tmp_path: Path) -> None
         ]
     )
 
-    with mock.patch("beast_mailbox_core.cli.FileSystemMailboxService", autospec=True) as mock_service_cls:
+    with mock.patch(
+        "beast_mailbox_core.cli.FileSystemMailboxService", autospec=True
+    ) as mock_service_cls:
         service_instance = mock_service_cls.return_value
         service_instance.start.return_value = asyncio.Future()
         service_instance.start.return_value.set_result(True)
@@ -123,9 +128,14 @@ async def test_run_service_async_uses_filesystem_backend(tmp_path: Path) -> None
         wait_event.set()
 
         with mock.patch("asyncio.Event", return_value=wait_event):
-            with mock.patch("beast_mailbox_core.cli._fetch_latest_messages") as mock_fetch, mock.patch(
-                "beast_mailbox_core.cli.RedisMailboxService", autospec=True
-            ) as mock_redis_cls:
+            with (
+                mock.patch(
+                    "beast_mailbox_core.cli._fetch_latest_messages"
+                ) as mock_fetch,
+                mock.patch(
+                    "beast_mailbox_core.cli.RedisMailboxService", autospec=True
+                ) as mock_redis_cls,
+            ):
                 mock_fetch.return_value = asyncio.Future()
                 mock_fetch.return_value.set_result(None)
 
@@ -213,7 +223,9 @@ async def test_send_message_async_uses_filesystem_backend(tmp_path: Path) -> Non
 
 
 @pytest.mark.asyncio
-async def test_fetch_latest_filesystem_messages_handles_deletion(tmp_path: Path) -> None:
+async def test_fetch_latest_filesystem_messages_handles_deletion(
+    tmp_path: Path,
+) -> None:
     """Filesystem latest fetch should delete messages when requested."""
 
     config = FileSystemMailboxConfig(base_path=str(tmp_path))
@@ -234,7 +246,9 @@ async def test_fetch_latest_filesystem_messages_handles_deletion(tmp_path: Path)
 
 
 @pytest.mark.asyncio
-async def test_fetch_latest_messages_ack_and_trim(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_fetch_latest_messages_ack_and_trim(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Redis latest fetch should acknowledge and trim when requested."""
 
     service = mock.create_autospec(cli.RedisMailboxService, instance=True)
@@ -251,11 +265,12 @@ async def test_fetch_latest_messages_ack_and_trim(monkeypatch: pytest.MonkeyPatc
     message.message_type = "direct_message"
     message.payload = {"field": "value"}
 
-    with mock.patch.object(cli.MailboxMessage, "from_redis_fields", return_value=message):
+    with mock.patch.object(
+        cli.MailboxMessage, "from_redis_fields", return_value=message
+    ):
         await cli._fetch_latest_messages(service, count=1, ack=True, trim=True)
 
     service.connect.assert_awaited_once()
     service._client.xack.assert_awaited_once_with("stream", "agent:group", "1-0")
     service._client.xdel.assert_awaited_once_with("stream", "1-0")
     service.stop.assert_awaited_once()
-

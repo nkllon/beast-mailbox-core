@@ -27,12 +27,12 @@ class TestServiceLifecycle:
     @pytest.mark.asyncio
     async def test_connect_creates_client(self, service):
         """Test connect creates Redis client."""
-        with patch('beast_mailbox_core.redis_mailbox.redis.Redis') as mock_redis:
+        with patch("beast_mailbox_core.redis_mailbox.redis.Redis") as mock_redis:
             mock_client = AsyncMock()
             mock_redis.return_value = mock_client
-            
+
             await service.connect()
-            
+
             assert service._client == mock_client
             mock_redis.assert_called_once()
 
@@ -41,15 +41,17 @@ class TestServiceLifecycle:
         """Test successful service start."""
         mock_client = AsyncMock()
         mock_client.xgroup_create = AsyncMock()
-        
-        with patch('beast_mailbox_core.redis_mailbox.redis.Redis', return_value=mock_client):
+
+        with patch(
+            "beast_mailbox_core.redis_mailbox.redis.Redis", return_value=mock_client
+        ):
             result = await service.start()
-            
+
             assert result is True
             assert service._running is True
             assert service._processing_task is not None
             mock_client.xgroup_create.assert_called_once()
-            
+
             # Clean up - cancel the task
             await service.stop()
 
@@ -60,13 +62,15 @@ class TestServiceLifecycle:
         mock_client.xgroup_create = AsyncMock(
             side_effect=Exception("BUSYGROUP Consumer Group name already exists")
         )
-        
-        with patch('beast_mailbox_core.redis_mailbox.redis.Redis', return_value=mock_client):
+
+        with patch(
+            "beast_mailbox_core.redis_mailbox.redis.Redis", return_value=mock_client
+        ):
             result = await service.start()
-            
+
             assert result is True
             assert service._running is True
-            
+
             await service.stop()
 
     @pytest.mark.asyncio
@@ -76,8 +80,10 @@ class TestServiceLifecycle:
         mock_client.xgroup_create = AsyncMock(
             side_effect=Exception("Permission denied")
         )
-        
-        with patch('beast_mailbox_core.redis_mailbox.redis.Redis', return_value=mock_client):
+
+        with patch(
+            "beast_mailbox_core.redis_mailbox.redis.Redis", return_value=mock_client
+        ):
             with pytest.raises(Exception, match="Permission denied"):
                 await service.start()
 
@@ -85,7 +91,7 @@ class TestServiceLifecycle:
     async def test_stop_without_start(self, service):
         """Test stop works when service never started."""
         await service.stop()
-        
+
         assert service._running is False
         assert service._client is None
 
@@ -95,9 +101,9 @@ class TestServiceLifecycle:
         mock_client = AsyncMock()
         mock_client.aclose = AsyncMock()  # Use aclose() instead of close()
         service._client = mock_client
-        
+
         await service.stop()
-        
+
         mock_client.aclose.assert_called_once()
         assert service._client is None
 
@@ -105,18 +111,18 @@ class TestServiceLifecycle:
     async def test_stop_cancels_processing_task(self, service):
         """Test stop cancels and waits for processing task."""
         service._running = True
-        
+
         # Create a real async task that we can cancel
         async def dummy_task():
             try:
                 await asyncio.sleep(10)
             except asyncio.CancelledError:
                 pass
-        
+
         service._processing_task = asyncio.create_task(dummy_task())
-        
+
         await service.stop()
-        
+
         assert service._processing_task is None
         assert service._running is False
 
@@ -124,20 +130,20 @@ class TestServiceLifecycle:
     async def test_stop_handles_task_with_exception(self, service):
         """Test stop handles tasks that raise non-CancelledError exceptions."""
         service._running = True
-        
+
         # Create a task that will raise a different exception
         async def failing_task():
             await asyncio.sleep(0.01)
             raise RuntimeError("Task failed during shutdown")
-        
+
         service._processing_task = asyncio.create_task(failing_task())
-        
+
         # Give task a moment to start
         await asyncio.sleep(0.02)
-        
+
         # stop() should handle the exception gracefully
         await service.stop()
-        
+
         assert service._processing_task is None
         assert service._running is False
 
@@ -152,9 +158,9 @@ class TestMessageDispatching:
             message_id="test-id",
             sender="alice",
             recipient="test-agent",
-            payload={"text": "hello"}
+            payload={"text": "hello"},
         )
-        
+
         # Should not raise
         await service._dispatch(message)
 
@@ -162,21 +168,21 @@ class TestMessageDispatching:
     async def test_dispatch_single_handler(self, service):
         """Test dispatch calls handler."""
         received_messages = []
-        
+
         async def handler(msg):
             received_messages.append(msg)
-        
+
         service.register_handler(handler)
-        
+
         message = MailboxMessage(
             message_id="test-id",
             sender="alice",
             recipient="test-agent",
-            payload={"text": "hello"}
+            payload={"text": "hello"},
         )
-        
+
         await service._dispatch(message)
-        
+
         assert len(received_messages) == 1
         assert received_messages[0].sender == "alice"
 
@@ -184,52 +190,52 @@ class TestMessageDispatching:
     async def test_dispatch_multiple_handlers(self, service):
         """Test dispatch calls all handlers."""
         call_count = [0]
-        
+
         async def handler1(msg):
             call_count[0] += 1
-        
+
         async def handler2(msg):
             call_count[0] += 1
-        
+
         service.register_handler(handler1)
         service.register_handler(handler2)
-        
+
         message = MailboxMessage(
             message_id="test-id",
             sender="alice",
             recipient="test-agent",
-            payload={"text": "hello"}
+            payload={"text": "hello"},
         )
-        
+
         await service._dispatch(message)
-        
+
         assert call_count[0] == 2
 
     @pytest.mark.asyncio
     async def test_dispatch_handler_error_doesnt_crash(self, service):
         """Test that handler errors are caught and logged."""
         handler2_called = False
-        
+
         async def failing_handler(msg):
             raise ValueError("Handler failed!")
-        
+
         async def good_handler(msg):
             nonlocal handler2_called
             handler2_called = True
-        
+
         service.register_handler(failing_handler)
         service.register_handler(good_handler)
-        
+
         message = MailboxMessage(
             message_id="test-id",
             sender="alice",
             recipient="test-agent",
-            payload={"text": "hello"}
+            payload={"text": "hello"},
         )
-        
+
         # Should not raise, just log error
         await service._dispatch(message)
-        
+
         # Second handler should still run
         assert handler2_called
 
@@ -242,13 +248,14 @@ class TestSendMessage:
         """Test send_message calls connect if not connected."""
         mock_client = AsyncMock()
         mock_client.xadd = AsyncMock(return_value=b"1234567890-0")
-        
-        with patch('beast_mailbox_core.redis_mailbox.redis.Redis', return_value=mock_client):
+
+        with patch(
+            "beast_mailbox_core.redis_mailbox.redis.Redis", return_value=mock_client
+        ):
             message_id = await service.send_message(
-                recipient="bob",
-                payload={"text": "hello"}
+                recipient="bob", payload={"text": "hello"}
             )
-            
+
             assert service._client is not None
             assert message_id is not None
 
@@ -258,12 +265,9 @@ class TestSendMessage:
         mock_client = AsyncMock()
         mock_client.xadd = AsyncMock(return_value=b"1234567890-0")
         service._client = mock_client
-        
-        await service.send_message(
-            recipient="bob",
-            payload={"text": "hello"}
-        )
-        
+
+        await service.send_message(recipient="bob", payload={"text": "hello"})
+
         # Verify stream name (uses default prefix "beast:mailbox")
         call_args = mock_client.xadd.call_args
         assert call_args[0][0] == "beast:mailbox:bob:in"
@@ -274,13 +278,11 @@ class TestSendMessage:
         mock_client = AsyncMock()
         mock_client.xadd = AsyncMock(return_value=b"1234567890-0")
         service._client = mock_client
-        
+
         message_id = await service.send_message(
-            recipient="bob",
-            payload={"text": "hello"},
-            message_id="custom-id-123"
+            recipient="bob", payload={"text": "hello"}, message_id="custom-id-123"
         )
-        
+
         # Returns the custom ID
         assert message_id == "custom-id-123"
 
@@ -290,16 +292,13 @@ class TestSendMessage:
         mock_client = AsyncMock()
         mock_client.xadd = AsyncMock(return_value=b"1234567890-0")
         service._client = mock_client
-        
-        await service.send_message(
-            recipient="bob",
-            payload={"text": "hello"}
-        )
-        
+
+        await service.send_message(recipient="bob", payload={"text": "hello"})
+
         # Verify maxlen parameter
         call_args = mock_client.xadd.call_args
-        assert call_args[1]['maxlen'] == service.config.max_stream_length
-        assert call_args[1]['approximate'] is True
+        assert call_args[1]["maxlen"] == service.config.max_stream_length
+        assert call_args[1]["approximate"] is True
 
 
 # Removed test_consume_loop_handles_exception - it relied on mocking Redis behavior.
@@ -310,4 +309,3 @@ class TestSendMessage:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

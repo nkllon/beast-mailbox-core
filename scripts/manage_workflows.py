@@ -26,32 +26,40 @@ except ImportError:
 
 class WorkflowManager:
     """Manage GitHub Actions workflows"""
-    
+
     def __init__(self, workflows_dir: Optional[Path] = None):
-        self.workflows_dir = workflows_dir or Path(__file__).parent.parent / ".github" / "workflows"
+        self.workflows_dir = (
+            workflows_dir or Path(__file__).parent.parent / ".github" / "workflows"
+        )
         if not self.workflows_dir.exists():
-            raise FileNotFoundError(f"Workflows directory not found: {self.workflows_dir}")
-    
+            raise FileNotFoundError(
+                f"Workflows directory not found: {self.workflows_dir}"
+            )
+
     def list_workflows(self) -> List[Dict[str, str]]:
         """List all workflow files"""
         workflows = []
         for workflow_file in sorted(self.workflows_dir.glob("*.yml")):
-            with open(workflow_file, 'r') as f:
+            with open(workflow_file, "r") as f:
                 try:
                     data = yaml.safe_load(f)
-                    workflows.append({
-                        "file": workflow_file.name,
-                        "name": data.get("name", "Unknown"),
-                        "path": str(workflow_file)
-                    })
+                    workflows.append(
+                        {
+                            "file": workflow_file.name,
+                            "name": data.get("name", "Unknown"),
+                            "path": str(workflow_file),
+                        }
+                    )
                 except Exception as e:
-                    workflows.append({
-                        "file": workflow_file.name,
-                        "name": f"Error: {e}",
-                        "path": str(workflow_file)
-                    })
+                    workflows.append(
+                        {
+                            "file": workflow_file.name,
+                            "name": f"Error: {e}",
+                            "path": str(workflow_file),
+                        }
+                    )
         return workflows
-    
+
     def read_workflow(self, workflow_name: str) -> Dict:
         """Read and parse a workflow file"""
         workflow_file = self.workflows_dir / f"{workflow_name}.yml"
@@ -60,23 +68,23 @@ class WorkflowManager:
             workflow_file = self.workflows_dir / workflow_name
             if not workflow_file.exists():
                 raise FileNotFoundError(f"Workflow not found: {workflow_name}")
-        
-        with open(workflow_file, 'r') as f:
+
+        with open(workflow_file, "r") as f:
             return yaml.safe_load(f)
-    
+
     def analyze_workflow(self, workflow_name: str) -> Dict:
         """Analyze workflow structure"""
         workflow = self.read_workflow(workflow_name)
-        
+
         analysis = {
             "name": workflow.get("name", "Unknown"),
             "triggers": {},
             "jobs": {},
             "actions_used": [],
             "permissions": {},
-            "external_services": []
+            "external_services": [],
         }
-        
+
         # Analyze triggers
         on = workflow.get("on", {})
         if isinstance(on, dict):
@@ -89,7 +97,7 @@ class WorkflowManager:
                     analysis["triggers"][trigger_type] = config
                 else:
                     analysis["triggers"][trigger_type] = config
-        
+
         # Analyze jobs
         jobs = workflow.get("jobs", {})
         for job_name, job_config in jobs.items():
@@ -97,9 +105,9 @@ class WorkflowManager:
                 "runs_on": job_config.get("runs-on", "unknown"),
                 "permissions": job_config.get("permissions", {}),
                 "steps": len(job_config.get("steps", [])),
-                "uses_actions": []
+                "uses_actions": [],
             }
-            
+
             # Extract actions used
             for step in job_config.get("steps", []):
                 if "uses" in step:
@@ -107,15 +115,15 @@ class WorkflowManager:
                     job_analysis["uses_actions"].append(action)
                     if action not in analysis["actions_used"]:
                         analysis["actions_used"].append(action)
-            
+
             # Check for external services
             if "services" in job_config:
                 for service_name in job_config["services"].keys():
                     if service_name not in analysis["external_services"]:
                         analysis["external_services"].append(service_name)
-            
+
             analysis["jobs"][job_name] = job_analysis
-        
+
         # Check for external service references
         workflow_str = yaml.dump(workflow)
         if "sonarcloud" in workflow_str.lower() or "sonar" in workflow_str.lower():
@@ -127,23 +135,25 @@ class WorkflowManager:
         if "pypi" in workflow_str.lower():
             if "PyPI" not in analysis["external_services"]:
                 analysis["external_services"].append("PyPI")
-        
+
         return analysis
-    
-    def update_action_version(self, workflow_name: str, action: str, version: str, dry_run: bool = False) -> Dict:
+
+    def update_action_version(
+        self, workflow_name: str, action: str, version: str, dry_run: bool = False
+    ) -> Dict:
         """Update action version in workflow"""
         workflow_file = self.workflows_dir / f"{workflow_name}.yml"
         if not workflow_file.exists():
             workflow_file = self.workflows_dir / workflow_name
-        
-        with open(workflow_file, 'r') as f:
+
+        with open(workflow_file, "r") as f:
             content = f.read()
-        
+
         # Find and replace action version
-        lines = content.split('\n')
+        lines = content.split("\n")
         updated = False
         new_lines = []
-        
+
         for line in lines:
             if action in line and "uses:" in line:
                 # Extract current action
@@ -159,106 +169,102 @@ class WorkflowManager:
                                 new_lines.append(new_line)
                                 updated = True
                                 continue
-            
+
             new_lines.append(line)
-        
+
         if not updated:
             return {"error": f"Action '{action}' not found in workflow"}
-        
+
         if not dry_run:
-            with open(workflow_file, 'w') as f:
-                f.write('\n'.join(new_lines))
-        
+            with open(workflow_file, "w") as f:
+                f.write("\n".join(new_lines))
+
         return {
             "updated": updated,
             "dry_run": dry_run,
             "workflow": workflow_name,
             "action": action,
-            "version": version
+            "version": version,
         }
-    
+
     def validate_workflows(self) -> Dict:
         """Validate all workflows"""
-        results = {
-            "total": 0,
-            "valid": 0,
-            "invalid": 0,
-            "errors": []
-        }
-        
+        results = {"total": 0, "valid": 0, "invalid": 0, "errors": []}
+
         for workflow_file in self.workflows_dir.glob("*.yml"):
             results["total"] += 1
             try:
-                with open(workflow_file, 'r') as f:
+                with open(workflow_file, "r") as f:
                     yaml.safe_load(f)
                 results["valid"] += 1
             except Exception as e:
                 results["invalid"] += 1
-                results["errors"].append({
-                    "file": workflow_file.name,
-                    "error": str(e)
-                })
-        
+                results["errors"].append({"file": workflow_file.name, "error": str(e)})
+
         return results
-    
+
     def get_action_versions(self, workflow_name: str) -> List[Dict[str, str]]:
         """Get all action versions used in workflow"""
         workflow = self.read_workflow(workflow_name)
         actions = []
-        
+
         for job_name, job_config in workflow.get("jobs", {}).items():
             for step in job_config.get("steps", []):
                 if "uses" in step:
                     action = step["uses"]
                     if "@" in action:
                         action_name, version = action.split("@", 1)
-                        actions.append({
-                            "action": action_name.strip(),
-                            "version": version.strip(),
-                            "job": job_name,
-                            "step": step.get("name", "unnamed")
-                        })
-        
+                        actions.append(
+                            {
+                                "action": action_name.strip(),
+                                "version": version.strip(),
+                                "job": job_name,
+                                "step": step.get("name", "unnamed"),
+                            }
+                        )
+
         return actions
 
 
 def main():
     parser = argparse.ArgumentParser(description="Manage GitHub Actions workflows")
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
-    
+
     # List command
     list_parser = subparsers.add_parser("list", help="List all workflows")
     list_parser.add_argument("--json", action="store_true", help="Output JSON")
-    
+
     # Analyze command
     analyze_parser = subparsers.add_parser("analyze", help="Analyze a workflow")
     analyze_parser.add_argument("workflow", help="Workflow name (without .yml)")
     analyze_parser.add_argument("--json", action="store_true", help="Output JSON")
-    
+
     # Update action command
     update_parser = subparsers.add_parser("update-action", help="Update action version")
     update_parser.add_argument("workflow", help="Workflow name (without .yml)")
     update_parser.add_argument("action", help="Action name (e.g., actions/checkout)")
     update_parser.add_argument("version", help="New version (e.g., v4)")
-    update_parser.add_argument("--dry-run", action="store_true", help="Don't actually update")
-    
+    update_parser.add_argument(
+        "--dry-run", action="store_true", help="Don't actually update"
+    )
+
     # Validate command
     validate_parser = subparsers.add_parser("validate", help="Validate all workflows")
     validate_parser.add_argument("--json", action="store_true", help="Output JSON")
-    
+
     # Versions command
     versions_parser = subparsers.add_parser("versions", help="List action versions")
     versions_parser.add_argument("workflow", help="Workflow name (without .yml)")
     versions_parser.add_argument("--json", action="store_true", help="Output JSON")
-    
+
     args = parser.parse_args()
-    
+
     if not args.command:
         parser.print_help()
         sys.exit(1)
-    
+
     manager = WorkflowManager()
-    
+
     try:
         if args.command == "list":
             workflows = manager.list_workflows()
@@ -269,7 +275,7 @@ def main():
                 print("=" * 80)
                 for wf in workflows:
                     print(f"  {wf['file']:30} {wf['name']}")
-        
+
         elif args.command == "analyze":
             analysis = manager.analyze_workflow(args.workflow)
             if args.json:
@@ -278,18 +284,20 @@ def main():
                 print(f"\nWorkflow Analysis: {analysis['name']}")
                 print("=" * 80)
                 print(f"\nTriggers:")
-                for trigger, config in analysis['triggers'].items():
+                for trigger, config in analysis["triggers"].items():
                     print(f"  {trigger}: {config}")
                 print(f"\nJobs: {len(analysis['jobs'])}")
-                for job_name, job_info in analysis['jobs'].items():
+                for job_name, job_info in analysis["jobs"].items():
                     print(f"  {job_name}:")
                     print(f"    Runs on: {job_info['runs_on']}")
                     print(f"    Steps: {job_info['steps']}")
                 print(f"\nActions Used: {len(analysis['actions_used'])}")
-                for action in analysis['actions_used'][:10]:
+                for action in analysis["actions_used"][:10]:
                     print(f"  {action}")
-                print(f"\nExternal Services: {', '.join(analysis['external_services']) or 'None'}")
-        
+                print(
+                    f"\nExternal Services: {', '.join(analysis['external_services']) or 'None'}"
+                )
+
         elif args.command == "update-action":
             result = manager.update_action_version(
                 args.workflow, args.action, args.version, dry_run=args.dry_run
@@ -298,10 +306,14 @@ def main():
                 print(f"ERROR: {result['error']}", file=sys.stderr)
                 sys.exit(1)
             if args.dry_run:
-                print(f"DRY RUN: Would update {result['action']} to {result['version']} in {result['workflow']}")
+                print(
+                    f"DRY RUN: Would update {result['action']} to {result['version']} in {result['workflow']}"
+                )
             else:
-                print(f"✅ Updated {result['action']} to {result['version']} in {result['workflow']}")
-        
+                print(
+                    f"✅ Updated {result['action']} to {result['version']} in {result['workflow']}"
+                )
+
         elif args.command == "validate":
             results = manager.validate_workflows()
             if args.json:
@@ -312,11 +324,11 @@ def main():
                 print(f"Total: {results['total']}")
                 print(f"Valid: {results['valid']}")
                 print(f"Invalid: {results['invalid']}")
-                if results['errors']:
+                if results["errors"]:
                     print("\nErrors:")
-                    for error in results['errors']:
+                    for error in results["errors"]:
                         print(f"  {error['file']}: {error['error']}")
-        
+
         elif args.command == "versions":
             versions = manager.get_action_versions(args.workflow)
             if args.json:
@@ -325,15 +337,17 @@ def main():
                 print(f"\nAction Versions in {args.workflow}:")
                 print("=" * 80)
                 for v in versions:
-                    print(f"  {v['action']:40} @ {v['version']:15} ({v['job']}/{v['step']})")
-    
+                    print(
+                        f"  {v['action']:40} @ {v['version']:15} ({v['job']}/{v['step']})"
+                    )
+
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
 if __name__ == "__main__":
     main()
-

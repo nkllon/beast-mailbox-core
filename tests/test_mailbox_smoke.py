@@ -28,7 +28,9 @@ def _ensure_docker_available() -> None:
 
 
 @pytest.mark.asyncio
-async def test_filesystem_and_redis_smoke(tmp_path_factory, redis_available, redis_config):
+async def test_filesystem_and_redis_smoke(
+    tmp_path_factory, redis_available, redis_config
+):
     """Run smoke scenarios across filesystem and Redis backends."""
 
     _ensure_docker_available()
@@ -59,9 +61,13 @@ async def test_smoke_load_ramp(tmp_path_factory, redis_available, redis_config):
         pytest.skip("Redis is required for smoke tests")
 
     prometheus_config = build_prometheus_config_from_env()
-    load_config = LoadRampConfig(concurrency_levels=[1], max_batch_duration=30.0, stop_on_failure=True)
+    load_config = LoadRampConfig(
+        concurrency_levels=[1], max_batch_duration=30.0, stop_on_failure=True
+    )
 
-    summary = await run_load_ramp(tmp_path_factory, redis_config, prometheus_config, load_config)
+    summary = await run_load_ramp(
+        tmp_path_factory, redis_config, prometheus_config, load_config
+    )
 
     assert summary.batches
     assert summary.batches[0].success_count >= 1

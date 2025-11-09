@@ -28,7 +28,9 @@ async def test_send_message_creates_file(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_start_and_receive_message(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+async def test_start_and_receive_message(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Messages should be picked up by the recipient service."""
 
     config = FileSystemMailboxConfig(base_path=str(tmp_path), poll_interval=0.05)
@@ -89,7 +91,9 @@ async def test_send_message_applies_mkdir_mode(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_process_pending_logs_when_no_handlers(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+async def test_process_pending_logs_when_no_handlers(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Service should log and retain messages when no handlers are registered."""
 
     config = FileSystemMailboxConfig(base_path=str(tmp_path))
@@ -105,7 +109,9 @@ async def test_process_pending_logs_when_no_handlers(tmp_path: Path, caplog: pyt
 
     await service._process_pending_files()
 
-    assert message_path.exists(), "Message should remain when no handlers are registered"
+    assert (
+        message_path.exists()
+    ), "Message should remain when no handlers are registered"
     assert "No handlers registered" in caplog.text
 
 
@@ -136,6 +142,7 @@ async def test_process_pending_logs_and_removes_corrupted_files(
     service = FileSystemMailboxService("recipient", config)
 
     await service.connect()
+
     async def handler(message) -> None:  # pragma: no cover - should not be invoked
         pass
 
@@ -218,7 +225,9 @@ def test_create_fs_config_from_env_defaults(monkeypatch: pytest.MonkeyPatch) -> 
     assert config.mkdir_mode == 0o755
 
 
-def test_create_fs_config_from_env_overrides(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_create_fs_config_from_env_overrides(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     """Environment variables should override defaults."""
 
     monkeypatch.setenv("BEAST_MAILBOX_FS_ROOT", str(tmp_path))
@@ -232,7 +241,9 @@ def test_create_fs_config_from_env_overrides(monkeypatch: pytest.MonkeyPatch, tm
     assert config.mkdir_mode == 0o700
 
 
-def test_create_fs_config_from_env_invalid_values(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_fs_config_from_env_invalid_values(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Invalid environment values should fall back to safe defaults."""
 
     monkeypatch.setenv("BEAST_MAILBOX_FS_POLL_INTERVAL", "not-a-number")
@@ -242,5 +253,3 @@ def test_create_fs_config_from_env_invalid_values(monkeypatch: pytest.MonkeyPatc
 
     assert config.poll_interval == 0.5
     assert config.mkdir_mode == 0o755
-
-

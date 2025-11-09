@@ -18,7 +18,11 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from beast_mailbox_core import FileSystemMailboxConfig, FileSystemMailboxService
-from beast_mailbox_core.redis_mailbox import MailboxConfig, MailboxMessage, RedisMailboxService
+from beast_mailbox_core.redis_mailbox import (
+    MailboxConfig,
+    MailboxMessage,
+    RedisMailboxService,
+)
 
 LOGGER = logging.getLogger("smoke.orchestrator")
 
@@ -167,7 +171,14 @@ class CLIExecutor:
         acknowledge: bool = False,
         trim: bool = False,
     ) -> CLIResult:
-        args = [agent_id, "--backend", backend, "--latest", "--count", str(latest_count)]
+        args = [
+            agent_id,
+            "--backend",
+            backend,
+            "--latest",
+            "--count",
+            str(latest_count),
+        ]
         if acknowledge:
             args.append("--ack")
         if trim:
@@ -244,7 +255,9 @@ class SuiteResult:
 
     @property
     def successful(self) -> bool:
-        return all(s.success for s in self.scenarios.values()) and self.telemetry.success
+        return (
+            all(s.success for s in self.scenarios.values()) and self.telemetry.success
+        )
 
 
 class TelemetryVerifier:
@@ -252,10 +265,15 @@ class TelemetryVerifier:
         self._prometheus = prometheus
 
     async def verify(
-        self, suite_run_id: str, scenario_results: Mapping[str, ScenarioResult], fallback_logs: Mapping[str, Sequence[str]]
+        self,
+        suite_run_id: str,
+        scenario_results: Mapping[str, ScenarioResult],
+        fallback_logs: Mapping[str, Sequence[str]],
     ) -> TelemetryResult:
         metrics_payload = self._build_payload(suite_run_id, scenario_results)
-        total_messages = sum(len(result.message_ids) for result in scenario_results.values())
+        total_messages = sum(
+            len(result.message_ids) for result in scenario_results.values()
+        )
         expected_values = {
             "beast_mailbox_smoke_messages_total": float(total_messages),
             "beast_mailbox_smoke_suite_pass": 1.0,
@@ -263,43 +281,56 @@ class TelemetryVerifier:
 
         issues: list[str] = []
 
-        pushgateway_url = (
-            os.getenv("BEAST_SMOKE_PUSHGATEWAY_URL")
-            or os.getenv("PROMETHEUS_PUSHGATEWAY_URL")
+        pushgateway_url = os.getenv("BEAST_SMOKE_PUSHGATEWAY_URL") or os.getenv(
+            "PROMETHEUS_PUSHGATEWAY_URL"
         )
-        pushgateway_auth = (
-            os.getenv("BEAST_SMOKE_PUSHGATEWAY_AUTH")
-            or os.getenv("PROMETHEUS_PUSHGATEWAY_AUTH")
+        pushgateway_auth = os.getenv("BEAST_SMOKE_PUSHGATEWAY_AUTH") or os.getenv(
+            "PROMETHEUS_PUSHGATEWAY_AUTH"
         )
         if pushgateway_url:
             try:
                 await asyncio.to_thread(
-                    self._push_payload, pushgateway_url, suite_run_id, metrics_payload, pushgateway_auth
+                    self._push_payload,
+                    pushgateway_url,
+                    suite_run_id,
+                    metrics_payload,
+                    pushgateway_auth,
                 )
             except Exception as exc:  # noqa: BLE001
                 LOGGER.warning("Pushgateway push failed: %s", exc)
                 issues.append(f"pushgateway error: {exc}")
 
         if self._prometheus is None:
-            return TelemetryResult(False, True, expected_values, fallback_logs, issues, metrics_payload)
+            return TelemetryResult(
+                False, True, expected_values, fallback_logs, issues, metrics_payload
+            )
 
         try:
             values = await asyncio.to_thread(self._query_metrics, suite_run_id)
-            expected = {name: expected_values.get(name, 0.0) for name in self._prometheus.metric_names}
-            success = all(values.get(name, 0.0) >= expected.get(name, 0.0) for name in expected)
+            expected = {
+                name: expected_values.get(name, 0.0)
+                for name in self._prometheus.metric_names
+            }
+            success = all(
+                values.get(name, 0.0) >= expected.get(name, 0.0) for name in expected
+            )
             if not success:
                 issues.append("Prometheus counters did not match expectations")
-            return TelemetryResult(True, success, values, fallback_logs, issues, metrics_payload)
+            return TelemetryResult(
+                True, success, values, fallback_logs, issues, metrics_payload
+            )
         except Exception as exc:  # noqa: BLE001
             LOGGER.warning("Prometheus query failed: %s", exc)
             issues.append(str(exc))
-            return TelemetryResult(True, True, expected_values, fallback_logs, issues, metrics_payload)
+            return TelemetryResult(
+                True, True, expected_values, fallback_logs, issues, metrics_payload
+            )
 
     def _query_metrics(self, suite_run_id: str) -> Mapping[str, float]:
         assert self._prometheus is not None
         values: Dict[str, float] = {}
         for metric in self._prometheus.metric_names:
-            query = f"{metric}{{suite_run_id=\"{suite_run_id}\"}}"
+            query = f'{metric}{{suite_run_id="{suite_run_id}"}}'
             url = f"{self._prometheus.endpoint}/api/v1/query?query={query}"
             req = Request(url)
             req.add_header("Authorization", f"Basic {self._basic_auth()}")
@@ -318,20 +349,28 @@ class TelemetryVerifier:
         creds = f":{self._prometheus.password}".encode("utf-8")
         return base64.b64encode(creds).decode("utf-8")
 
-    def _build_payload(self, suite_run_id: str, scenarios: Mapping[str, ScenarioResult]) -> str:
+    def _build_payload(
+        self, suite_run_id: str, scenarios: Mapping[str, ScenarioResult]
+    ) -> str:
         lines = ["# TYPE beast_mailbox_smoke_suite_pass gauge"]
-        lines.append(f"beast_mailbox_smoke_suite_pass{{suite_run_id=\"{suite_run_id}\"}} 1")
+        lines.append(
+            f'beast_mailbox_smoke_suite_pass{{suite_run_id="{suite_run_id}"}} 1'
+        )
         lines.append("# TYPE beast_mailbox_smoke_messages_total counter")
         for backend, result in scenarios.items():
             send_count = len(result.message_ids)
             lines.append(
-                "beast_mailbox_smoke_messages_total{backend=\"%s\",phase=\"send\",suite_run_id=\"%s\"} %s"
+                'beast_mailbox_smoke_messages_total{backend="%s",phase="send",suite_run_id="%s"} %s'
                 % (backend, suite_run_id, send_count)
             )
         return "\n".join(lines) + "\n"
 
-    def _push_payload(self, base_url: str, suite_run_id: str, payload: str, auth: Optional[str]) -> None:
-        target = base_url.rstrip("/") + f"/metrics/job/beast_smoke/instance/{suite_run_id}"
+    def _push_payload(
+        self, base_url: str, suite_run_id: str, payload: str, auth: Optional[str]
+    ) -> None:
+        target = (
+            base_url.rstrip("/") + f"/metrics/job/beast_smoke/instance/{suite_run_id}"
+        )
         data = payload.encode("utf-8")
         req = Request(target, data=data, method="PUT")
         req.add_header("Content-Type", "text/plain")
@@ -371,15 +410,21 @@ class ResultReporter:
                 "issues": list(result.telemetry.issues),
             },
         }
-        (result.artifact_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        (result.artifact_dir / "summary.json").write_text(
+            json.dumps(summary, indent=2), encoding="utf-8"
+        )
         if result.telemetry.payload:
-            (result.artifact_dir / "metrics.prom").write_text(result.telemetry.payload, encoding="utf-8")
+            (result.artifact_dir / "metrics.prom").write_text(
+                result.telemetry.payload, encoding="utf-8"
+            )
 
 
 class Scenario:
     name: str
 
-    async def run(self, env: EnvironmentContext, cli: CLIExecutor) -> ScenarioResult:  # pragma: no cover - interface
+    async def run(
+        self, env: EnvironmentContext, cli: CLIExecutor
+    ) -> ScenarioResult:  # pragma: no cover - interface
         raise NotImplementedError
 
 
@@ -421,14 +466,21 @@ class FilesystemScenario(Scenario):
             # Consume the message via FileSystemMailboxService to ensure cleanup
             await self._consume_pending_messages(inbox_root, recipient)
 
-        cleanup_ok = not any(inbox_dir.glob("*.json")) and not any(inbox_dir.glob("*.tmp"))
+        cleanup_ok = not any(inbox_dir.glob("*.json")) and not any(
+            inbox_dir.glob("*.tmp")
+        )
 
         service_result = CLIResult(0, "", "")
 
         # Direct service flow
         direct_message_id = uuid.uuid4().hex
-        direct_payload = {"suite_run_id": env.suite_run_id, "origin": "filesystem-direct"}
-        await self._exercise_direct_service(inbox_root, direct_message_id, direct_payload)
+        direct_payload = {
+            "suite_run_id": env.suite_run_id,
+            "origin": "filesystem-direct",
+        }
+        await self._exercise_direct_service(
+            inbox_root, direct_message_id, direct_payload
+        )
 
         handler_inbox = inbox_root / "fs-smoke-handler" / "inbox"
         if handler_inbox.exists():
@@ -451,7 +503,9 @@ class FilesystemScenario(Scenario):
             logs=logs,
         )
 
-    async def _exercise_direct_service(self, root: Path, message_id: str, payload: Mapping[str, object]) -> None:
+    async def _exercise_direct_service(
+        self, root: Path, message_id: str, payload: Mapping[str, object]
+    ) -> None:
         config = FileSystemMailboxConfig(base_path=str(root), poll_interval=0.05)
         receiver = FileSystemMailboxService("fs-smoke-handler", config)
         received: list[str] = []
@@ -464,7 +518,9 @@ class FilesystemScenario(Scenario):
         await receiver.start()
         sender_service = FileSystemMailboxService("fs-smoke-direct", config)
         await sender_service.connect()
-        await sender_service.send_message("fs-smoke-handler", payload, message_id=message_id)
+        await sender_service.send_message(
+            "fs-smoke-handler", payload, message_id=message_id
+        )
         await asyncio.sleep(0.2)
         await receiver.stop()
         await sender_service.stop()
@@ -588,9 +644,17 @@ class SmokeOrchestrator:
                 scenario_results[scenario.name] = result
                 fallback_logs[scenario.name] = result.logs
 
-            telemetry_result = await self._telemetry.verify(env.suite_run_id, scenario_results, fallback_logs)
+            telemetry_result = await self._telemetry.verify(
+                env.suite_run_id, scenario_results, fallback_logs
+            )
             duration = time.perf_counter() - start_time
-            suite_result = SuiteResult(env.suite_run_id, scenario_results, telemetry_result, env.artifacts_dir, duration)
+            suite_result = SuiteResult(
+                env.suite_run_id,
+                scenario_results,
+                telemetry_result,
+                env.artifacts_dir,
+                duration,
+            )
             self._reporter.emit(suite_result)
             return suite_result
 
@@ -635,12 +699,17 @@ def build_prometheus_config_from_env() -> Optional[PrometheusConfig]:
     return PrometheusConfig(
         endpoint=endpoint.rstrip("/"),
         password=password,
-        metric_names=["beast_mailbox_smoke_messages_total", "beast_mailbox_smoke_suite_pass"],
+        metric_names=[
+            "beast_mailbox_smoke_messages_total",
+            "beast_mailbox_smoke_suite_pass",
+        ],
     )
 
 
 async def run_smoke_once(
-    tmp_path_factory, redis_config: Optional[MailboxConfig], prometheus_config: Optional[PrometheusConfig]
+    tmp_path_factory,
+    redis_config: Optional[MailboxConfig],
+    prometheus_config: Optional[PrometheusConfig],
 ) -> SuiteResult:
     env_manager = EnvironmentManager(tmp_path_factory, redis_config, prometheus_config)
     if redis_config is not None:
@@ -663,7 +732,10 @@ async def run_load_ramp(
 
     for concurrency in load_config.concurrency_levels:
         batch_start = time.perf_counter()
-        tasks = [run_smoke_once(tmp_path_factory, redis_config, prometheus_config) for _ in range(concurrency)]
+        tasks = [
+            run_smoke_once(tmp_path_factory, redis_config, prometheus_config)
+            for _ in range(concurrency)
+        ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         duration = time.perf_counter() - batch_start
 
@@ -686,7 +758,9 @@ async def run_load_ramp(
                         )
                 else:
                     failure_count += 1
-                    issues.append(f"suite {result.suite_run_id} reported scenario failure")
+                    issues.append(
+                        f"suite {result.suite_run_id} reported scenario failure"
+                    )
             else:
                 failure_count += 1
                 issues.append(str(result))
@@ -722,7 +796,10 @@ async def run_load_ramp(
 
     summary = LoadRampSummary(load_config, batches)
     # Persist summary alongside the first artifact dir if available.
-    first_artifact = next((path for batch in batches for path in batch.artifact_dirs if path.exists()), None)
+    first_artifact = next(
+        (path for batch in batches for path in batch.artifact_dirs if path.exists()),
+        None,
+    )
     if first_artifact:
         summary_path = first_artifact / "load-summary.json"
         summary_payload = {

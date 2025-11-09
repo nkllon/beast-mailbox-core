@@ -9,7 +9,12 @@ import asyncio
 import os
 import pytest
 
-from beast_mailbox_core import MailboxConfig, MailboxMessage, RecoveryMetrics, RedisMailboxService
+from beast_mailbox_core import (
+    MailboxConfig,
+    MailboxMessage,
+    RecoveryMetrics,
+    RedisMailboxService,
+)
 
 
 def pytest_generate_tests(metafunc):
@@ -46,6 +51,7 @@ def integration_config(request):
 def agent_id():
     """Return test agent ID."""
     import time
+
     return f"test-agent-{time.time()}"
 
 
@@ -53,7 +59,9 @@ class TestRecoveryIntegration:
     """Integration tests for recovery with real Redis."""
 
     @pytest.mark.asyncio
-    async def test_recovery_processes_pending_message(self, integration_config, agent_id):
+    async def test_recovery_processes_pending_message(
+        self, integration_config, agent_id
+    ):
         """Test recovery processes a pending message end-to-end."""
         # Clean up any existing test data
         service1 = RedisMailboxService("temp-cleanup", integration_config)
@@ -68,11 +76,11 @@ class TestRecoveryIntegration:
             except Exception:
                 pass
         await service1.stop()
-        
+
         # Create consumer group FIRST (before sending message)
         receiver = RedisMailboxService(agent_id, integration_config)
         await receiver.connect()
-        
+
         # Create consumer group first before reading
         if receiver._client:
             try:
@@ -85,24 +93,23 @@ class TestRecoveryIntegration:
             except Exception:
                 # Group might already exist, ignore
                 pass
-        
+
         await receiver.stop()
-        
+
         # Now create service and send a message (after group exists)
         sender = RedisMailboxService("sender", integration_config)
         await sender.connect()
-        
+
         message_id = await sender.send_message(
-            recipient=agent_id,
-            payload={"test": "recovery", "value": 42}
+            recipient=agent_id, payload={"test": "recovery", "value": 42}
         )
-        
+
         await sender.stop()
-        
+
         # Now read the message to move it to pending list
         receiver2 = RedisMailboxService(agent_id, integration_config)
         await receiver2.connect()
-        
+
         # Read the message to move it to pending list
         await receiver2._client.xreadgroup(
             groupname=receiver2._consumer_group,
@@ -110,41 +117,43 @@ class TestRecoveryIntegration:
             streams={receiver2.inbox_stream: ">"},
             count=1,
         )
-        
+
         await receiver2.stop()
-        
+
         # Now create a new service with a handler and start recovery
         received_messages = []
         recovery_metrics = None
-        
+
         async def handler(msg: MailboxMessage):
             received_messages.append(msg)
-        
+
         async def callback(metrics: RecoveryMetrics):
             nonlocal recovery_metrics
             recovery_metrics = metrics
-        
-        service = RedisMailboxService(agent_id, integration_config, recovery_callback=callback)
+
+        service = RedisMailboxService(
+            agent_id, integration_config, recovery_callback=callback
+        )
         service.register_handler(handler)
-        
+
         # Start should trigger recovery
         result = await service.start()
-        
+
         # Give it a moment to complete
         await asyncio.sleep(0.5)
-        
+
         assert result is True
-        
+
         # Stop the service
         await service.stop()
-        
+
         # Verify message was recovered
         assert len(received_messages) == 1
         assert received_messages[0].message_id == message_id
         assert received_messages[0].payload["test"] == "recovery"
         assert recovery_metrics is not None
         assert recovery_metrics.total_recovered == 1
-        
+
         # Verify message was acknowledged (it shouldn't be in pending anymore)
         check_service = RedisMailboxService(agent_id, integration_config)
         await check_service.connect()
@@ -157,14 +166,16 @@ class TestRecoveryIntegration:
                 count=10,
             )
             assert len(pending_info) == 0
-        
+
         await check_service.stop()
 
     @pytest.mark.asyncio
-    async def test_recovery_handles_multiple_pending_messages(self, integration_config, agent_id):
+    async def test_recovery_handles_multiple_pending_messages(
+        self, integration_config, agent_id
+    ):
         """Test recovery handles multiple pending messages."""
         agent_id = f"{agent_id}-multi"
-        
+
         # Clean up
         service1 = RedisMailboxService("temp-cleanup", integration_config)
         await service1.connect()
@@ -176,11 +187,11 @@ class TestRecoveryIntegration:
             except Exception:
                 pass
         await service1.stop()
-        
+
         # Create consumer group FIRST (before sending messages)
         receiver = RedisMailboxService(agent_id, integration_config)
         await receiver.connect()
-        
+
         # Create consumer group first before reading
         if receiver._client:
             try:
@@ -193,27 +204,26 @@ class TestRecoveryIntegration:
             except Exception:
                 # Group might already exist, ignore
                 pass
-        
+
         await receiver.stop()
-        
+
         # Send multiple messages (after group exists)
         sender = RedisMailboxService("sender", integration_config)
         await sender.connect()
-        
+
         message_ids = []
         for i in range(5):
             msg_id = await sender.send_message(
-                recipient=agent_id,
-                payload={"index": i, "test": "multi-recovery"}
+                recipient=agent_id, payload={"index": i, "test": "multi-recovery"}
             )
             message_ids.append(msg_id)
-        
+
         await sender.stop()
-        
+
         # Now read all messages to move them to PEL
         receiver2 = RedisMailboxService(agent_id, integration_config)
         await receiver2.connect()
-        
+
         # Read all messages
         await receiver2._client.xreadgroup(
             groupname=receiver2._consumer_group,
@@ -221,52 +231,51 @@ class TestRecoveryIntegration:
             streams={receiver2.inbox_stream: ">"},
             count=10,
         )
-        
+
         await receiver2.stop()
-        
+
         # Now recover them
         received_messages = []
-        
+
         async def handler(msg: MailboxMessage):
             received_messages.append(msg)
-        
+
         service = RedisMailboxService(agent_id, integration_config)
         service.register_handler(handler)
         service.config.recovery_batch_size = 2  # Test batching
-        
+
         result = await service.start()
         await asyncio.sleep(0.5)
-        
+
         assert result is True
         assert len(received_messages) == 5
-        
+
         await service.stop()
 
     @pytest.mark.asyncio
-    async def test_recovery_no_pending_skips_gracefully(self, integration_config, agent_id):
+    async def test_recovery_no_pending_skips_gracefully(
+        self, integration_config, agent_id
+    ):
         """Test recovery skips gracefully when no pending messages."""
         agent_id = f"{agent_id}-no-pending"
-        
+
         received_messages = []
-        
+
         async def handler(msg: MailboxMessage):
             received_messages.append(msg)
-        
+
         service = RedisMailboxService(agent_id, integration_config)
         service.register_handler(handler)
-        
+
         # Start should complete recovery even with no pending messages
         result = await service.start()
         await asyncio.sleep(0.5)
-        
+
         assert result is True
         assert len(received_messages) == 0
-        
+
         await service.stop()
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-
-
-

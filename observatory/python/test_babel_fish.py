@@ -4,13 +4,20 @@ Test Babel Fish - Make sure it actually works
 """
 
 import asyncio
-from babel_fish import ask_apple_intelligence, review_code, diagnose_error, get_architecture_advice
+from babel_fish import (
+    ask_apple_intelligence,
+    review_code,
+    diagnose_error,
+    get_architecture_advice,
+)
 
 
 async def test_simple_query():
     """Test a simple query."""
     print("🧪 Testing simple query...")
-    response = await ask_apple_intelligence("What's the best way to handle errors in Python?")
+    response = await ask_apple_intelligence(
+        "What's the best way to handle errors in Python?"
+    )
     print(f"✅ Response: {response[:200]}...")
     return response
 
@@ -47,7 +54,7 @@ async def test_architecture():
     print("🧪 Testing architecture advice...")
     response = await get_architecture_advice(
         "How should I structure a sync service for reliability?",
-        context="Current implementation uses single sync loop"
+        context="Current implementation uses single sync loop",
     )
     print(f"✅ Response: {response[:200]}...")
     return response
@@ -57,7 +64,7 @@ async def main():
     """Run all tests."""
     print("🐟 Babel Fish Test Suite")
     print("=" * 50)
-    
+
     try:
         await test_simple_query()
         await test_code_review()
@@ -70,9 +77,9 @@ async def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-

@@ -26,33 +26,40 @@ def _stop_docker_container(container_name):
 @pytest.fixture(scope="session")
 def redis_docker():
     """Start Redis in Docker for testing.
-    
+
     Automatically starts Redis container and stops it after tests.
     ALWAYS cleans up the container, even if tests fail.
     If Docker is not available or container already exists, uses existing container.
     """
     container_name = "beast-mailbox-test-redis"
     container_started = False
-    
+
     # Check if container already exists and is running
     result = subprocess.run(
-        ["docker", "ps", "--filter", f"name={container_name}", "--format", "{{.Names}}"],
+        [
+            "docker",
+            "ps",
+            "--filter",
+            f"name={container_name}",
+            "--format",
+            "{{.Names}}",
+        ],
         capture_output=True,
         text=True,
     )
-    
+
     if container_name in result.stdout:
         # Container already running - use it but DO NOT clean it up
         # (it was started externally, don't remove it)
         yield "localhost", 6379
         return
-    
+
     # Try to start existing stopped container
     result = subprocess.run(
         ["docker", "start", container_name],
         capture_output=True,
     )
-    
+
     if result.returncode == 0:
         # Started existing container - we started it, so we clean it up
         container_started = True
@@ -63,24 +70,28 @@ def redis_docker():
             # ALWAYS cleanup, even if tests fail
             _stop_docker_container(container_name)
         return
-    
+
     # Create and start new container
     try:
         subprocess.run(
             [
-                "docker", "run", "-d",
-                "--name", container_name,
-                "-p", "6379:6379",
+                "docker",
+                "run",
+                "-d",
+                "--name",
+                container_name,
+                "-p",
+                "6379:6379",
                 "redis:latest",
             ],
             capture_output=True,
             check=True,
         )
         container_started = True
-        
+
         # Wait for Redis to be ready
         time.sleep(2)
-        
+
         try:
             yield "localhost", 6379
         finally:
@@ -102,6 +113,7 @@ def redis_docker():
 def redis_config():
     """Return a test Redis configuration."""
     from beast_mailbox_core.redis_mailbox import MailboxConfig
+
     return MailboxConfig(
         host="localhost",
         port=6379,
@@ -122,12 +134,13 @@ def agent_id():
 @pytest.fixture(scope="session")
 def redis_available(redis_docker):
     """Check if Redis is available for testing.
-    
+
     Uses the redis_docker fixture to ensure Redis is running.
     Returns True if Redis is available, False otherwise.
     """
     try:
         import redis
+
         client = redis.Redis(host=redis_docker[0], port=redis_docker[1], db=15)
         client.ping()
         client.close()
@@ -140,4 +153,3 @@ def redis_available(redis_docker):
 def sample_payload():
     """Return a sample message payload."""
     return {"text": "test message", "priority": "high", "data": [1, 2, 3]}
-

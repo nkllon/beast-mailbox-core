@@ -96,12 +96,16 @@ class FileSystemMailboxService:
                 exist_ok=True,
             )
         except Exception as exc:  # pragma: no cover - defensive logging
-            self.logger.error("Failed to create inbox directory %s: %s", inbox_path, exc)
+            self.logger.error(
+                "Failed to create inbox directory %s: %s", inbox_path, exc
+            )
             raise
 
         self._connected = True
 
-    def register_handler(self, handler: Callable[[MailboxMessage], Awaitable[None]]) -> None:
+    def register_handler(
+        self, handler: Callable[[MailboxMessage], Awaitable[None]]
+    ) -> None:
         """Register an async handler to process incoming messages."""
 
         self._handlers.append(handler)
@@ -173,7 +177,9 @@ class FileSystemMailboxService:
             os.replace(tmp_file, destination)
 
         await asyncio.to_thread(_write_file)
-        self.logger.debug("Sent file system message %s to %s", msg.message_id, destination)
+        self.logger.debug(
+            "Sent file system message %s to %s", msg.message_id, destination
+        )
         return msg.message_id
 
     async def _consume_loop(self) -> None:
@@ -262,5 +268,3 @@ class FileSystemMailboxService:
                     entry.unlink()
                 except FileNotFoundError:  # pragma: no cover - race condition
                     continue
-
-

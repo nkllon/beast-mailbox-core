@@ -32,63 +32,67 @@ BACKEND_CHOICES = (BACKEND_REDIS, BACKEND_FILESYSTEM)
 
 def configure_logging(verbose: bool) -> None:
     """Configure logging for CLI operations.
-    
+
     Args:
         verbose: If True, set DEBUG level; otherwise INFO level
-        
+
     The format includes timestamp, level, logger name, and message for
     comprehensive log output during CLI operations.
     """
     level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.basicConfig(
+        level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
 
 
 def parse_redis_url(redis_url: Optional[str] = None) -> Dict[str, Any]:
     """Parse REDIS_URL environment variable into connection parameters.
-    
+
     Supports Redis URL format: `redis://:password@host:port/db` or
     `redis://user:password@host:port/db`.
-    
+
     Args:
         redis_url: Optional URL string. If None, reads from REDIS_URL environment variable.
-        
+
     Returns:
         Dictionary with keys: host, port, password, db
-        
+
     Raises:
         SystemExit: If REDIS_URL is malformed or uses unsupported scheme.
-        
+
     Example:
         >>> config = parse_redis_url("redis://:pass@localhost:6379/0")
         >>> assert config["host"] == "localhost"
         >>> assert config["port"] == 6379
         >>> assert config["password"] == "pass"
         >>> assert config["db"] == 0
-        
+
     Note:
         Returns None values for missing components (password, db).
         Port defaults to 6379 if not specified in URL.
     """
     if redis_url is None:
         redis_url = os.environ.get("REDIS_URL")
-    
+
     if not redis_url:
         return {}
-    
+
     try:
         parsed = urlparse(redis_url)
-        
+
         # Validate scheme
         if parsed.scheme not in ("redis", "rediss"):
-            raise ValueError(f"Unsupported scheme: {parsed.scheme}. Use redis:// or rediss://")
-        
+            raise ValueError(
+                f"Unsupported scheme: {parsed.scheme}. Use redis:// or rediss://"
+            )
+
         # Extract components
         host = parsed.hostname or "localhost"
         port = parsed.port or 6379
-        
+
         # Password extraction - urlparse handles both "user:pass@host" and ":pass@host"
         password = parsed.password
-        
+
         # Database number from path (e.g., /0, /1)
         db = 0
         if parsed.path and len(parsed.path) > 1:
@@ -97,7 +101,7 @@ def parse_redis_url(redis_url: Optional[str] = None) -> Dict[str, Any]:
             except ValueError:
                 # Invalid db number, use default
                 pass
-        
+
         return {
             "host": host,
             "port": port,
@@ -113,18 +117,18 @@ def parse_redis_url(redis_url: Optional[str] = None) -> Dict[str, Any]:
 
 def get_redis_config_from_args(args: argparse.Namespace) -> Dict[str, Any]:
     """Get Redis configuration with priority: CLI args > REDIS_URL > defaults.
-    
+
     Priority order:
     1. CLI flags (highest priority - explicit override)
     2. REDIS_URL environment variable (convenient default)
     3. Hardcoded defaults (localhost:6379)
-    
+
     Args:
         args: Parsed argparse.Namespace with redis_host, redis_port, redis_password, redis_db attributes
-        
+
     Returns:
         Dictionary with keys: host, port, password, db suitable for MailboxConfig
-        
+
     Note:
         CLI flags override environment variables, maintaining backward compatibility.
         Since argparse applies defaults before this function, we check if CLI values
@@ -132,48 +136,48 @@ def get_redis_config_from_args(args: argparse.Namespace) -> Dict[str, Any]:
     """
     # Start with defaults from REDIS_URL if available
     env_config = parse_redis_url()
-    
+
     # Get CLI values - handle both argparse (with defaults) and direct calls (may have None)
     cli_host = getattr(args, "redis_host", None)
     cli_port = getattr(args, "redis_port", None)
     cli_password = getattr(args, "redis_password", None)
     cli_db = getattr(args, "redis_db", None)
-    
+
     # Priority: CLI explicit values > REDIS_URL > hardcoded defaults
     # If CLI value is provided and differs from hardcoded default, user explicitly set it - use CLI
     # If CLI value equals default or is None, prefer REDIS_URL if available, else use hardcoded default
     default_host = "localhost"
     default_port = 6379
     default_db = 0
-    
+
     # For host: if CLI is None or equals default, use REDIS_URL or default
     if cli_host is None or (cli_host == default_host and env_config.get("host")):
         host = env_config.get("host", default_host)
     else:
         host = cli_host
-    
+
     # For port: if CLI is None or equals default, use REDIS_URL or default
     if cli_port is None or (cli_port == default_port and env_config.get("port")):
         port = env_config.get("port", default_port)
     else:
         port = cli_port
-    
+
     # For password: if CLI is None, use REDIS_URL or None
     password = cli_password if cli_password is not None else env_config.get("password")
-    
+
     # For db: if CLI is None or equals default, use REDIS_URL or default
     if cli_db is None or (cli_db == default_db and env_config.get("db") is not None):
         db = env_config.get("db", default_db)
     else:
         db = cli_db
-    
+
     config = {
         "host": host,
         "port": port,
         "password": password,
         "db": db,
     }
-    
+
     return config
 
 
@@ -184,16 +188,16 @@ async def _acknowledge_messages(
     message_ids: list,
 ) -> None:
     """Acknowledge messages in a consumer group after processing.
-    
+
     Args:
         client: Redis client instance
         stream: Stream name containing the messages
         consumer_group: Consumer group name for acknowledgment
         message_ids: List of message IDs to acknowledge
-        
+
     Raises:
         SystemExit: If acknowledgment fails (with error details)
-        
+
     Note:
         This function creates the consumer group if it doesn't exist,
         handling BUSYGROUP errors gracefully. Other group creation
@@ -214,7 +218,9 @@ async def _acknowledge_messages(
 
         # Acknowledge messages
         ack_count = await client.xack(stream, consumer_group, *message_ids)
-        logging.info("✓ Acknowledged %d message(s) in group %s", ack_count, consumer_group)
+        logging.info(
+            "✓ Acknowledged %d message(s) in group %s", ack_count, consumer_group
+        )
     except Exception as exc:
         logging.error("Failed to acknowledge messages: %s", exc)
         raise SystemExit(f"Acknowledgement failed: {exc}")
@@ -226,15 +232,15 @@ async def _trim_messages(
     message_ids: list,
 ) -> None:
     """Delete messages from a stream using XDEL.
-    
+
     Args:
         client: Redis client instance
         stream: Stream name containing the messages
         message_ids: List of message IDs to delete
-        
+
     Raises:
         SystemExit: If deletion fails (with error details)
-        
+
     Note:
         This is useful for cleaning up messages after inspection or
         processing. Unlike stream trimming by length, this allows
@@ -255,23 +261,23 @@ async def _fetch_latest_messages(
     trim: bool = False,
 ) -> None:
     """Retrieve and display the latest messages from the inbox without starting a consumer loop.
-    
+
     This is a one-shot inspection tool for checking mailbox contents. It reads
     messages in reverse chronological order (newest first) without blocking.
-    
+
     Args:
         service: The mailbox service instance to use for retrieval
         count: Maximum number of messages to retrieve (default: 10)
         ack: If True, acknowledge messages in the consumer group after display
         trim: If True, delete messages from the stream after acknowledging
-        
+
     Raises:
         SystemExit: If Redis client is unavailable or operations fail
-        
+
     Example:
         >>> service = RedisMailboxService("my-agent", config)
         >>> await _fetch_latest_messages(service, count=5, ack=True)
-        
+
     Note:
         The --ack flag marks messages as processed in the consumer group.
         The --trim flag permanently deletes messages (use with caution).
@@ -329,7 +335,11 @@ async def _fetch_latest_filesystem_messages(
         return
 
     files = sorted(
-        [path for path in inbox_path.iterdir() if path.is_file() and path.suffix == ".json"],
+        [
+            path
+            for path in inbox_path.iterdir()
+            if path.is_file() and path.suffix == ".json"
+        ],
         key=lambda path: path.name,
         reverse=True,
     )[:count]
@@ -340,7 +350,9 @@ async def _fetch_latest_filesystem_messages(
 
     for path in files:
         try:
-            data = await asyncio.to_thread(lambda: json.loads(path.read_text(encoding="utf-8")))
+            data = await asyncio.to_thread(
+                lambda: json.loads(path.read_text(encoding="utf-8"))
+            )
         except FileNotFoundError:
             continue
         except json.JSONDecodeError as exc:
@@ -364,11 +376,11 @@ async def _fetch_latest_filesystem_messages(
 
 async def run_service_async(args: argparse.Namespace) -> None:
     """Async implementation of the mailbox service command.
-    
+
     This function provides two modes of operation:
     1. One-shot mode (--latest flag): Inspect recent messages and exit
     2. Service mode: Run continuously, consuming and handling messages
-    
+
     Args:
         args: Parsed command-line arguments containing:
             - agent_id: Agent identifier for this instance
@@ -381,10 +393,10 @@ async def run_service_async(args: argparse.Namespace) -> None:
             - ack: Acknowledge messages in one-shot mode
             - trim: Delete messages in one-shot mode
             - echo: Register an echo handler that logs all received messages
-            
+
     Raises:
         SystemExit: If service fails to start or Redis connection fails
-        
+
     Note:
         In service mode, the function runs until interrupted (Ctrl+C) or
         cancelled. The service gracefully shuts down on interruption.
@@ -423,7 +435,9 @@ async def run_service_async(args: argparse.Namespace) -> None:
             await _fetch_latest_filesystem_messages(
                 service,
                 getattr(args, "count", 10),
-                delete=bool(getattr(args, "ack", False) or getattr(args, "trim", False)),
+                delete=bool(
+                    getattr(args, "ack", False) or getattr(args, "trim", False)
+                ),
             )
         else:
             await _fetch_latest_messages(
@@ -509,7 +523,9 @@ def create_service_parser() -> argparse.ArgumentParser:
         default=None,
         help="Filesystem mailbox directory mode (octal, e.g., 755)",
     )
-    parser.add_argument("--echo", action="store_true", help="Print received messages to stdout")
+    parser.add_argument(
+        "--echo", action="store_true", help="Print received messages to stdout"
+    )
     parser.add_argument(
         "--latest",
         action="store_true",
@@ -537,19 +553,19 @@ def create_service_parser() -> argparse.ArgumentParser:
 
 def run_service(argv: list[str] | None = None) -> None:
     """CLI entry point for beast-mailbox-service command.
-    
+
     Starts the Beast Mailbox service for an agent. The service can run in
     two modes:
-    
+
     1. **Inspector Mode** (--latest flag):
        Fetch and display recent messages, optionally acknowledge/trim them, then exit.
-       
+
     2. **Service Mode** (default):
        Run continuously, consuming messages and dispatching to handlers.
-    
+
     Args:
         argv: Command-line arguments (defaults to sys.argv if None)
-        
+
     Command-line Arguments:
         agent_id (required): Unique identifier for this agent
         --redis-host: Redis server hostname (default: localhost)
@@ -565,17 +581,17 @@ def run_service(argv: list[str] | None = None) -> None:
         --ack: Acknowledge messages after display (with --latest)
         --trim: Delete messages after acknowledgment (with --latest)
         --verbose: Enable DEBUG logging
-        
+
     Examples:
         # Start a service that echoes messages:
         $ beast-mailbox-service my-agent --echo --verbose
-        
+
         # Inspect last 5 messages without acknowledging:
         $ beast-mailbox-service my-agent --latest --count 5
-        
+
         # Read and delete last 10 messages:
         $ beast-mailbox-service my-agent --latest --ack --trim
-        
+
     Raises:
         SystemExit: On configuration errors or service failures
     """
@@ -587,9 +603,9 @@ def run_service(argv: list[str] | None = None) -> None:
 
 async def send_message_async(args: argparse.Namespace) -> None:
     """Async implementation of the send message command.
-    
+
     Sends a single message to a recipient agent's inbox and exits.
-    
+
     Args:
         args: Parsed command-line arguments containing:
             - sender: Sending agent ID
@@ -599,11 +615,11 @@ async def send_message_async(args: argparse.Namespace) -> None:
             - message_type: Message classification
             - redis_host, redis_port, redis_password, redis_db: Redis connection
             - stream_prefix: Prefix for stream names
-            
+
     Raises:
         SystemExit: If Redis connection fails or message cannot be sent
         json.JSONDecodeError: If --json contains invalid JSON
-        
+
     Note:
         Either --message or --json must be provided (not both).
         The service connects, sends the message, and disconnects cleanly.
@@ -708,13 +724,13 @@ def create_send_parser() -> argparse.ArgumentParser:
 
 def send_message(argv: list[str] | None = None) -> None:
     """CLI entry point for beast-mailbox-send command.
-    
+
     Send a message from one agent to another agent's inbox. This is a
     one-shot operation that connects, sends, and disconnects cleanly.
-    
+
     Args:
         argv: Command-line arguments (defaults to sys.argv if None)
-        
+
     Command-line Arguments:
         sender (required): Sending agent ID
         recipient (required): Receiving agent ID
@@ -727,20 +743,20 @@ def send_message(argv: list[str] | None = None) -> None:
         --redis-db: Redis database number (default: 0)
         --stream-prefix: Prefix for stream names (default: beast:mailbox)
         --verbose: Enable DEBUG logging
-        
+
     Examples:
         # Send a text message:
         $ beast-mailbox-send alice bob --message "Hello!"
-        
+
         # Send structured JSON data:
         $ beast-mailbox-send alice bob --json '{"action": "deploy", "version": "1.2.3"}'
-        
+
         # Send with custom message type:
         $ beast-mailbox-send alice bob --json '{"status": "ok"}' --message-type health_check
-        
+
     Raises:
         SystemExit: On configuration errors, connection failures, or invalid JSON
-        
+
     Note:
         You must provide either --message OR --json (not both).
         The --json payload must be valid JSON.
@@ -749,4 +765,3 @@ def send_message(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
     configure_logging(args.verbose)
     asyncio.run(send_message_async(args))
-

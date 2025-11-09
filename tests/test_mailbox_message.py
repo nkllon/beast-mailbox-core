@@ -20,9 +20,9 @@ class TestMailboxMessageDecoding:
             b"message_type": b"direct_message",
             b"timestamp": b"1234567890.0",
         }
-        
+
         message = MailboxMessage.from_redis_fields(fields)
-        
+
         assert message.message_id == "msg-001"
         assert message.sender == "alice"
         assert message.recipient == "bob"
@@ -40,13 +40,17 @@ class TestMailboxMessageDecoding:
             b"message_type": b"notification",
             b"timestamp": b"9876543210.5",
         }
-        
+
         message = MailboxMessage.from_redis_fields(fields)
-        
+
         assert message.message_id == "msg-002"
         assert message.sender == "charlie"
         assert message.recipient == "dave"
-        assert message.payload == {"count": 42, "tags": ["test", "prod"], "meta": {"version": 2}}
+        assert message.payload == {
+            "count": 42,
+            "tags": ["test", "prod"],
+            "meta": {"version": 2},
+        }
         assert message.message_type == "notification"
         assert message.timestamp == 9876543210.5
 
@@ -56,13 +60,13 @@ class TestMailboxMessageDecoding:
             b"message_id": b"msg-003",
             b"sender": b"eve",
             b"recipient": b"frank",
-            b"payload": b'{}',
+            b"payload": b"{}",
             b"message_type": b"status_update",
             b"timestamp": b"1111111111.0",
         }
-        
+
         message = MailboxMessage.from_redis_fields(fields)
-        
+
         assert message.message_id == "msg-003"
         assert message.sender == "eve"
         assert message.recipient == "frank"
@@ -78,11 +82,11 @@ class TestMailboxMessageDecoding:
             recipient="bob",
             payload={"key": "value"},
             message_type="test_message",
-            timestamp=123.456
+            timestamp=123.456,
         )
-        
+
         fields = message.to_redis_fields()
-        
+
         assert fields["message_id"] == "test-id"
         assert fields["sender"] == "alice"
         assert fields["recipient"] == "bob"
@@ -95,9 +99,9 @@ class TestMailboxMessageDecoding:
         fields = {
             b"payload": b'{"text": "test"}',
         }
-        
+
         message = MailboxMessage.from_redis_fields(fields)
-        
+
         assert message.sender == "unknown"
         assert message.recipient == "unknown"
         assert message.message_type == "direct_message"
@@ -106,4 +110,3 @@ class TestMailboxMessageDecoding:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-
