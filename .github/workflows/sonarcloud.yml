@@ -68,7 +68,7 @@ jobs:
           echo "test_duration=$DURATION" >> /tmp/test_metrics.env
       
       - name: Upload Test Metrics
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-metrics
           path: /tmp/test_metrics.env
