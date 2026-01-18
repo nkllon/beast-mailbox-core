@@ -42,3 +42,9 @@ Thumbs.db
 htmlcov/
 
 src/beast_mailbox_core.egg-info/
+
+# System and IDE exclusions
+**/.DS_Store
+.AppleDouble
+.LSOverride
+*.pyc

@@ -1,0 +1,23 @@
+{
+  "feature_name": "windows-vpc-remote-dev",
+  "created_at": "2025-11-09T00:31:02Z",
+  "updated_at": "2025-11-09T01:09:25Z",
+  "language": "en",
+  "phase": "tasks-generated",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "ready_for_implementation": false
+}
+

@@ -60,6 +60,28 @@ jobs:
           fi
           echo "✅ No uncommitted changes"
       
+      - name: Verify we're on main branch
+        if: ${{ !inputs.skip_validation }}
+        run: |
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$CURRENT_BRANCH" != "main" ]; then
+            echo "❌ ERROR: Must run release validation from main branch"
+            echo "Current branch: $CURRENT_BRANCH"
+            echo "Please checkout main branch and try again"
+            exit 1
+          fi
+          
+          # Also verify current commit is on origin/main
+          git fetch origin main
+          if ! git branch -r --contains HEAD | grep -q 'origin/main'; then
+            echo "❌ ERROR: Current commit is not on origin/main branch"
+            echo "Please ensure you're on the latest main branch and try again"
+            exit 1
+          fi
+          
+          echo "✅ Verified on main branch"
+          echo "✅ Verified current commit is on origin/main"
+      
       - name: Validate version in pyproject.toml
         if: ${{ !inputs.skip_validation }}
         id: version-check

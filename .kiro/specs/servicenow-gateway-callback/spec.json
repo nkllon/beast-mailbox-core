@@ -1,0 +1,22 @@
+{
+  "feature_name": "servicenow-gateway-callback",
+  "created_at": "2025-11-08T22:38:34.183735+00:00",
+  "updated_at": "2025-11-08T22:40:31.498958+00:00",
+  "language": "en",
+  "phase": "tasks-generated",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "ready_for_implementation": false
+}

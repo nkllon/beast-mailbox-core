@@ -233,6 +233,8 @@ beast-mailbox-service --help
 
 ### Making Changes
 
+> **Spec workflow is non-optional.** Treat the `/kiro:` slash commands as the deterministic editor for every specification phase. Never hand-edit files in `.kiro/specs/`; instead run the appropriate command (`/kiro/steering`, `/kiro/spec-init`, `/kiro/spec-requirements`, `/kiro/spec-design`, `/kiro/spec-tasks`, `/kiro/spec-impl`) and let it update the Markdown/JSON outputs.
+
 1. **Create feature branch:**
    ```bash
    git checkout -b feature/your-feature-name

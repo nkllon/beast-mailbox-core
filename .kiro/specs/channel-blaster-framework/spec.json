@@ -1,0 +1,28 @@
+{
+  "feature_name": "channel-blaster-framework",
+  "id": "213143a3-2150-4d1c-aa6c-975d90fc39ee",
+  "created_at": "2025-11-09T01:56:54Z",
+  "updated_at": "2025-11-09T04:26:26.997Z",
+  "language": "en",
+  "owner": "platform-core@beast",
+  "hash": {
+    "algorithm": "sha256",
+    "value": "739e24db70bc36026a2d94f424901e6c4922dfb8439cf20ac646fdacd5cbfa7a"
+  },
+  "phase": "tasks-generated",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": false
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "ready_for_implementation": false
+}

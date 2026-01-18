@@ -1,0 +1,23 @@
+{
+  "feature_name": "tardigrade-mode",
+  "created_at": "2025-11-09T02:02:34Z",
+  "updated_at": "2025-11-09T02:28:42Z",
+  "language": "en",
+  "phase": "tasks-generated",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": false
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "ready_for_implementation": false
+}
+

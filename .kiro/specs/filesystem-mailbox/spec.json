@@ -1,0 +1,22 @@
+{
+  "feature_name": "filesystem-mailbox",
+  "created_at": "2025-11-08T20:14:36.227171+00:00",
+  "updated_at": "2025-11-08T20:42:12.379963+00:00",
+  "language": "en",
+  "phase": "tasks-generated",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "ready_for_implementation": true
+}

@@ -1,0 +1,23 @@
+{
+  "feature_name": "tardigrade-management",
+  "created_at": "2025-11-09T02:22:51Z",
+  "updated_at": "2025-11-09T02:30:06Z",
+  "language": "en",
+  "phase": "tasks-generated",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": false
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "ready_for_implementation": false
+}
+
